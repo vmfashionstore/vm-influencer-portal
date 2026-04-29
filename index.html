@@ -550,6 +550,55 @@
 
   .footer-text { font-size: 7px; letter-spacing: 0.18em; color: var(--gray-muted); text-transform: uppercase; }
 
+
+  /* PROGRESS BAR */
+  .sync-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 24px;
+    background: var(--gray-dark);
+    border-bottom: 1px solid var(--gray-line);
+    font-size: 8px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gray-text);
+  }
+
+  .sync-bar.hidden { display: none !important; }
+
+  .sync-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--pink);
+    animation: blink 1s ease infinite;
+    flex-shrink: 0;
+  }
+
+  .sync-dot.done { background: #8BC4A0; animation: none; }
+  .sync-dot.error { background: #E88080; animation: none; }
+
+  .sync-track {
+    flex: 1;
+    height: 1px;
+    background: var(--gray-line);
+  }
+
+  .sync-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--pink-dark), var(--pink-light));
+    transition: width 0.4s ease;
+  }
+
+  .sync-label { white-space: nowrap; }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  @media (min-width: 768px) { .sync-bar { padding: 8px 48px; } }
+
   @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes fadeDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
@@ -606,6 +655,14 @@
   </header>
 
   <div class="month-bar" id="month-bar"></div>
+
+
+  <!-- SYNC BAR -->
+  <div class="sync-bar hidden" id="sync-bar">
+    <div class="sync-dot" id="sync-dot"></div>
+    <div class="sync-track"><div class="sync-fill" id="sync-fill" style="width:0%"></div></div>
+    <div class="sync-label" id="sync-label">Carregando dados...</div>
+  </div>
 
   <nav class="nav-tabs">
     <button class="nav-tab active" data-tab="performance"><span class="tab-icon">📊</span> Performance</button>
@@ -922,45 +979,75 @@ function buildMonthBar() {
   });
 }
 
+function setSyncStatus(label, pct, state) {
+  const bar   = document.getElementById('sync-bar');
+  const dot   = document.getElementById('sync-dot');
+  const fill  = document.getElementById('sync-fill');
+  const lbl   = document.getElementById('sync-label');
+  bar.classList.remove('hidden');
+  lbl.textContent  = label;
+  fill.style.width = pct + '%';
+  dot.className    = 'sync-dot' + (state ? ' ' + state : '');
+  if (state === 'done' || state === 'error') {
+    setTimeout(() => bar.classList.add('hidden'), 4000);
+  }
+}
+
 async function fetchCurrentMonth() {
-  // Busca só as primeiras 2 páginas (mês atual) para carregamento rápido
-  const now = new Date();
-  const mesAtual = now.getMonth();
-  const anoAtual = now.getFullYear();
   allOrders = [];
+  setSyncStatus('Buscando pedidos recentes...', 10, '');
 
   for (let page = 1; page <= 2; page++) {
     try {
       const res  = await fetch(`${VNDA_BASE}?per_page=100&status=confirmed&page=${page}`, { headers: VNDA_HEADERS });
+      if (!res.ok) {
+        setSyncStatus('Erro ao conectar com a VNDA (' + res.status + ')', 100, 'error');
+        return;
+      }
       const data = await res.json();
       if (!Array.isArray(data) || data.length === 0) break;
       allOrders = allOrders.concat(data);
       if (data.length < 100) break;
-    } catch(e) { break; }
+    } catch(e) {
+      setSyncStatus('Erro de conexão: ' + e.message, 100, 'error');
+      return;
+    }
   }
+
+  setSyncStatus('Dados do mês carregados · ' + allOrders.length + ' pedidos', 20, '');
   updateDashboard();
 }
 
 async function fetchAllOrdersBackground() {
-  // Busca todo o histórico em paralelo (grupos de 5 páginas)
   const BATCH = 5;
   let page = 3;
   let hasMore = true;
+  let totalLoaded = allOrders.length;
+  let batchNum = 0;
 
   while (hasMore) {
+    batchNum++;
     const pages = Array.from({length: BATCH}, (_, i) => page + i);
-    const results = await Promise.all(
-      pages.map(p =>
-        fetch(`${VNDA_BASE}?per_page=100&status=confirmed&page=${p}`, { headers: VNDA_HEADERS })
-          .then(r => r.json())
-          .catch(() => [])
-      )
-    );
+
+    let batchResults;
+    try {
+      batchResults = await Promise.all(
+        pages.map(p =>
+          fetch(`${VNDA_BASE}?per_page=100&status=confirmed&page=${p}`, { headers: VNDA_HEADERS })
+            .then(r => r.ok ? r.json() : [])
+            .catch(() => [])
+        )
+      );
+    } catch(e) {
+      setSyncStatus('Erro no histórico: ' + e.message, 100, 'error');
+      break;
+    }
 
     let anyData = false;
-    for (const data of results) {
+    for (const data of batchResults) {
       if (!Array.isArray(data) || data.length === 0) { hasMore = false; break; }
       allOrders = allOrders.concat(data);
+      totalLoaded += data.length;
       anyData = true;
       if (data.length < 100) { hasMore = false; break; }
     }
@@ -968,9 +1055,14 @@ async function fetchAllOrdersBackground() {
     if (!anyData) hasMore = false;
     page += BATCH;
 
-    // Atualiza dashboard a cada batch para o usuário ver progresso
+    // Progresso estimado (assumindo ~200 páginas no total)
+    const pct = Math.min(20 + Math.round((page / 200) * 75), 95);
+    setSyncStatus('Carregando histórico · ' + totalLoaded + ' pedidos encontrados...', pct, '');
     updateDashboard();
   }
+
+  setSyncStatus('✓ Sincronizado · ' + allOrders.length + ' pedidos no total', 100, 'done');
+  updateDashboard();
 }
 
 function getOrdersForPeriod(month, year) {
