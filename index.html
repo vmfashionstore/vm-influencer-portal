@@ -840,14 +840,9 @@
 const SUPABASE_URL = 'https://ckqqfppssynlicsejrqc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrcXFmcHBzc3lubGljc2VqcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTk5NDcsImV4cCI6MjA5MzAzNTk0N30.sC-F9JEweQun-Pteg0uLEV72dP7GV2hGVrYtB5fONH8';
 
-const VNDA_TOKEN = 'Bearer msMS9hx2Cssbk4KZ5x2Q2Xtx';
-const VNDA_HOST  = 'www.vmfashionstore.com.br';
-const VNDA_BASE  = 'https://api.vnda.com.br/api/v2/orders';
-const VNDA_HEADERS = {
-  'authorization': VNDA_TOKEN,
-  'X-Shop-Host': VNDA_HOST,
-  'accept': 'application/json'
-};
+// API via proxy Vercel (evita bloqueio CORS do navegador)
+const VNDA_BASE = '/api/orders';
+const VNDA_HEADERS = {};
 
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const fmt = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -999,7 +994,7 @@ async function fetchCurrentMonth() {
 
   for (let page = 1; page <= 2; page++) {
     try {
-      const res  = await fetch(`${VNDA_BASE}?per_page=100&status=confirmed&page=${page}`, { headers: VNDA_HEADERS });
+      const res  = await fetch(`${VNDA_BASE}?page=${page}`);
       if (!res.ok) {
         setSyncStatus('Erro ao conectar com a VNDA (' + res.status + ')', 100, 'error');
         return;
@@ -1033,7 +1028,7 @@ async function fetchAllOrdersBackground() {
     try {
       batchResults = await Promise.all(
         pages.map(p =>
-          fetch(`${VNDA_BASE}?per_page=100&status=confirmed&page=${p}`, { headers: VNDA_HEADERS })
+          fetch(`${VNDA_BASE}?page=${p}`)
             .then(r => r.ok ? r.json() : [])
             .catch(() => [])
         )
