@@ -1233,7 +1233,7 @@ async function init() {
 }
 
 // ─── LOGIN ───
-async function handleLogin() {
+  async function handleLogin() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const btn = document.getElementById('login-btn');
@@ -1245,24 +1245,23 @@ async function handleLogin() {
   btn.classList.add('loading');
   err.textContent = '';
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    console.log('data:', data);
+    console.log('error:', error);
 
-  if (error) {
-    err.textContent = 'Email ou senha incorretos.';
+    if (error) {
+      err.textContent = 'Erro: ' + error.message;
+      btn.textContent = 'Entrar';
+      btn.classList.remove('loading');
+    } else {
+      err.textContent = 'Login ok! Carregando...';
+    }
+  } catch(e) {
+    err.textContent = 'Erro inesperado: ' + e.message;
     btn.textContent = 'Entrar';
     btn.classList.remove('loading');
   }
-}
-
-async function handleLogout() {
-  await supabase.auth.signOut();
-}
-
-function showLogin() {
-  document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('portal-screen').classList.add('hidden');
-  document.getElementById('login-btn').textContent = 'Entrar';
-  document.getElementById('login-btn').classList.remove('loading');
 }
 
 // ─── LOAD PORTAL ───
