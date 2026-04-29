@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>VM — Portal de Influencers</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --black: #080808;
@@ -32,10 +31,9 @@
     overflow-x: hidden;
   }
 
-  /* ─── UTILS ─── */
   .hidden { display: none !important; }
 
-  /* ─── LOGIN SCREEN ─── */
+  /* LOGIN */
   #login-screen {
     min-height: 100vh;
     display: flex;
@@ -54,15 +52,6 @@
     transform: translateX(-50%);
     width: 600px; height: 600px;
     background: radial-gradient(circle, rgba(232,160,176,0.06) 0%, transparent 65%);
-    pointer-events: none;
-  }
-
-  #login-screen::after {
-    content: '';
-    position: absolute;
-    bottom: -100px; right: -100px;
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(196,96,122,0.04) 0%, transparent 65%);
     pointer-events: none;
   }
 
@@ -102,10 +91,7 @@
     text-align: center;
   }
 
-  .input-group {
-    margin-bottom: 16px;
-    position: relative;
-  }
+  .input-group { margin-bottom: 16px; }
 
   .input-label {
     font-size: 8px;
@@ -128,6 +114,7 @@
     outline: none;
     transition: border-color 0.2s;
     -webkit-appearance: none;
+    border-radius: 0;
   }
 
   .input-field:focus { border-color: var(--pink); }
@@ -147,15 +134,13 @@
     cursor: pointer;
     margin-top: 8px;
     transition: background 0.2s, transform 0.1s;
+    border-radius: 0;
+    display: block;
   }
 
   .login-btn:hover { background: var(--pink-light); }
   .login-btn:active { transform: scale(0.99); }
-
-  .login-btn.loading {
-    opacity: 0.7;
-    pointer-events: none;
-  }
+  .login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
 
   .login-error {
     font-size: 10px;
@@ -166,10 +151,9 @@
     min-height: 16px;
   }
 
-  /* ─── PORTAL ─── */
+  /* PORTAL */
   #portal-screen { min-height: 100vh; display: flex; flex-direction: column; }
 
-  /* HEADER */
   .portal-header {
     display: flex;
     align-items: center;
@@ -191,11 +175,7 @@
     text-transform: uppercase;
   }
 
-  .portal-user {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  .portal-user { display: flex; align-items: center; gap: 12px; }
 
   .user-name {
     font-size: 9px;
@@ -224,11 +204,11 @@
     padding: 6px 12px;
     cursor: pointer;
     transition: all 0.2s;
+    border-radius: 0;
   }
 
   .logout-btn:hover { border-color: var(--pink); color: var(--pink); }
 
-  /* MONTH BAR */
   .month-bar {
     display: flex;
     padding: 0 24px;
@@ -258,7 +238,6 @@
   .month-btn:hover { color: var(--white); }
   .month-btn.active { color: var(--pink); border-bottom: 2px solid var(--pink); }
 
-  /* NAV TABS */
   .nav-tabs {
     display: flex;
     padding: 0 24px;
@@ -292,16 +271,12 @@
   .nav-tab.active { color: var(--white); border-bottom: 2px solid var(--pink); }
   .nav-tab .tab-icon { font-size: 10px; }
 
-  /* CONTENT */
-  .portal-content {
-    flex: 1;
-    padding: 24px;
-  }
+  .portal-content { flex: 1; padding: 24px; }
 
   .tab-panel { display: none; animation: fadeUp 0.3s ease both; }
   .tab-panel.active { display: block; }
 
-  /* ─── PERFORMANCE TAB ─── */
+  /* KPI */
   .kpi-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -311,16 +286,9 @@
     margin-bottom: 24px;
   }
 
-  .kpi-card {
-    background: var(--gray-card);
-    padding: 20px 18px;
-    position: relative;
-  }
+  .kpi-card { background: var(--gray-card); padding: 20px 18px; position: relative; }
 
-  .kpi-card.hero {
-    background: var(--gray-mid);
-    grid-column: span 2;
-  }
+  .kpi-card.hero { background: var(--gray-mid); grid-column: span 2; }
 
   .kpi-card.hero::before {
     content: '';
@@ -356,7 +324,6 @@
     text-transform: uppercase;
   }
 
-  /* Comparativo */
   .comparativo-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -367,7 +334,7 @@
   .comp-card {
     background: var(--gray-card);
     border: 1px solid var(--gray-line);
-    padding: 14px 14px;
+    padding: 14px;
   }
 
   .comp-label {
@@ -378,29 +345,13 @@
     margin-bottom: 6px;
   }
 
-  .comp-value {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 20px;
-    color: var(--white);
-  }
+  .comp-value { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--white); }
 
-  .comp-badge {
-    font-size: 8px;
-    letter-spacing: 0.1em;
-    margin-top: 4px;
-  }
-
+  .comp-badge { font-size: 8px; letter-spacing: 0.1em; margin-top: 4px; color: var(--gray-text); }
   .comp-badge.up { color: #8BC4A0; }
   .comp-badge.down { color: var(--pink); }
-  .comp-badge.neutral { color: var(--gray-text); }
 
-  /* Section title */
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 14px;
-  }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 
   .section-title {
     font-size: 8px;
@@ -416,15 +367,9 @@
     text-transform: uppercase;
   }
 
-  /* Orders table */
-  .table-wrap {
-    border: 1px solid var(--gray-line);
-    overflow-x: auto;
-    margin-bottom: 24px;
-  }
+  .table-wrap { border: 1px solid var(--gray-line); overflow-x: auto; margin-bottom: 24px; }
 
   table { width: 100%; border-collapse: collapse; min-width: 460px; }
-
   thead tr { border-bottom: 1px solid var(--gray-line); }
 
   th {
@@ -448,33 +393,19 @@
 
   tr:last-child td { border-bottom: none; }
   tbody tr:hover { background: #111; }
-
   .td-date { color: var(--gray-text); font-size: 10px; }
   .td-num { font-family: 'Cormorant Garamond', serif; font-size: 15px; }
   .td-pink { color: var(--pink); font-size: 10px; }
 
-  /* Bar chart */
   .bar-section { margin-bottom: 24px; }
-
   .bar-list { display: flex; flex-direction: column; gap: 14px; }
-
-  .bar-top {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 6px;
-  }
-
+  .bar-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
   .bar-name { font-size: 10px; color: var(--gray-text); flex: 1; padding-right: 8px; }
   .bar-amount { font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--white); }
-
   .bar-track { height: 1px; background: var(--gray-line); }
   .bar-fill { height: 100%; background: linear-gradient(90deg, var(--pink-dark), var(--pink-light)); }
 
-  /* Commission box */
-  .commission-box {
-    border: 1px solid var(--gray-line);
-    margin-bottom: 24px;
-  }
+  .commission-box { border: 1px solid var(--gray-line); margin-bottom: 24px; }
 
   .c-row {
     display: flex;
@@ -486,10 +417,7 @@
 
   .c-row:last-child { border-bottom: none; }
 
-  .c-row.total {
-    background: var(--gray-mid);
-    position: relative;
-  }
+  .c-row.total { background: var(--gray-mid); position: relative; }
 
   .c-row.total::before {
     content: '';
@@ -503,20 +431,9 @@
   .c-val { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--white); }
   .c-val.pink { color: var(--pink); font-size: 22px; }
 
-  /* ─── PRODUCTS TAB ─── */
-  .products-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 24px;
-  }
+  .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 24px; }
 
-  .product-card {
-    background: var(--gray-card);
-    border: 1px solid var(--gray-line);
-    padding: 16px;
-    position: relative;
-  }
+  .product-card { background: var(--gray-card); border: 1px solid var(--gray-line); padding: 16px; }
 
   .product-rank {
     font-family: 'Cormorant Garamond', serif;
@@ -528,34 +445,11 @@
   }
 
   .product-rank.top { color: var(--pink); }
+  .product-name { font-size: 11px; color: var(--white); line-height: 1.4; margin-bottom: 8px; }
+  .product-stats { display: flex; justify-content: space-between; align-items: center; }
+  .product-qty { font-size: 8px; letter-spacing: 0.15em; color: var(--gray-text); text-transform: uppercase; }
+  .product-val { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--pink); }
 
-  .product-name {
-    font-size: 11px;
-    color: var(--white);
-    line-height: 1.4;
-    margin-bottom: 8px;
-  }
-
-  .product-stats {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .product-qty {
-    font-size: 8px;
-    letter-spacing: 0.15em;
-    color: var(--gray-text);
-    text-transform: uppercase;
-  }
-
-  .product-val {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 16px;
-    color: var(--pink);
-  }
-
-  /* ─── CONTENTS TAB ─── */
   .content-cards { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
 
   .content-card {
@@ -568,8 +462,7 @@
   }
 
   .content-thumb {
-    width: 56px;
-    height: 56px;
+    width: 56px; height: 56px;
     background: var(--gray-mid);
     flex-shrink: 0;
     display: flex;
@@ -580,61 +473,18 @@
   }
 
   .content-info { flex: 1; }
-
-  .content-date {
-    font-size: 8px;
-    letter-spacing: 0.15em;
-    color: var(--gray-text);
-    text-transform: uppercase;
-    margin-bottom: 5px;
-  }
-
-  .content-desc {
-    font-size: 12px;
-    color: var(--white);
-    line-height: 1.5;
-    margin-bottom: 8px;
-  }
-
+  .content-date { font-size: 8px; letter-spacing: 0.15em; color: var(--gray-text); text-transform: uppercase; margin-bottom: 5px; }
+  .content-desc { font-size: 12px; color: var(--white); line-height: 1.5; margin-bottom: 8px; }
   .content-tags { display: flex; gap: 6px; flex-wrap: wrap; }
 
   .content-tag {
-    font-size: 7px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    padding: 3px 8px;
-    border: 1px solid var(--gray-line);
-    color: var(--gray-text);
+    font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 3px 8px; border: 1px solid var(--gray-line); color: var(--gray-text);
   }
 
   .content-tag.pink { border-color: var(--pink-dark); color: var(--pink); }
 
-  .content-metrics {
-    display: flex;
-    gap: 16px;
-    margin-top: 8px;
-  }
-
-  .metric {
-    font-size: 8px;
-    color: var(--gray-text);
-    letter-spacing: 0.1em;
-  }
-
-  .metric span {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 14px;
-    color: var(--white);
-    display: block;
-  }
-
-  /* ─── MATERIALS TAB ─── */
-  .materials-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 24px;
-  }
+  .materials-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 24px; }
 
   .material-card {
     background: var(--gray-card);
@@ -647,61 +497,15 @@
   }
 
   .material-card:hover { border-color: var(--pink); }
+  .material-icon { font-size: 24px; margin-bottom: 10px; display: block; }
+  .material-type { font-size: 7px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gray-text); margin-bottom: 5px; }
+  .material-name { font-size: 11px; color: var(--white); line-height: 1.4; margin-bottom: 8px; }
+  .material-date { font-size: 8px; letter-spacing: 0.1em; color: var(--gray-muted); text-transform: uppercase; }
+  .material-btn { display: inline-block; margin-top: 10px; font-size: 7px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--pink); border: 1px solid var(--pink-dark); padding: 4px 10px; }
 
-  .material-icon {
-    font-size: 24px;
-    margin-bottom: 10px;
-    display: block;
-  }
+  .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 
-  .material-type {
-    font-size: 7px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-    margin-bottom: 5px;
-  }
-
-  .material-name {
-    font-size: 11px;
-    color: var(--white);
-    line-height: 1.4;
-    margin-bottom: 8px;
-  }
-
-  .material-date {
-    font-size: 8px;
-    letter-spacing: 0.1em;
-    color: var(--gray-muted);
-    text-transform: uppercase;
-  }
-
-  .material-btn {
-    display: inline-block;
-    margin-top: 10px;
-    font-size: 7px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--pink);
-    border: 1px solid var(--pink-dark);
-    padding: 4px 10px;
-  }
-
-  /* ─── CALENDAR TAB ─── */
-  .calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-  }
-
-  .cal-month {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 20px;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    color: var(--white);
-  }
+  .cal-month { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; letter-spacing: 0.1em; color: var(--white); }
 
   .cal-grid {
     display: grid;
@@ -712,179 +516,56 @@
     margin-bottom: 24px;
   }
 
-  .cal-day-header {
-    background: var(--gray-dark);
-    padding: 8px 4px;
-    text-align: center;
-    font-size: 7px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-  }
+  .cal-day-header { background: var(--gray-dark); padding: 8px 4px; text-align: center; font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); }
 
-  .cal-day {
-    background: var(--gray-card);
-    padding: 8px 6px;
-    min-height: 52px;
-    position: relative;
-  }
-
+  .cal-day { background: var(--gray-card); padding: 8px 6px; min-height: 52px; position: relative; }
   .cal-day.empty { background: var(--gray-dark); opacity: 0.4; }
   .cal-day.today { background: var(--gray-mid); }
 
-  .cal-day.today::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: var(--pink);
-  }
+  .cal-day.today::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--pink); }
 
-  .cal-num {
-    font-size: 10px;
-    color: var(--gray-text);
-    margin-bottom: 4px;
-  }
+  .cal-num { font-size: 10px; color: var(--gray-text); margin-bottom: 4px; }
 
-  .cal-today .cal-num { color: var(--pink); }
-
-  .cal-event {
-    font-size: 7px;
-    background: rgba(232,160,176,0.15);
-    color: var(--pink-light);
-    padding: 2px 4px;
-    margin-top: 2px;
-    letter-spacing: 0.05em;
-    line-height: 1.3;
-    border-left: 1px solid var(--pink-dark);
-  }
+  .cal-event { font-size: 7px; background: rgba(232,160,176,0.15); color: var(--pink-light); padding: 2px 4px; margin-top: 2px; letter-spacing: 0.05em; line-height: 1.3; border-left: 1px solid var(--pink-dark); }
 
   .upcoming-list { display: flex; flex-direction: column; gap: 8px; }
 
-  .upcoming-item {
-    background: var(--gray-card);
-    border: 1px solid var(--gray-line);
-    padding: 14px 16px;
-    display: flex;
-    gap: 14px;
-    align-items: center;
-  }
+  .upcoming-item { background: var(--gray-card); border: 1px solid var(--gray-line); padding: 14px 16px; display: flex; gap: 14px; align-items: center; }
 
-  .upcoming-date {
-    text-align: center;
-    min-width: 40px;
-  }
-
-  .upcoming-day {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 28px;
-    font-weight: 300;
-    color: var(--pink);
-    line-height: 1;
-  }
-
-  .upcoming-month {
-    font-size: 7px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-  }
-
-  .upcoming-divider {
-    width: 1px;
-    height: 36px;
-    background: var(--gray-line);
-  }
-
+  .upcoming-date { text-align: center; min-width: 40px; }
+  .upcoming-day { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; color: var(--pink); line-height: 1; }
+  .upcoming-month { font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); }
+  .upcoming-divider { width: 1px; height: 36px; background: var(--gray-line); }
   .upcoming-info { flex: 1; }
+  .upcoming-title { font-size: 12px; color: var(--white); margin-bottom: 4px; }
+  .upcoming-type { font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); }
 
-  .upcoming-title {
-    font-size: 12px;
-    color: var(--white);
-    margin-bottom: 4px;
-  }
+  .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; gap: 16px; }
 
-  .upcoming-type {
-    font-size: 8px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-  }
+  .loading-logo { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; letter-spacing: 0.4em; color: var(--gray-text); animation: pulse 1.5s ease infinite; }
 
-  /* LOADING */
-  .loading-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 24px;
-    gap: 16px;
-  }
+  .loading-text { font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gray-muted); }
 
-  .loading-logo {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 32px;
-    font-weight: 300;
-    letter-spacing: 0.4em;
-    color: var(--gray-text);
-    animation: pulse 1.5s ease infinite;
-  }
+  .portal-footer { border-top: 1px solid var(--gray-line); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
 
-  .loading-text {
-    font-size: 8px;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--gray-muted);
-  }
+  .footer-text { font-size: 7px; letter-spacing: 0.18em; color: var(--gray-muted); text-transform: uppercase; }
 
-  /* FOOTER */
-  .portal-footer {
-    border-top: 1px solid var(--gray-line);
-    padding: 14px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 
-  .footer-text {
-    font-size: 7px;
-    letter-spacing: 0.18em;
-    color: var(--gray-muted);
-    text-transform: uppercase;
-  }
-
-  /* ANIMATIONS */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes fadeDown {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 1; }
-  }
-
-  /* DESKTOP */
   @media (min-width: 768px) {
     .portal-header { padding: 18px 48px; }
     .month-bar { padding: 0 48px; }
     .nav-tabs { padding: 0 48px; }
     .portal-content { padding: 32px 48px; }
     .portal-footer { padding: 16px 48px; }
-
     .kpi-grid { grid-template-columns: repeat(4, 1fr); }
     .kpi-card.hero { grid-column: span 1; }
     .kpi-value.pink { font-size: 36px; }
-
     .comparativo-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .products-grid { grid-template-columns: repeat(3, 1fr); }
     .materials-grid { grid-template-columns: repeat(3, 1fr); }
-
     .content-card { padding: 20px; }
     .content-thumb { width: 72px; height: 72px; }
   }
@@ -892,33 +573,27 @@
 </head>
 <body>
 
-<!-- ─── LOGIN ─── -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-logo">VM</div>
   <div class="login-tagline">Portal de Influencers</div>
-
   <div class="login-box">
     <div class="login-title">Acesse sua conta</div>
-
     <div class="input-group">
       <label class="input-label" for="email">E-mail</label>
       <input class="input-field" type="email" id="email" placeholder="seu@email.com" autocomplete="email">
     </div>
-
     <div class="input-group">
       <label class="input-label" for="password">Senha</label>
       <input class="input-field" type="password" id="password" placeholder="••••••••" autocomplete="current-password">
     </div>
-
-    <button class="login-btn" id="login-btn" onclick="handleLogin()">Entrar</button>
+    <button class="login-btn" id="login-btn">Entrar</button>
     <div class="login-error" id="login-error"></div>
   </div>
 </div>
 
-<!-- ─── PORTAL ─── -->
+<!-- PORTAL -->
 <div id="portal-screen" class="hidden">
-
-  <!-- HEADER -->
   <header class="portal-header">
     <div class="portal-logo">VM</div>
     <div class="portal-user">
@@ -926,36 +601,21 @@
         <div class="user-name" id="user-name">—</div>
         <div class="user-sub" id="user-coupon">—</div>
       </div>
-      <button class="logout-btn" onclick="handleLogout()">Sair</button>
+      <button class="logout-btn" id="logout-btn">Sair</button>
     </div>
   </header>
 
-  <!-- MONTH BAR -->
   <div class="month-bar" id="month-bar"></div>
 
-  <!-- NAV TABS -->
   <nav class="nav-tabs">
-    <button class="nav-tab active" onclick="switchTab('performance', this)">
-      <span class="tab-icon">📊</span> Performance
-    </button>
-    <button class="nav-tab" onclick="switchTab('produtos', this)">
-      <span class="tab-icon">🛍️</span> Produtos
-    </button>
-    <button class="nav-tab" onclick="switchTab('conteudos', this)">
-      <span class="tab-icon">📸</span> Conteúdos
-    </button>
-    <button class="nav-tab" onclick="switchTab('materiais', this)">
-      <span class="tab-icon">📁</span> Materiais
-    </button>
-    <button class="nav-tab" onclick="switchTab('calendario', this)">
-      <span class="tab-icon">📅</span> Calendário
-    </button>
+    <button class="nav-tab active" data-tab="performance"><span class="tab-icon">📊</span> Performance</button>
+    <button class="nav-tab" data-tab="produtos"><span class="tab-icon">🛍️</span> Produtos</button>
+    <button class="nav-tab" data-tab="conteudos"><span class="tab-icon">📸</span> Conteúdos</button>
+    <button class="nav-tab" data-tab="materiais"><span class="tab-icon">📁</span> Materiais</button>
+    <button class="nav-tab" data-tab="calendario"><span class="tab-icon">📅</span> Calendário</button>
   </nav>
 
-  <!-- CONTENT -->
   <main class="portal-content">
-
-    <!-- LOADING -->
     <div class="loading-state" id="loading-state">
       <div class="loading-logo">VM</div>
       <div class="loading-text">Carregando seus dados...</div>
@@ -963,7 +623,6 @@
 
     <!-- PERFORMANCE -->
     <div class="tab-panel" id="tab-performance">
-
       <div class="kpi-grid">
         <div class="kpi-card hero">
           <div class="kpi-label">Total a Receber</div>
@@ -987,56 +646,38 @@
         </div>
       </div>
 
-      <!-- Comparativo mês anterior -->
       <div class="section-header">
         <div class="section-title">Comparativo — mês anterior</div>
       </div>
-      <div class="comparativo-grid" style="margin-bottom:24px;">
+      <div class="comparativo-grid">
         <div class="comp-card">
           <div class="comp-label">Mês Atual</div>
           <div class="comp-value" id="comp-atual">—</div>
-          <div class="comp-badge neutral" id="comp-mes-atual">—</div>
+          <div class="comp-badge" id="comp-mes-atual">—</div>
         </div>
         <div class="comp-card">
           <div class="comp-label">Mês Anterior</div>
           <div class="comp-value" id="comp-anterior">—</div>
-          <div class="comp-badge neutral" id="comp-mes-anterior">—</div>
+          <div class="comp-badge" id="comp-mes-anterior">—</div>
         </div>
         <div class="comp-card">
           <div class="comp-label">Variação</div>
           <div class="comp-value" id="comp-variacao">—</div>
-          <div class="comp-badge neutral" id="comp-badge">vs mês anterior</div>
+          <div class="comp-badge" id="comp-badge">vs mês anterior</div>
         </div>
       </div>
 
-      <!-- Resumo comissão -->
       <div class="section-header">
         <div class="section-title">Resumo da comissão</div>
       </div>
-      <div class="commission-box" style="margin-bottom:24px;">
-        <div class="c-row">
-          <div class="c-label">Total vendido</div>
-          <div class="c-val" id="comm-vendido">—</div>
-        </div>
-        <div class="c-row">
-          <div class="c-label">% Comissão</div>
-          <div class="c-val" id="comm-perc">—</div>
-        </div>
-        <div class="c-row">
-          <div class="c-label">Comissão variável</div>
-          <div class="c-val" id="comm-variavel">—</div>
-        </div>
-        <div class="c-row">
-          <div class="c-label">Cachê fixo</div>
-          <div class="c-val" id="comm-fixo">—</div>
-        </div>
-        <div class="c-row total">
-          <div class="c-label">Total a receber</div>
-          <div class="c-val pink" id="comm-total">—</div>
-        </div>
+      <div class="commission-box">
+        <div class="c-row"><div class="c-label">Total vendido</div><div class="c-val" id="comm-vendido">—</div></div>
+        <div class="c-row"><div class="c-label">% Comissão</div><div class="c-val" id="comm-perc">—</div></div>
+        <div class="c-row"><div class="c-label">Comissão variável</div><div class="c-val" id="comm-variavel">—</div></div>
+        <div class="c-row"><div class="c-label">Cachê fixo</div><div class="c-val" id="comm-fixo">—</div></div>
+        <div class="c-row total"><div class="c-label">Total a receber</div><div class="c-val pink" id="comm-total">—</div></div>
       </div>
 
-      <!-- Pedidos -->
       <div class="section-header">
         <div class="section-title">Pedidos do período</div>
         <div class="section-meta" id="pedidos-count">—</div>
@@ -1045,11 +686,7 @@
         <table>
           <thead>
             <tr>
-              <th>Data</th>
-              <th>Produto</th>
-              <th>Qtd</th>
-              <th>Total</th>
-              <th>Comissão</th>
+              <th>Data</th><th>Produto</th><th>Qtd</th><th>Total</th><th>Comissão</th>
             </tr>
           </thead>
           <tbody id="orders-table">
@@ -1066,9 +703,7 @@
         <div class="section-meta" id="produtos-periodo">—</div>
       </div>
       <div class="products-grid" id="products-grid">
-        <div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">
-          Carregando produtos...
-        </div>
+        <div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Carregando...</div>
       </div>
       <div class="section-header" style="margin-bottom:14px;">
         <div class="section-title">Por valor gerado</div>
@@ -1098,182 +733,145 @@
         <div class="section-title">Materiais e briefings</div>
         <div class="section-meta">Documentos da parceria</div>
       </div>
-      <div class="materials-grid" id="materials-grid">
-        <div class="material-card">
-          <span class="material-icon">📋</span>
-          <div class="material-type">Briefing</div>
-          <div class="material-name">Briefing Coleção Inverno 2026</div>
-          <div class="material-date">Abr 2026</div>
-          <div class="material-btn">Acessar →</div>
-        </div>
-        <div class="material-card">
-          <span class="material-icon">🎨</span>
-          <div class="material-type">Identidade Visual</div>
-          <div class="material-name">Guia de marca e paleta de cores</div>
-          <div class="material-date">Jan 2026</div>
-          <div class="material-btn">Acessar →</div>
-        </div>
-        <div class="material-card">
-          <span class="material-icon">📸</span>
-          <div class="material-type">Fotos do produto</div>
-          <div class="material-name">Pack de imagens — Nova coleção</div>
-          <div class="material-date">Mar 2026</div>
-          <div class="material-btn">Acessar →</div>
-        </div>
-        <div class="material-card">
-          <span class="material-icon">📄</span>
-          <div class="material-type">Contrato</div>
-          <div class="material-name">Contrato de parceria 2026</div>
-          <div class="material-date">Jan 2026</div>
-          <div class="material-btn">Acessar →</div>
-        </div>
+      <div class="materials-grid">
+        <div class="material-card"><span class="material-icon">📋</span><div class="material-type">Briefing</div><div class="material-name">Briefing Coleção Inverno 2026</div><div class="material-date">Abr 2026</div><div class="material-btn">Acessar →</div></div>
+        <div class="material-card"><span class="material-icon">🎨</span><div class="material-type">Identidade Visual</div><div class="material-name">Guia de marca e paleta de cores</div><div class="material-date">Jan 2026</div><div class="material-btn">Acessar →</div></div>
+        <div class="material-card"><span class="material-icon">📸</span><div class="material-type">Fotos do produto</div><div class="material-name">Pack de imagens — Nova coleção</div><div class="material-date">Mar 2026</div><div class="material-btn">Acessar →</div></div>
+        <div class="material-card"><span class="material-icon">📄</span><div class="material-type">Contrato</div><div class="material-name">Contrato de parceria 2026</div><div class="material-date">Jan 2026</div><div class="material-btn">Acessar →</div></div>
       </div>
     </div>
 
     <!-- CALENDÁRIO -->
     <div class="tab-panel" id="tab-calendario">
       <div class="calendar-header">
-        <div class="cal-month" id="cal-month-title">Abril 2026</div>
+        <div class="cal-month" id="cal-month-title">—</div>
       </div>
-
       <div class="cal-grid" id="cal-grid"></div>
-
       <div class="section-header" style="margin-bottom:14px;">
         <div class="section-title">Próximas postagens</div>
       </div>
-      <div class="upcoming-list" id="upcoming-list">
+      <div class="upcoming-list">
         <div class="upcoming-item">
-          <div class="upcoming-date">
-            <div class="upcoming-day">30</div>
-            <div class="upcoming-month">Abr</div>
-          </div>
+          <div class="upcoming-date"><div class="upcoming-day">30</div><div class="upcoming-month">Abr</div></div>
           <div class="upcoming-divider"></div>
-          <div class="upcoming-info">
-            <div class="upcoming-title">Post feed — Novidade coleção</div>
-            <div class="upcoming-type">Instagram · Feed</div>
-          </div>
+          <div class="upcoming-info"><div class="upcoming-title">Post feed — Novidade coleção</div><div class="upcoming-type">Instagram · Feed</div></div>
         </div>
         <div class="upcoming-item">
-          <div class="upcoming-date">
-            <div class="upcoming-day">05</div>
-            <div class="upcoming-month">Mai</div>
-          </div>
+          <div class="upcoming-date"><div class="upcoming-day">05</div><div class="upcoming-month">Mai</div></div>
           <div class="upcoming-divider"></div>
-          <div class="upcoming-info">
-            <div class="upcoming-title">Stories — Cupom especial</div>
-            <div class="upcoming-type">Instagram · Stories</div>
-          </div>
+          <div class="upcoming-info"><div class="upcoming-title">Stories — Cupom especial</div><div class="upcoming-type">Instagram · Stories</div></div>
         </div>
         <div class="upcoming-item">
-          <div class="upcoming-date">
-            <div class="upcoming-day">12</div>
-            <div class="upcoming-month">Mai</div>
-          </div>
+          <div class="upcoming-date"><div class="upcoming-day">12</div><div class="upcoming-month">Mai</div></div>
           <div class="upcoming-divider"></div>
-          <div class="upcoming-info">
-            <div class="upcoming-title">Reels — Lookbook inverno</div>
-            <div class="upcoming-type">Instagram · Reels</div>
-          </div>
+          <div class="upcoming-info"><div class="upcoming-title">Reels — Lookbook inverno</div><div class="upcoming-type">Instagram · Reels</div></div>
         </div>
       </div>
     </div>
-
   </main>
 
   <footer class="portal-footer">
     <div class="footer-text">VM Fashion Store</div>
-    <div class="footer-text" id="footer-update">Dados via VNDA · Atualizados diariamente</div>
+    <div class="footer-text">Dados via VNDA · Atualizados diariamente</div>
     <div class="footer-text" id="footer-period">—</div>
   </footer>
-
 </div>
 
+<!-- Supabase carregado via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-// ─── SUPABASE CONFIG ───
 const SUPABASE_URL = 'https://ckqqfppssynlicsejrqc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrcXFmcHBzc3lubGljc2VqcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTk5NDcsImV4cCI6MjA5MzAzNTk0N30.sC-F9JEweQun-Pteg0uLEV72dP7GV2hGVrYtB5fONH8';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ─── VNDA CONFIG ───
 const VNDA_TOKEN = 'Bearer msMS9hx2Cssbk4KZ5x2Q2Xtx';
-const VNDA_HOST = 'www.vmfashionstore.com.br';
-const VNDA_BASE = 'https://api.vnda.com.br/api/v2/orders';
+const VNDA_HOST  = 'www.vmfashionstore.com.br';
+const VNDA_BASE  = 'https://api.vnda.com.br/api/v2/orders';
 const VNDA_HEADERS = {
   'authorization': VNDA_TOKEN,
   'X-Shop-Host': VNDA_HOST,
   'accept': 'application/json'
 };
 
-// ─── STATE ───
-let currentUser = null;
-let currentInfluencer = null;
-let allOrders = [];
-let selectedMonth = null;
-let selectedYear = null;
-
-// ─── MONTHS ───
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const MONTHS_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const fmt = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+const fmtPct = v => (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
 
-// ─── UTILS ───
-const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
-const fmtPct = (v) => (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
+let sb, currentInfluencer, allOrders = [], selectedMonth, selectedYear;
 
-// ─── INIT ───
+document.addEventListener('DOMContentLoaded', function () {
+  // Inicializa Supabase
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Eventos de login
+  document.getElementById('login-btn').addEventListener('click', handleLogin);
+  document.getElementById('password').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
+  document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+  // Eventos das abas
+  document.querySelectorAll('.nav-tab').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      this.classList.add('active');
+      document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Verifica sessão existente
+  init();
+});
+
 async function init() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    await loadPortal(session.user);
-  }
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) await loadPortal(session.user);
 
-  supabase.auth.onAuthStateChange(async (event, session) => {
+  sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN') await loadPortal(session.user);
     if (event === 'SIGNED_OUT') showLogin();
   });
 }
 
-// ─── LOGIN ───
-  async function handleLogin() {
-  const email = document.getElementById('email').value.trim();
+async function handleLogin() {
+  const email    = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
-  const btn = document.getElementById('login-btn');
-  const err = document.getElementById('login-error');
+  const btn      = document.getElementById('login-btn');
+  const err      = document.getElementById('login-error');
 
   if (!email || !password) { err.textContent = 'Preencha email e senha.'; return; }
 
   btn.textContent = 'Entrando...';
-  btn.classList.add('loading');
+  btn.disabled = true;
   err.textContent = '';
 
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    console.log('data:', data);
-    console.log('error:', error);
-
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error) {
-      err.textContent = 'Erro: ' + error.message;
-      btn.textContent = 'Entrar';
-      btn.classList.remove('loading');
-    } else {
-      err.textContent = 'Login ok! Carregando...';
+      err.textContent = 'Email ou senha incorretos.';
     }
-  } catch(e) {
+  } catch (e) {
     err.textContent = 'Erro inesperado: ' + e.message;
+  } finally {
     btn.textContent = 'Entrar';
-    btn.classList.remove('loading');
+    btn.disabled = false;
   }
 }
 
-// ─── LOAD PORTAL ───
+async function handleLogout() {
+  await sb.auth.signOut();
+}
+
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('portal-screen').classList.add('hidden');
+}
+
 async function loadPortal(user) {
-  currentUser = user;
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('portal-screen').classList.remove('hidden');
   document.getElementById('loading-state').style.display = 'flex';
   document.getElementById('tab-performance').classList.remove('active');
 
-  // Load influencer profile from Supabase
-  const { data: influencer } = await supabase
+  const { data: influencer } = await sb
     .from('influencers')
     .select('*')
     .eq('user_id', user.id)
@@ -1282,8 +880,7 @@ async function loadPortal(user) {
   if (!influencer) {
     document.getElementById('loading-state').innerHTML = `
       <div class="loading-logo">VM</div>
-      <div class="loading-text">Perfil não encontrado. Contate a equipe VM.</div>
-    `;
+      <div class="loading-text">Perfil não encontrado. Contate a equipe VM.</div>`;
     return;
   }
 
@@ -1291,20 +888,18 @@ async function loadPortal(user) {
   document.getElementById('user-name').textContent = influencer.nome;
   document.getElementById('user-coupon').textContent = 'Cupom ' + influencer.cupom;
 
-  // Set current month
   const now = new Date();
   selectedMonth = now.getMonth();
-  selectedYear = now.getFullYear();
+  selectedYear  = now.getFullYear();
 
   buildMonthBar();
-  await fetchOrders();
   buildCalendar();
+  await fetchOrders();
 
   document.getElementById('loading-state').style.display = 'none';
   document.getElementById('tab-performance').classList.add('active');
 }
 
-// ─── MONTH BAR ───
 function buildMonthBar() {
   const bar = document.getElementById('month-bar');
   bar.innerHTML = '';
@@ -1312,22 +907,21 @@ function buildMonthBar() {
     const btn = document.createElement('button');
     btn.className = 'month-btn' + (i === selectedMonth ? ' active' : '');
     btn.textContent = m;
-    btn.onclick = () => {
+    btn.addEventListener('click', () => {
       document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedMonth = i;
       updateDashboard();
-    };
+    });
     bar.appendChild(btn);
   });
 }
 
-// ─── FETCH ORDERS ───
 async function fetchOrders() {
   allOrders = [];
   let page = 1;
   while (true) {
-    const res = await fetch(`${VNDA_BASE}?per_page=100&status=confirmed&page=${page}`, { headers: VNDA_HEADERS });
+    const res  = await fetch(`${VNDA_BASE}?per_page=100&status=confirmed&page=${page}`, { headers: VNDA_HEADERS });
     const data = await res.json();
     if (!Array.isArray(data) || data.length === 0) break;
     allOrders = allOrders.concat(data);
@@ -1337,197 +931,146 @@ async function fetchOrders() {
   updateDashboard();
 }
 
-// ─── FILTER ORDERS ───
 function getOrdersForPeriod(month, year) {
-  const coupon = currentInfluencer.cupom.toUpperCase();
+  const cupom = currentInfluencer.cupom.toUpperCase();
   return allOrders.filter(o => {
     if (!o.coupon_code) return false;
-    if (o.coupon_code.toUpperCase() !== coupon) return false;
+    if (o.coupon_code.toUpperCase() !== cupom) return false;
     const d = new Date(o.received_at.substring(0, 10));
     return d.getMonth() === month && d.getFullYear() === year;
   });
 }
 
-// ─── UPDATE DASHBOARD ───
 function updateDashboard() {
   const orders = getOrdersForPeriod(selectedMonth, selectedYear);
 
-  // Previous month
-  let prevMonth = selectedMonth - 1;
-  let prevYear = selectedYear;
+  let prevMonth = selectedMonth - 1, prevYear = selectedYear;
   if (prevMonth < 0) { prevMonth = 11; prevYear--; }
   const prevOrders = getOrdersForPeriod(prevMonth, prevYear);
 
-  const totalVendido = orders.reduce((s, o) => s + parseFloat(o.total || 0), 0);
-  const prevVendido = prevOrders.reduce((s, o) => s + parseFloat(o.total || 0), 0);
-  const percComissao = currentInfluencer.perc_comissao || 0;
-  const valorFixo = currentInfluencer.valor_fixo || 0;
-  const comissaoVar = totalVendido * percComissao;
-  const totalReceber = comissaoVar + valorFixo;
-  const qtdPedidos = new Set(orders.map(o => o.id)).size;
-  const ticketMedio = qtdPedidos > 0 ? totalVendido / qtdPedidos : 0;
-  const variacao = prevVendido > 0 ? (totalVendido - prevVendido) / prevVendido : 0;
+  const totalVendido  = orders.reduce((s, o) => s + parseFloat(o.total || 0), 0);
+  const prevVendido   = prevOrders.reduce((s, o) => s + parseFloat(o.total || 0), 0);
+  const percComissao  = currentInfluencer.perc_comissao || 0;
+  const valorFixo     = currentInfluencer.valor_fixo || 0;
+  const comissaoVar   = totalVendido * percComissao;
+  const totalReceber  = comissaoVar + valorFixo;
+  const qtdPedidos    = new Set(orders.map(o => o.id)).size;
+  const ticketMedio   = qtdPedidos > 0 ? totalVendido / qtdPedidos : 0;
+  const variacao      = prevVendido > 0 ? (totalVendido - prevVendido) / prevVendido : 0;
+  const mesLabel      = MONTHS[selectedMonth] + ' ' + selectedYear;
+  const prevLabel     = MONTHS[prevMonth] + ' ' + prevYear;
 
-  const mesLabel = MONTHS[selectedMonth] + ' ' + selectedYear;
-  const prevLabel = MONTHS[prevMonth] + ' ' + prevYear;
-
-  // KPIs
   document.getElementById('kpi-total-receber').textContent = fmt(totalReceber);
   document.getElementById('kpi-total-vendido').textContent = fmt(totalVendido);
-  document.getElementById('kpi-pedidos').textContent = qtdPedidos;
-  document.getElementById('kpi-ticket').textContent = fmt(ticketMedio);
-  document.getElementById('kpi-mes-label').textContent = mesLabel;
+  document.getElementById('kpi-pedidos').textContent       = qtdPedidos;
+  document.getElementById('kpi-ticket').textContent        = fmt(ticketMedio);
+  document.getElementById('kpi-mes-label').textContent     = mesLabel;
 
-  // Comparativo
-  document.getElementById('comp-atual').textContent = fmt(totalVendido);
-  document.getElementById('comp-anterior').textContent = fmt(prevVendido);
-  document.getElementById('comp-mes-atual').textContent = mesLabel;
+  document.getElementById('comp-atual').textContent        = fmt(totalVendido);
+  document.getElementById('comp-anterior').textContent     = fmt(prevVendido);
+  document.getElementById('comp-mes-atual').textContent    = mesLabel;
   document.getElementById('comp-mes-anterior').textContent = prevLabel;
+
   const varEl = document.getElementById('comp-variacao');
-  const badgeEl = document.getElementById('comp-badge');
-  varEl.textContent = fmtPct(variacao);
-  varEl.style.color = variacao >= 0 ? '#8BC4A0' : 'var(--pink)';
-  badgeEl.textContent = 'vs ' + prevLabel;
+  varEl.textContent  = fmtPct(variacao);
+  varEl.style.color  = variacao >= 0 ? '#8BC4A0' : 'var(--pink)';
+  document.getElementById('comp-badge').textContent = 'vs ' + prevLabel;
 
-  // Commission
-  document.getElementById('comm-vendido').textContent = fmt(totalVendido);
-  document.getElementById('comm-perc').textContent = (percComissao * 100).toFixed(0) + '%';
+  document.getElementById('comm-vendido').textContent  = fmt(totalVendido);
+  document.getElementById('comm-perc').textContent     = (percComissao * 100).toFixed(0) + '%';
   document.getElementById('comm-variavel').textContent = fmt(comissaoVar);
-  document.getElementById('comm-fixo').textContent = fmt(valorFixo);
-  document.getElementById('comm-total').textContent = fmt(totalReceber);
-
-  // Footer
+  document.getElementById('comm-fixo').textContent     = fmt(valorFixo);
+  document.getElementById('comm-total').textContent    = fmt(totalReceber);
   document.getElementById('footer-period').textContent = mesLabel;
 
-  // Orders table
-  const uniqueOrders = [];
-  const seen = new Set();
-  orders.forEach(o => {
-    if (!seen.has(o.id)) {
-      seen.add(o.id);
-      uniqueOrders.push(o);
-    }
-  });
+  const uniqueOrders = [...new Map(orders.map(o => [o.id, o])).values()];
   document.getElementById('pedidos-count').textContent = uniqueOrders.length + ' pedidos · ' + mesLabel;
 
   const tbody = document.getElementById('orders-table');
-  if (uniqueOrders.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--gray-text);padding:24px;font-size:11px;">Nenhum pedido neste período</td></tr>`;
-  } else {
-    tbody.innerHTML = uniqueOrders.map(o => {
-      const date = o.received_at ? o.received_at.substring(0, 10).split('-').reverse().join('/') : '—';
-      const total = parseFloat(o.total || 0);
-      const comm = total * percComissao;
-      const firstItem = Array.isArray(o.items) && o.items.length > 0 ? o.items[0].product_name || '—' : '—';
-      const qty = Array.isArray(o.items) ? o.items.reduce((s, i) => s + (i.quantity || 0), 0) : '—';
-      return `<tr>
-        <td class="td-date">${date}</td>
-        <td>${firstItem}${o.items && o.items.length > 1 ? ` <span style="color:var(--gray-text);font-size:9px;">+${o.items.length-1}</span>` : ''}</td>
-        <td>${qty}</td>
-        <td class="td-num">${fmt(total)}</td>
-        <td class="td-pink">+ ${fmt(comm)}</td>
-      </tr>`;
-    }).join('');
-  }
+  tbody.innerHTML = uniqueOrders.length === 0
+    ? `<tr><td colspan="5" style="text-align:center;color:var(--gray-text);padding:24px;font-size:11px;">Nenhum pedido neste período</td></tr>`
+    : uniqueOrders.map(o => {
+        const date      = o.received_at ? o.received_at.substring(0,10).split('-').reverse().join('/') : '—';
+        const total     = parseFloat(o.total || 0);
+        const comm      = total * percComissao;
+        const firstItem = Array.isArray(o.items) && o.items.length > 0 ? o.items[0].product_name || '—' : '—';
+        const qty       = Array.isArray(o.items) ? o.items.reduce((s,i) => s + (i.quantity||0), 0) : '—';
+        const extra     = o.items && o.items.length > 1 ? ` <span style="color:var(--gray-text);font-size:9px;">+${o.items.length-1}</span>` : '';
+        return `<tr>
+          <td class="td-date">${date}</td>
+          <td>${firstItem}${extra}</td>
+          <td>${qty}</td>
+          <td class="td-num">${fmt(total)}</td>
+          <td class="td-pink">+ ${fmt(comm)}</td>
+        </tr>`;
+      }).join('');
 
-  // Products
-  updateProducts(orders, percComissao, mesLabel);
+  updateProducts(orders, mesLabel);
 }
 
-// ─── PRODUCTS ───
-function updateProducts(orders, percComissao, mesLabel) {
+function updateProducts(orders, mesLabel) {
   document.getElementById('produtos-periodo').textContent = mesLabel;
-
-  const productMap = {};
+  const map = {};
   orders.forEach(o => {
     if (!Array.isArray(o.items)) return;
     o.items.forEach(item => {
       const name = item.product_name || 'Produto';
-      if (!productMap[name]) productMap[name] = { qty: 0, val: 0 };
-      productMap[name].qty += item.quantity || 0;
-      productMap[name].val += parseFloat(item.total || item.price || 0);
+      if (!map[name]) map[name] = { qty: 0, val: 0 };
+      map[name].qty += item.quantity || 0;
+      map[name].val += parseFloat(item.total || item.price || 0);
     });
   });
 
-  const sorted = Object.entries(productMap).sort((a, b) => b[1].val - a[1].val);
+  const sorted = Object.entries(map).sort((a,b) => b[1].val - a[1].val);
   const maxVal = sorted.length > 0 ? sorted[0][1].val : 1;
 
-  // Grid
   const grid = document.getElementById('products-grid');
-  if (sorted.length === 0) {
-    grid.innerHTML = `<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Nenhum produto neste período</div>`;
-  } else {
-    grid.innerHTML = sorted.slice(0, 6).map(([name, data], i) => `
-      <div class="product-card">
-        <div class="product-rank ${i === 0 ? 'top' : ''}">${String(i+1).padStart(2,'0')}</div>
-        <div class="product-name">${name}</div>
-        <div class="product-stats">
-          <div class="product-qty">${data.qty} venda${data.qty !== 1 ? 's' : ''}</div>
-          <div class="product-val">${fmt(data.val)}</div>
-        </div>
-      </div>
-    `).join('');
-  }
+  grid.innerHTML = sorted.length === 0
+    ? `<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Nenhum produto neste período</div>`
+    : sorted.slice(0,6).map(([name, data], i) => `
+        <div class="product-card">
+          <div class="product-rank ${i===0?'top':''}">${String(i+1).padStart(2,'0')}</div>
+          <div class="product-name">${name}</div>
+          <div class="product-stats">
+            <div class="product-qty">${data.qty} venda${data.qty!==1?'s':''}</div>
+            <div class="product-val">${fmt(data.val)}</div>
+          </div>
+        </div>`).join('');
 
-  // Bar list
-  const barList = document.getElementById('products-bar-list');
-  barList.innerHTML = sorted.slice(0, 8).map(([name, data]) => `
+  document.getElementById('products-bar-list').innerHTML = sorted.slice(0,8).map(([name, data]) => `
     <div class="bar-item">
       <div class="bar-top">
         <div class="bar-name">${name}</div>
         <div class="bar-amount">${fmt(data.val)}</div>
       </div>
-      <div class="bar-track">
-        <div class="bar-fill" style="width:${Math.round((data.val/maxVal)*100)}%"></div>
-      </div>
-    </div>
-  `).join('');
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round((data.val/maxVal)*100)}%"></div></div>
+    </div>`).join('');
 }
 
-// ─── CALENDAR ───
 function buildCalendar() {
-  const now = new Date();
-  const year = now.getFullYear();
+  const now   = new Date();
+  const year  = now.getFullYear();
   const month = now.getMonth();
+  const today = now.getDate();
 
   document.getElementById('cal-month-title').textContent = MONTHS[month] + ' ' + year;
 
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const today = now.getDate();
+  const firstDay    = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const days        = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 
-  const grid = document.getElementById('cal-grid');
-
-  const dayHeaders = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-  let html = dayHeaders.map(d => `<div class="cal-day-header">${d}</div>`).join('');
-
-  for (let i = 0; i < firstDay; i++) {
-    html += `<div class="cal-day empty"></div>`;
-  }
-
+  let html = days.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
   for (let d = 1; d <= daysInMonth; d++) {
     const isToday = d === today;
-    html += `
-      <div class="cal-day ${isToday ? 'today' : ''}">
-        <div class="cal-num" style="${isToday ? 'color:var(--pink)' : ''}">${d}</div>
-        ${isToday ? '<div class="cal-event">Hoje</div>' : ''}
-      </div>
-    `;
+    html += `<div class="cal-day ${isToday?'today':''}">
+      <div class="cal-num" style="${isToday?'color:var(--pink)':''}">${d}</div>
+      ${isToday?'<div class="cal-event">Hoje</div>':''}
+    </div>`;
   }
 
-  grid.innerHTML = html;
+  document.getElementById('cal-grid').innerHTML = html;
 }
-
-// ─── TAB SWITCH ───
-function switchTab(tab, btn) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  btn.classList.add('active');
-}
-
-// ─── START ───
-init();
 </script>
 </body>
 </html>
