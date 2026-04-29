@@ -868,8 +868,6 @@ function showLogin() {
 async function loadPortal(user) {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('portal-screen').classList.remove('hidden');
-  document.getElementById('loading-state').style.display = 'flex';
-  document.getElementById('tab-performance').classList.remove('active');
 
   const { data: influencer } = await sb
     .from('influencers')
@@ -881,6 +879,7 @@ async function loadPortal(user) {
     document.getElementById('loading-state').innerHTML = `
       <div class="loading-logo">VM</div>
       <div class="loading-text">Perfil não encontrado. Contate a equipe VM.</div>`;
+    document.getElementById('loading-state').style.display = 'flex';
     return;
   }
 
@@ -894,10 +893,16 @@ async function loadPortal(user) {
 
   buildMonthBar();
   buildCalendar();
-  await fetchOrders();
 
+  // Mostra layout imediatamente
   document.getElementById('loading-state').style.display = 'none';
   document.getElementById('tab-performance').classList.add('active');
+
+  // Carrega mês atual primeiro (1-2 páginas apenas)
+  await fetchCurrentMonth();
+
+  // Carrega histórico completo em segundo plano
+  fetchAllOrdersBackground();
 }
 
 function buildMonthBar() {
@@ -917,18 +922,55 @@ function buildMonthBar() {
   });
 }
 
-async function fetchOrders() {
+async function fetchCurrentMonth() {
+  // Busca só as primeiras 2 páginas (mês atual) para carregamento rápido
+  const now = new Date();
+  const mesAtual = now.getMonth();
+  const anoAtual = now.getFullYear();
   allOrders = [];
-  let page = 1;
-  while (true) {
-    const res  = await fetch(`${VNDA_BASE}?per_page=100&status=confirmed&page=${page}`, { headers: VNDA_HEADERS });
-    const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) break;
-    allOrders = allOrders.concat(data);
-    if (data.length < 100) break;
-    page++;
+
+  for (let page = 1; page <= 2; page++) {
+    try {
+      const res  = await fetch(`${VNDA_BASE}?per_page=100&status=confirmed&page=${page}`, { headers: VNDA_HEADERS });
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) break;
+      allOrders = allOrders.concat(data);
+      if (data.length < 100) break;
+    } catch(e) { break; }
   }
   updateDashboard();
+}
+
+async function fetchAllOrdersBackground() {
+  // Busca todo o histórico em paralelo (grupos de 5 páginas)
+  const BATCH = 5;
+  let page = 3;
+  let hasMore = true;
+
+  while (hasMore) {
+    const pages = Array.from({length: BATCH}, (_, i) => page + i);
+    const results = await Promise.all(
+      pages.map(p =>
+        fetch(`${VNDA_BASE}?per_page=100&status=confirmed&page=${p}`, { headers: VNDA_HEADERS })
+          .then(r => r.json())
+          .catch(() => [])
+      )
+    );
+
+    let anyData = false;
+    for (const data of results) {
+      if (!Array.isArray(data) || data.length === 0) { hasMore = false; break; }
+      allOrders = allOrders.concat(data);
+      anyData = true;
+      if (data.length < 100) { hasMore = false; break; }
+    }
+
+    if (!anyData) hasMore = false;
+    page += BATCH;
+
+    // Atualiza dashboard a cada batch para o usuário ver progresso
+    updateDashboard();
+  }
 }
 
 function getOrdersForPeriod(month, year) {
