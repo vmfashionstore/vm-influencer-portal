@@ -1065,11 +1065,13 @@ function getOrdersForPeriod(month, year) {
   return allOrders.filter(o => {
     if (!o.coupon_code) return false;
     if (o.coupon_code.toUpperCase() !== cupom) return false;
-    // Usa confirmed_at como data oficial da venda
     const dateStr = o.confirmed_at || o.received_at;
     if (!dateStr) return false;
-    const d = new Date(dateStr.substring(0, 10));
-    return d.getMonth() === month && d.getFullYear() === year;
+    // Extrai apenas YYYY-MM-DD sem converter fuso horário
+    const parts = dateStr.substring(0, 10).split('-');
+    const d_year  = parseInt(parts[0]);
+    const d_month = parseInt(parts[1]) - 1; // JS month is 0-indexed
+    return d_month === month && d_year === year;
   });
 }
 
