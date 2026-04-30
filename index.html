@@ -992,7 +992,7 @@ async function fetchCurrentMonth() {
   allOrders = [];
   setSyncStatus('Buscando pedidos recentes...', 10, '');
 
-  for (let page = 1; page <= 2; page++) {
+  for (let page = 1; page <= 5; page++) {
     try {
       const res  = await fetch(`${VNDA_BASE}?page=${page}`);
       if (!res.ok) {
@@ -1014,8 +1014,8 @@ async function fetchCurrentMonth() {
 }
 
 async function fetchAllOrdersBackground() {
-  const BATCH = 5;
-  let page = 3;
+  const BATCH = 10;
+  let page = 6;
   let hasMore = true;
   let totalLoaded = allOrders.length;
   let batchNum = 0;
@@ -1051,7 +1051,7 @@ async function fetchAllOrdersBackground() {
     page += BATCH;
 
     // Progresso estimado (assumindo ~200 páginas no total)
-    const pct = Math.min(20 + Math.round((page / 200) * 75), 95);
+    const pct = Math.min(20 + Math.round((page / 250) * 75), 95);
     setSyncStatus('Carregando histórico · ' + totalLoaded + ' pedidos encontrados...', pct, '');
     updateDashboard();
   }
@@ -1065,7 +1065,10 @@ function getOrdersForPeriod(month, year) {
   return allOrders.filter(o => {
     if (!o.coupon_code) return false;
     if (o.coupon_code.toUpperCase() !== cupom) return false;
-    const d = new Date(o.received_at.substring(0, 10));
+    // Usa confirmed_at como data oficial da venda
+    const dateStr = o.confirmed_at || o.received_at;
+    if (!dateStr) return false;
+    const d = new Date(dateStr.substring(0, 10));
     return d.getMonth() === month && d.getFullYear() === year;
   });
 }
