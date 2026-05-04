@@ -1179,12 +1179,7 @@ document.addEventListener('DOMContentLoaded', function () {
     showNivel(2);
   });
 
-  // Galeria — abrir lightbox
-  document.getElementById('gallery-grid').addEventListener('click', function(e) {
-    const item = e.target.closest('[data-gidx]');
-    if (!item) return;
-    openLightbox(parseInt(item.dataset.gidx));
-  });
+  // Galeria — abrir lightbox (handled by nivel3-grid)
 
   // Lightbox — navegação
   document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
