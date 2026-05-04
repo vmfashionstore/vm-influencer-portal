@@ -1307,8 +1307,13 @@ function renderContents() {
     filtered = filtered.filter(c => c.tipo.trim().toLowerCase() === tipoFiltro.toLowerCase());
   }
 
-  // Ordena por data mais recente
-  filtered.sort((a, b) => b.data.localeCompare(a.data));
+  // Ordena por data mais recente — normaliza para comparação
+  const toISO = d => {
+    if (!d) return '';
+    if (d.includes('/')) { const p = d.split('/'); return p[2]+'-'+p[1]+'-'+p[0]; }
+    return d;
+  };
+  filtered.sort((a, b) => toISO(b.data).localeCompare(toISO(a.data)));
 
   const meta = document.getElementById('conteudos-meta');
   meta.textContent = filtered.length + ' conteúdo' + (filtered.length !== 1 ? 's' : '') + ' registrado' + (filtered.length !== 1 ? 's' : '');
@@ -1327,7 +1332,11 @@ function renderContents() {
   const tipoIcon = { feed: '📷', carrossel: '🎠', stories: '⭕', reels: '🎬', tiktok: '🎵' };
 
   container.innerHTML = filtered.map(c => {
-    const dateFmt = c.data ? c.data.split('-').reverse().join('/') : '—';
+    const dateFmt = (() => {
+      if (!c.data) return '—';
+      if (c.data.includes('/')) return c.data; // já está em DD/MM/YYYY
+      return c.data.split('-').reverse().join('/');
+    })();
     const icon    = tipoIcon[c.tipo] || '📱';
     // Converte link Drive para thumbnail que funciona em img tag
     const getDriveThumb = (url) => {
