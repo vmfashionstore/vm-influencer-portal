@@ -799,6 +799,7 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap;" id="tipo-filters">
           <button class="tipo-btn active" data-tipo="todos">Todos</button>
           <button class="tipo-btn" data-tipo="feed">Feed</button>
+          <button class="tipo-btn" data-tipo="carrossel">Carrossel</button>
           <button class="tipo-btn" data-tipo="stories">Stories</button>
           <button class="tipo-btn" data-tipo="reels">Reels</button>
         </div>
@@ -1000,6 +1001,36 @@ async function loadPortal(user) {
 function buildMonthBar() {
   const bar = document.getElementById('month-bar');
   bar.innerHTML = '';
+
+  // Opção "Todos"
+  const btnTodos = document.createElement('button');
+  btnTodos.className = 'month-btn';
+  btnTodos.textContent = 'Todos';
+  btnTodos.dataset.special = 'todos';
+  btnTodos.addEventListener('click', () => {
+    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+    btnTodos.classList.add('active');
+    selectedMonth = 'todos';
+    updateDashboard();
+    renderContents();
+  });
+  bar.appendChild(btnTodos);
+
+  // Opção "2026"
+  const btn2026 = document.createElement('button');
+  btn2026.className = 'month-btn';
+  btn2026.textContent = '2026';
+  btn2026.dataset.special = '2026';
+  btn2026.addEventListener('click', () => {
+    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+    btn2026.classList.add('active');
+    selectedMonth = 'ano';
+    updateDashboard();
+    renderContents();
+  });
+  bar.appendChild(btn2026);
+
+  // Meses normais
   MONTHS.forEach((m, i) => {
     const btn = document.createElement('button');
     btn.className = 'month-btn' + (i === selectedMonth ? ' active' : '');
@@ -1009,6 +1040,7 @@ function buildMonthBar() {
       btn.classList.add('active');
       selectedMonth = i;
       updateDashboard();
+      renderContents();
     });
     bar.appendChild(btn);
   });
@@ -1107,10 +1139,11 @@ function getOrdersForPeriod(month, year) {
     if (o.coupon_code.toUpperCase() !== cupom) return false;
     const dateStr = o.confirmed_at || o.received_at;
     if (!dateStr) return false;
-    // Extrai apenas YYYY-MM-DD sem converter fuso horário
     const parts = dateStr.substring(0, 10).split('-');
     const d_year  = parseInt(parts[0]);
-    const d_month = parseInt(parts[1]) - 1; // JS month is 0-indexed
+    const d_month = parseInt(parts[1]) - 1;
+    if (month === 'todos') return true;
+    if (month === 'ano') return d_year === year;
     return d_month === month && d_year === year;
   });
 }
@@ -1270,7 +1303,7 @@ function renderContents() {
   let filtered  = allContents.filter(c => c.cupom === cupom);
 
   if (tipoFiltro !== 'todos') {
-    filtered = filtered.filter(c => c.tipo === tipoFiltro);
+    filtered = filtered.filter(c => c.tipo.trim().toLowerCase() === tipoFiltro.toLowerCase());
   }
 
   // Ordena por data mais recente
@@ -1290,22 +1323,30 @@ function renderContents() {
     return;
   }
 
-  const tipoIcon = { feed: '📷', stories: '⭕', reels: '🎬', tiktok: '🎵' };
+  const tipoIcon = { feed: '📷', carrossel: '🎠', stories: '⭕', reels: '🎬', tiktok: '🎵' };
 
   container.innerHTML = filtered.map(c => {
     const dateFmt = c.data ? c.data.split('-').reverse().join('/') : '—';
     const icon    = tipoIcon[c.tipo] || '📱';
-    const hasImg  = c.imagem_url && c.imagem_url.startsWith('http');
+    // Converte link Drive para thumbnail que funciona em img tag
+    const getDriveThumb = (url) => {
+      if (!url) return '';
+      const match = url.match(/id=([^&]+)/);
+      if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
+      return url;
+    };
+    const imgSrc  = c.imagem_url ? getDriveThumb(c.imagem_url) : '';
+    const hasImg  = !!imgSrc;
     const hasLink = c.link && c.link.startsWith('http');
 
     return `
       <div class="content-card">
         ${hasImg
-          ? `<img src="${c.imagem_url}" style="width:72px;height:72px;object-fit:cover;flex-shrink:0;border:1px solid var(--gray-line);" onerror="this.style.display='none'">`
+          ? `<img src="${imgSrc}" style="width:72px;height:72px;object-fit:cover;flex-shrink:0;border:1px solid var(--gray-line);" onerror="this.parentElement.querySelector('.content-thumb-fallback').style.display='flex';this.style.display='none'"><div class="content-thumb content-thumb-fallback" style="display:none">📷</div>`
           : `<div class="content-thumb">${icon}</div>`
         }
         <div class="content-info">
-          <div class="content-date">${dateFmt} · ${c.tipo || '—'}</div>
+          <div class="content-date">${dateFmt} · ${c.tipo ? c.tipo.charAt(0).toUpperCase() + c.tipo.slice(1) : '—'}</div>
           ${c.descricao ? `<div class="content-desc">${c.descricao}</div>` : ''}
           <div class="content-tags">
             ${c.produto ? `<span class="content-tag pink">🛍️ ${c.produto}</span>` : ''}
