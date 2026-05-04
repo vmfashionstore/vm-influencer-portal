@@ -815,13 +815,30 @@
     <div class="tab-panel" id="tab-materiais">
       <div class="section-header" style="margin-bottom:16px;">
         <div class="section-title">Materiais e briefings</div>
-        <div class="section-meta">Documentos da parceria</div>
+        <div class="section-meta" id="materiais-meta">Carregando...</div>
       </div>
-      <div class="materials-grid">
-        <div class="material-card"><span class="material-icon">📋</span><div class="material-type">Briefing</div><div class="material-name">Briefing Coleção Inverno 2026</div><div class="material-date">Abr 2026</div><div class="material-btn">Acessar →</div></div>
-        <div class="material-card"><span class="material-icon">🎨</span><div class="material-type">Identidade Visual</div><div class="material-name">Guia de marca e paleta de cores</div><div class="material-date">Jan 2026</div><div class="material-btn">Acessar →</div></div>
-        <div class="material-card"><span class="material-icon">📸</span><div class="material-type">Fotos do produto</div><div class="material-name">Pack de imagens — Nova coleção</div><div class="material-date">Mar 2026</div><div class="material-btn">Acessar →</div></div>
-        <div class="material-card"><span class="material-icon">📄</span><div class="material-type">Contrato</div><div class="material-name">Contrato de parceria 2026</div><div class="material-date">Jan 2026</div><div class="material-btn">Acessar →</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="material-filters">
+        <button class="tipo-btn active" data-mtype="todos">Todos</button>
+        <button class="tipo-btn" data-mtype="briefing">Briefing</button>
+        <button class="tipo-btn" data-mtype="contrato">Contrato</button>
+        <button class="tipo-btn" data-mtype="fotos">Fotos</button>
+        <button class="tipo-btn" data-mtype="identidade">Identidade</button>
+        <button class="tipo-btn" data-mtype="tabela">Tabela</button>
+        <button class="tipo-btn" data-mtype="outro">Outro</button>
+      </div>
+      <div class="materials-grid" id="materials-grid">
+        <div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Carregando materiais...</div>
+      </div>
+    </div>
+
+    <!-- MODAL VISUALIZADOR -->
+    <div id="material-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:1000;flex-direction:column;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid var(--gray-line);background:var(--gray-dark);">
+        <div id="modal-title" style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--white);letter-spacing:0.05em;">—</div>
+        <button id="modal-close" style="background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;padding:8px 16px;cursor:pointer;">Fechar ✕</button>
+      </div>
+      <div style="flex:1;overflow:hidden;padding:0;">
+        <iframe id="modal-iframe" src="" style="width:100%;height:100%;border:none;background:var(--black);" allowfullscreen></iframe>
       </div>
     </div>
 
@@ -874,6 +891,9 @@ const VNDA_HEADERS = {};
 // Google Sheets — Conteúdos
 const SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=0&single=true&output=csv';
 
+// Google Sheets — Materiais
+const MATERIALS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=1147990017&single=true&output=csv';
+
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const fmt = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtPct = v => (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
@@ -889,14 +909,29 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('password').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
 
-  // Filtros de tipo de conteúdo
+  // Filtros de tipo de conteúdo e materiais
   document.addEventListener('click', function(e) {
     if (e.target.classList.contains('tipo-btn')) {
-      document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      tipoFiltro = e.target.dataset.tipo;
-      renderContents();
+      // Verifica se é filtro de conteúdo ou material
+      const isMatFilter = e.target.closest('#material-filters');
+      if (isMatFilter) {
+        document.querySelectorAll('#material-filters .tipo-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        materialTipoFiltro = e.target.dataset.mtype;
+        renderMaterials();
+      } else {
+        document.querySelectorAll('#tab-conteudos .tipo-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        tipoFiltro = e.target.dataset.tipo;
+        renderContents();
+      }
     }
+  });
+
+  // Fechar modal
+  document.getElementById('modal-close').addEventListener('click', closeMaterial);
+  document.getElementById('material-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeMaterial();
   });
 
   // Eventos das abas
@@ -986,6 +1021,7 @@ async function loadPortal(user) {
   buildMonthBar();
   buildCalendar();
   fetchContents();
+  fetchMaterials();
 
   // Mostra layout imediatamente
   document.getElementById('loading-state').style.display = 'none';
@@ -1389,6 +1425,127 @@ function renderContents() {
         </div>
       </div>`;
   }).join('');
+}
+
+// ─── MATERIALS ───
+let allMaterials = [];
+let materialTipoFiltro = 'todos';
+
+async function fetchMaterials() {
+  try {
+    const res  = await fetch(MATERIALS_CSV);
+    const text = await res.text();
+    const rows = text.split('\n').slice(1);
+
+    allMaterials = rows
+      .filter(r => r.trim())
+      .map(r => {
+        const cols = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < r.length; i++) {
+          if (r[i] === '"') { inQ = !inQ; continue; }
+          if (r[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
+          cur += r[i];
+        }
+        cols.push(cur.trim());
+        return {
+          cupom:  (cols[0] || '').toUpperCase(),
+          titulo: cols[1] || '',
+          tipo:   (cols[2] || '').toLowerCase(),
+          link:   cols[3] || '',
+          data:   cols[4] || ''
+        };
+      });
+
+    renderMaterials();
+  } catch(e) {
+    document.getElementById('materials-grid').innerHTML =
+      `<div style="grid-column:span 2;text-align:center;color:var(--pink);padding:32px;font-size:11px;">Erro ao carregar materiais: ${e.message}</div>`;
+  }
+}
+
+function renderMaterials() {
+  const cupom = currentInfluencer.cupom.toUpperCase();
+
+  // Mostra materiais da influencer + materiais de TODAS
+  let filtered = allMaterials.filter(m =>
+    m.cupom === cupom || m.cupom === 'TODAS'
+  );
+
+  if (materialTipoFiltro !== 'todos') {
+    filtered = filtered.filter(m => m.tipo === materialTipoFiltro);
+  }
+
+  const meta = document.getElementById('materiais-meta');
+  meta.textContent = filtered.length + ' material' + (filtered.length !== 1 ? 'is' : '') + ' disponível' + (filtered.length !== 1 ? 'eis' : '');
+
+  const tipoIcon = {
+    briefing:    '📋',
+    contrato:    '📄',
+    fotos:       '📸',
+    identidade:  '🎨',
+    tabela:      '📊',
+    outro:       '📁'
+  };
+
+  const tipoLabel = {
+    briefing:    'Briefing',
+    contrato:    'Contrato',
+    fotos:       'Fotos',
+    identidade:  'Identidade Visual',
+    tabela:      'Tabela',
+    outro:       'Outro'
+  };
+
+  const grid = document.getElementById('materials-grid');
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Nenhum material disponível.</div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((m, i) => {
+    const icon  = tipoIcon[m.tipo] || '📁';
+    const label = tipoLabel[m.tipo] || 'Material';
+    return `
+      <div class="material-card" onclick="openMaterial(${i})" data-idx="${i}">
+        <span class="material-icon">${icon}</span>
+        <div class="material-type">${label}</div>
+        <div class="material-name">${m.titulo}</div>
+        <div class="material-date">${m.data}</div>
+        <div class="material-btn">Visualizar →</div>
+      </div>`;
+  }).join('');
+
+  // Store filtered for modal access
+  window._filteredMaterials = filtered;
+}
+
+function openMaterial(idx) {
+  const m = window._filteredMaterials[idx];
+  if (!m || !m.link) return;
+
+  // Convert Drive link to preview
+  let previewUrl = m.link;
+  const idMatch  = m.link.match(/\/d\/([^\/]+)/);
+  if (idMatch) {
+    previewUrl = `https://drive.google.com/file/d/${idMatch[1]}/preview`;
+  } else if (m.link.includes('docs.google.com')) {
+    previewUrl = m.link.includes('?')
+      ? m.link + '&embedded=true'
+      : m.link + '?embedded=true';
+  }
+
+  document.getElementById('modal-title').textContent  = m.titulo;
+  document.getElementById('modal-iframe').src         = previewUrl;
+  document.getElementById('material-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMaterial() {
+  document.getElementById('material-modal').classList.remove('open');
+  document.getElementById('modal-iframe').src = '';
+  document.body.style.overflow = '';
 }
 
 function buildCalendar() {
