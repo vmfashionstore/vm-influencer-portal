@@ -1326,7 +1326,12 @@ function renderContents() {
 
   // Filtro por tipo
   if (tipoFiltro !== 'todos') {
-    filtered = filtered.filter(c => c.tipo.trim().toLowerCase() === tipoFiltro.toLowerCase());
+    if (tipoFiltro === 'feed') {
+      // Feed agrupa: feed, carrossel e reels
+      filtered = filtered.filter(c => ['feed','carrossel','reels'].includes(c.tipo.trim().toLowerCase()));
+    } else {
+      filtered = filtered.filter(c => c.tipo.trim().toLowerCase() === tipoFiltro.toLowerCase());
+    }
   }
 
   // Ordena por data mais recente
