@@ -959,7 +959,7 @@
           <div class="section-title">Galeria de fotos</div>
           <div class="section-meta" id="gallery-count">—</div>
         </div>
-        <div class="gallery-grid" id="gallery-grid"></div>
+        <div id="gallery-grid"></div>
       </div>
     </div>
 
@@ -1769,8 +1769,9 @@ async function fetchGallery() {
         cols.push(cur.trim());
         return {
           cupom:      (cols[0] || '').toUpperCase(),
-          titulo:     cols[1] || '',
-          imagem_id:  cols[2] || ''
+          galeria:    cols[1] || 'Fotos',
+          titulo:     cols[2] || '',
+          imagem_id:  cols[3] || ''
         };
       });
 
@@ -1781,12 +1782,10 @@ async function fetchGallery() {
 }
 
 function renderGallery() {
-  const cupom = currentInfluencer.cupom.toUpperCase();
+  const cupom   = currentInfluencer.cupom.toUpperCase();
   const filtered = allGallery.filter(g => g.cupom === cupom || g.cupom === 'TODAS');
 
   const section = document.getElementById('gallery-section');
-  const grid    = document.getElementById('gallery-grid');
-  const count   = document.getElementById('gallery-count');
 
   if (filtered.length === 0) {
     section.style.display = 'none';
@@ -1794,17 +1793,52 @@ function renderGallery() {
   }
 
   section.style.display = 'block';
-  count.textContent = filtered.length + ' foto' + (filtered.length !== 1 ? 's' : '');
   lightboxItems = filtered;
 
-  grid.innerHTML = filtered.map((g, i) => `
-    <div class="gallery-item" data-gidx="${i}">
-      <img 
-        src="https://drive.google.com/thumbnail?id=${g.imagem_id}&sz=w400"
-        alt="${g.titulo}"
-        onerror="this.parentElement.style.display='none'">
-      <div class="gallery-item-title">${g.titulo}</div>
-    </div>`).join('');
+  // Agrupa por galeria
+  const grupos = {};
+  filtered.forEach((g, i) => {
+    if (!grupos[g.galeria]) grupos[g.galeria] = [];
+    grupos[g.galeria].push({ ...g, globalIdx: i });
+  });
+
+  const totalFotos = filtered.length;
+  document.getElementById('gallery-count').textContent =
+    Object.keys(grupos).length + ' galeria' + (Object.keys(grupos).length !== 1 ? 's' : '') +
+    ' · ' + totalFotos + ' foto' + (totalFotos !== 1 ? 's' : '');
+
+  // Renderiza cada grupo
+  document.getElementById('gallery-grid').outerHTML = '<div id="gallery-grid"></div>';
+  const container = document.getElementById('gallery-section');
+
+  // Remove old group divs
+  container.querySelectorAll('.gallery-group').forEach(el => el.remove());
+
+  const anchor = document.getElementById('gallery-grid');
+
+  Object.entries(grupos).forEach(([nomeGaleria, fotos]) => {
+    const group = document.createElement('div');
+    group.className = 'gallery-group';
+    group.style.marginBottom = '32px';
+
+    group.innerHTML = `
+      <div class="section-header" style="margin-bottom:12px;">
+        <div class="section-title">${nomeGaleria}</div>
+        <div class="section-meta">${fotos.length} foto${fotos.length !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="gallery-grid">
+        ${fotos.map(g => `
+          <div class="gallery-item" data-gidx="${g.globalIdx}">
+            <img
+              src="https://drive.google.com/thumbnail?id=${g.imagem_id}&sz=w400"
+              alt="${g.titulo}"
+              onerror="this.parentElement.style.display='none'">
+            <div class="gallery-item-title">${g.titulo}</div>
+          </div>`).join('')}
+      </div>`;
+
+    anchor.parentNode.insertBefore(group, anchor);
+  });
 }
 
 function openLightbox(idx) {
