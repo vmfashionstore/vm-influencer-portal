@@ -1300,19 +1300,35 @@ async function fetchContents() {
 }
 
 function renderContents() {
-  const cupom   = currentInfluencer.cupom.toUpperCase();
-  let filtered  = allContents.filter(c => c.cupom === cupom);
+  const cupom = currentInfluencer.cupom.toUpperCase();
+  let filtered = allContents.filter(c => c.cupom === cupom);
 
-  if (tipoFiltro !== 'todos') {
-    filtered = filtered.filter(c => c.tipo.trim().toLowerCase() === tipoFiltro.toLowerCase());
-  }
-
-  // Ordena por data mais recente — normaliza para comparação
+  // Normaliza data para comparação (aceita DD/MM/YYYY e YYYY-MM-DD)
   const toISO = d => {
     if (!d) return '';
     if (d.includes('/')) { const p = d.split('/'); return p[2]+'-'+p[1]+'-'+p[0]; }
     return d;
   };
+
+  // Filtro por mês
+  if (selectedMonth !== 'todos') {
+    filtered = filtered.filter(c => {
+      const iso = toISO(c.data);
+      if (!iso) return false;
+      const parts = iso.split('-');
+      const c_year  = parseInt(parts[0]);
+      const c_month = parseInt(parts[1]) - 1;
+      if (selectedMonth === 'ano') return c_year === selectedYear;
+      return c_month === selectedMonth && c_year === selectedYear;
+    });
+  }
+
+  // Filtro por tipo
+  if (tipoFiltro !== 'todos') {
+    filtered = filtered.filter(c => c.tipo.trim().toLowerCase() === tipoFiltro.toLowerCase());
+  }
+
+  // Ordena por data mais recente
   filtered.sort((a, b) => toISO(b.data).localeCompare(toISO(a.data)));
 
   const meta = document.getElementById('conteudos-meta');
