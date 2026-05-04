@@ -1705,6 +1705,14 @@ function renderContents() {
 
 // ─── MATERIALS ───
 let allMaterials = [];
+
+const CAT_CONFIG = {
+  briefing:   { icon: '📋', label: 'Briefing' },
+  contrato:   { icon: '📄', label: 'Contrato' },
+  fotos:      { icon: '📸', label: 'Fotos' },
+  identidade: { icon: '🎨', label: 'Identidade Visual' },
+  outro:      { icon: '📁', label: 'Outro' }
+};
 let materialTipoFiltro = 'todos';
 
 async function fetchMaterials() {
