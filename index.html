@@ -1735,65 +1735,12 @@ async function fetchMaterials() {
 
     renderMaterials();
   } catch(e) {
-    document.getElementById('materials-grid').innerHTML =
+    document.getElementById('cat-grid').innerHTML =
       `<div style="grid-column:span 2;text-align:center;color:var(--pink);padding:32px;font-size:11px;">Erro ao carregar materiais: ${e.message}</div>`;
   }
 }
 
-function renderMaterials() {
-  const cupom = currentInfluencer.cupom.toUpperCase();
-
-  // Mostra materiais da influencer + materiais de TODAS
-  let filtered = allMaterials.filter(m =>
-    m.cupom === cupom || m.cupom === 'TODAS'
-  );
-
-  if (materialTipoFiltro !== 'todos') {
-    filtered = filtered.filter(m => m.tipo === materialTipoFiltro);
-  }
-
-  const meta = document.getElementById('materiais-meta');
-  meta.textContent = filtered.length + ' material' + (filtered.length !== 1 ? 'is' : '') + ' disponível' + (filtered.length !== 1 ? 'eis' : '');
-
-  const tipoIcon = {
-    briefing:    '📋',
-    contrato:    '📄',
-    fotos:       '📸',
-    identidade:  '🎨',
-    outro:       '📁'
-  };
-
-  const tipoLabel = {
-    briefing:    'Briefing',
-    contrato:    'Contrato',
-    fotos:       'Fotos',
-    identidade:  'Identidade Visual',
-    outro:       'Outro'
-  };
-
-  const grid = document.getElementById('materials-grid');
-
-  if (filtered.length === 0) {
-    grid.innerHTML = `<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Nenhum material disponível.</div>`;
-    return;
-  }
-
-  // Store filtered for modal access before rendering
-  window._filteredMaterials = filtered;
-
-  grid.innerHTML = filtered.map((m, i) => {
-    const icon  = tipoIcon[m.tipo] || '📁';
-    const label = tipoLabel[m.tipo] || 'Material';
-    return `
-      <div class="material-card" data-idx="${i}" style="cursor:pointer;">
-        <span class="material-icon">${icon}</span>
-        <div class="material-type">${label}</div>
-        <div class="material-name">${m.titulo}</div>
-        <div class="material-date">${m.data}</div>
-        <div class="material-btn">Visualizar →</div>
-      </div>`;
-  }).join('');
-}
+// renderMaterials replaced by renderCategoryCards
 
 function openMaterial(idx) {
   const m = window._filteredMaterials[idx];
@@ -1853,71 +1800,13 @@ async function fetchGallery() {
         };
       });
 
-    renderGallery();
+    // gallery rendered on demand via openFotosCategory
   } catch(e) {
     console.error('Erro galeria:', e);
   }
 }
 
-function renderGallery() {
-  const cupom   = currentInfluencer.cupom.toUpperCase();
-  const filtered = allGallery.filter(g => g.cupom === cupom || g.cupom === 'TODAS');
-
-  const section = document.getElementById('gallery-section');
-
-  if (filtered.length === 0) {
-    section.style.display = 'none';
-    return;
-  }
-
-  section.style.display = 'block';
-  lightboxItems = filtered;
-
-  // Agrupa por galeria
-  const grupos = {};
-  filtered.forEach((g, i) => {
-    if (!grupos[g.galeria]) grupos[g.galeria] = [];
-    grupos[g.galeria].push({ ...g, globalIdx: i });
-  });
-
-  const totalFotos = filtered.length;
-  document.getElementById('gallery-count').textContent =
-    Object.keys(grupos).length + ' galeria' + (Object.keys(grupos).length !== 1 ? 's' : '') +
-    ' · ' + totalFotos + ' foto' + (totalFotos !== 1 ? 's' : '');
-
-  // Renderiza cada grupo
-  document.getElementById('gallery-grid').outerHTML = '<div id="gallery-grid"></div>';
-  const container = document.getElementById('gallery-section');
-
-  // Remove old group divs
-  container.querySelectorAll('.gallery-group').forEach(el => el.remove());
-
-  const anchor = document.getElementById('gallery-grid');
-
-  Object.entries(grupos).forEach(([nomeGaleria, fotos]) => {
-    const group = document.createElement('div');
-    group.className = 'gallery-group';
-    group.style.marginBottom = '32px';
-
-    group.innerHTML = `
-      <div class="section-header" style="margin-bottom:12px;">
-        <div class="section-title">${nomeGaleria}</div>
-        <div class="section-meta">${fotos.length} foto${fotos.length !== 1 ? 's' : ''}</div>
-      </div>
-      <div class="gallery-grid">
-        ${fotos.map(g => `
-          <div class="gallery-item" data-gidx="${g.globalIdx}">
-            <img
-              src="https://drive.google.com/thumbnail?id=${g.imagem_id}&sz=w400"
-              alt="${g.titulo}"
-              onerror="this.parentElement.style.display='none'">
-            <div class="gallery-item-title">${g.titulo}</div>
-          </div>`).join('')}
-      </div>`;
-
-    anchor.parentNode.insertBefore(group, anchor);
-  });
-}
+// renderGallery replaced by openFotosCategory and openLaunch
 
 function openLightbox(idx) {
   lightboxIdx = idx;
