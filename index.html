@@ -742,6 +742,73 @@
     text-transform: uppercase;
   }
 
+
+  .mat-back-btn {
+    background: none;
+    border: 1px solid var(--gray-line);
+    color: var(--gray-text);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-right: 16px;
+    flex-shrink: 0;
+  }
+
+  .mat-back-btn:hover { border-color: var(--pink); color: var(--pink); }
+
+  .cat-card {
+    background: var(--gray-card);
+    border: 1px solid var(--gray-line);
+    padding: 28px 20px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .cat-card:hover { border-color: var(--pink); background: var(--gray-mid); }
+
+  .cat-card-icon { font-size: 28px; }
+  .cat-card-label { font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gray-text); }
+  .cat-card-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--white); }
+  .cat-card-count { font-size: 8px; letter-spacing: 0.12em; color: var(--gray-muted); text-transform: uppercase; }
+
+  .launch-card {
+    background: var(--gray-card);
+    border: 1px solid var(--gray-line);
+    padding: 20px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .launch-card:hover { border-color: var(--pink); }
+
+  .launch-card-preview {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    margin-bottom: 12px;
+    aspect-ratio: 3/1;
+  }
+
+  .launch-card-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .launch-card-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--white); margin-bottom: 4px; }
+  .launch-card-count { font-size: 8px; letter-spacing: 0.15em; color: var(--gray-text); text-transform: uppercase; }
+  .launch-card-arrow { position: absolute; top: 16px; right: 16px; color: var(--pink); font-size: 16px; }
+
   @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes fadeDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
@@ -937,30 +1004,36 @@
 
     <!-- MATERIAIS -->
     <div class="tab-panel" id="tab-materiais">
-      <div class="section-header" style="margin-bottom:16px;">
-        <div class="section-title">Materiais e briefings</div>
-        <div class="section-meta" id="materiais-meta">Carregando...</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="material-filters">
-        <button class="tipo-btn active" data-mtype="todos">Todos</button>
-        <button class="tipo-btn" data-mtype="briefing">Briefing</button>
-        <button class="tipo-btn" data-mtype="contrato">Contrato</button>
-        <button class="tipo-btn" data-mtype="fotos">Fotos</button>
-        <button class="tipo-btn" data-mtype="identidade">Identidade</button>
-        <button class="tipo-btn" data-mtype="outro">Outro</button>
-      </div>
-      <div class="materials-grid" id="materials-grid">
-        <div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Carregando materiais...</div>
+
+      <!-- NÍVEL 1: Cards de categoria -->
+      <div id="mat-nivel-1">
+        <div class="section-header" style="margin-bottom:20px;">
+          <div class="section-title">Materiais e briefings</div>
+          <div class="section-meta" id="materiais-meta">—</div>
+        </div>
+        <div class="materials-grid" id="cat-grid"></div>
       </div>
 
-      <!-- GALERIA DE FOTOS -->
-      <div id="gallery-section" style="display:none;">
-        <div class="section-header" style="margin-bottom:14px;margin-top:8px;">
-          <div class="section-title">Galeria de fotos</div>
-          <div class="section-meta" id="gallery-count">—</div>
+      <!-- NÍVEL 2: Conteúdo da categoria ou lançamentos de fotos -->
+      <div id="mat-nivel-2" style="display:none;">
+        <div class="section-header" style="margin-bottom:20px;">
+          <button class="mat-back-btn" id="back-to-cats">← Voltar</button>
+          <div class="section-title" id="nivel2-title">—</div>
+          <div class="section-meta" id="nivel2-meta">—</div>
         </div>
-        <div id="gallery-grid"></div>
+        <div class="materials-grid" id="nivel2-grid"></div>
       </div>
+
+      <!-- NÍVEL 3: Galeria de fotos de um lançamento -->
+      <div id="mat-nivel-3" style="display:none;">
+        <div class="section-header" style="margin-bottom:20px;">
+          <button class="mat-back-btn" id="back-to-launches">← Voltar</button>
+          <div class="section-title" id="nivel3-title">—</div>
+          <div class="section-meta" id="nivel3-meta">—</div>
+        </div>
+        <div class="gallery-grid" id="nivel3-grid"></div>
+      </div>
+
     </div>
 
     <!-- LIGHTBOX GALERIA -->
@@ -1056,23 +1129,54 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('password').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
 
-  // Filtros de tipo de conteúdo e materiais
+  // Filtros de tipo de conteúdo
   document.addEventListener('click', function(e) {
     if (e.target.classList.contains('tipo-btn')) {
-      // Verifica se é filtro de conteúdo ou material
-      const isMatFilter = e.target.closest('#material-filters');
-      if (isMatFilter) {
-        document.querySelectorAll('#material-filters .tipo-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        materialTipoFiltro = e.target.dataset.mtype;
-        renderMaterials();
-      } else {
-        document.querySelectorAll('#tab-conteudos .tipo-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        tipoFiltro = e.target.dataset.tipo;
-        renderContents();
-      }
+      document.querySelectorAll('#tab-conteudos .tipo-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      tipoFiltro = e.target.dataset.tipo;
+      renderContents();
     }
+  });
+
+  // Navegação materiais — nível 1: categorias
+  document.getElementById('cat-grid').addEventListener('click', function(e) {
+    const card = e.target.closest('[data-cat]');
+    if (card) openCategory(card.dataset.cat);
+  });
+
+  // Navegação materiais — nível 2: lançamentos de fotos ou materiais
+  document.getElementById('nivel2-grid').addEventListener('click', function(e) {
+    const launch = e.target.closest('[data-launch]');
+    if (launch) { openLaunch(launch.dataset.launch); return; }
+    const matCard = e.target.closest('[data-n2idx]');
+    if (matCard) {
+      const idx = parseInt(matCard.dataset.n2idx);
+      const m   = window._nivel2Items[idx];
+      if (!m || !m.link) return;
+      let previewUrl = m.link;
+      const idMatch  = m.link.match(/\/d\/([^/]+)/);
+      if (idMatch) previewUrl = 'https://drive.google.com/file/d/' + idMatch[1] + '/preview';
+      document.getElementById('modal-title').textContent = m.titulo;
+      document.getElementById('modal-iframe').src = previewUrl;
+      document.getElementById('material-modal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  });
+
+  // Navegação materiais — nível 3: galeria
+  document.getElementById('nivel3-grid').addEventListener('click', function(e) {
+    const item = e.target.closest('[data-gidx]');
+    if (!item) return;
+    openLightbox(parseInt(item.dataset.gidx));
+  });
+
+  // Voltar botões
+  document.getElementById('back-to-cats').addEventListener('click', function() {
+    showNivel(1);
+  });
+  document.getElementById('back-to-launches').addEventListener('click', function() {
+    showNivel(2);
   });
 
   // Galeria — abrir lightbox
@@ -1108,28 +1212,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (e.target === this) closeMaterial();
   });
 
-  // Abrir material via event delegation
-  document.getElementById('materials-grid').addEventListener('click', function(e) {
-    const card = e.target.closest('[data-idx]');
-    if (!card) return;
-    const idx = parseInt(card.dataset.idx);
-    if (!window._filteredMaterials || !window._filteredMaterials[idx]) return;
-    const m = window._filteredMaterials[idx];
-    if (!m.link) return;
-
-    let previewUrl = m.link;
-    const idMatch  = m.link.match(/\/d\/([^\/]+)/);
-    if (idMatch) {
-      previewUrl = 'https://drive.google.com/file/d/' + idMatch[1] + '/preview';
-    } else if (m.link.includes('docs.google.com')) {
-      previewUrl = m.link.includes('?') ? m.link + '&embedded=true' : m.link + '?embedded=true';
-    }
-
-    document.getElementById('modal-title').textContent = m.titulo;
-    document.getElementById('modal-iframe').src = previewUrl;
-    document.getElementById('material-modal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-  });
+// material grid event now handled by nivel2-grid
 
   // Eventos das abas
   document.querySelectorAll('.nav-tab').forEach(btn => {
