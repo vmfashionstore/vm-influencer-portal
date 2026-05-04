@@ -450,6 +450,25 @@
   .product-qty { font-size: 8px; letter-spacing: 0.15em; color: var(--gray-text); text-transform: uppercase; }
   .product-val { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--pink); }
 
+
+  .tipo-btn {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gray-text);
+    padding: 6px 14px;
+    border: 1px solid var(--gray-line);
+    background: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 0;
+  }
+
+  .tipo-btn:hover { color: var(--white); border-color: var(--gray-text); }
+  .tipo-btn.active { color: var(--black); background: var(--pink); border-color: var(--pink); }
+
   .content-cards { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
 
   .content-card {
@@ -774,12 +793,19 @@
     <div class="tab-panel" id="tab-conteudos">
       <div class="section-header" style="margin-bottom:16px;">
         <div class="section-title">Conteúdos postados</div>
-        <div class="section-meta">Alimentado via planilha</div>
+        <div class="section-meta" id="conteudos-meta">Carregando...</div>
+      </div>
+      <div class="section-header" style="margin-bottom:12px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="tipo-filters">
+          <button class="tipo-btn active" data-tipo="todos">Todos</button>
+          <button class="tipo-btn" data-tipo="feed">Feed</button>
+          <button class="tipo-btn" data-tipo="stories">Stories</button>
+          <button class="tipo-btn" data-tipo="reels">Reels</button>
+        </div>
       </div>
       <div class="content-cards" id="content-cards">
         <div style="text-align:center;color:var(--gray-text);padding:32px;font-size:11px;border:1px solid var(--gray-line);">
-          Nenhum conteúdo registrado para este período.<br>
-          <span style="font-size:9px;letter-spacing:0.1em;color:var(--gray-muted);">Os dados são preenchidos pela equipe VM.</span>
+          Carregando conteúdos...
         </div>
       </div>
     </div>
@@ -844,6 +870,9 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const VNDA_BASE = '/api/orders';
 const VNDA_HEADERS = {};
 
+// Google Sheets — Conteúdos
+const SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=0&single=true&output=csv';
+
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const fmt = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtPct = v => (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
@@ -858,6 +887,16 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('login-btn').addEventListener('click', handleLogin);
   document.getElementById('password').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+  // Filtros de tipo de conteúdo
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('tipo-btn')) {
+      document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      tipoFiltro = e.target.dataset.tipo;
+      renderContents();
+    }
+  });
 
   // Eventos das abas
   document.querySelectorAll('.nav-tab').forEach(btn => {
@@ -945,6 +984,7 @@ async function loadPortal(user) {
 
   buildMonthBar();
   buildCalendar();
+  fetchContents();
 
   // Mostra layout imediatamente
   document.getElementById('loading-state').style.display = 'none';
@@ -1179,6 +1219,103 @@ function updateProducts(orders, mesLabel) {
       </div>
       <div class="bar-track"><div class="bar-fill" style="width:${Math.round((data.val/maxVal)*100)}%"></div></div>
     </div>`).join('');
+}
+
+// ─── CONTENTS ───
+let allContents = [];
+let tipoFiltro = 'todos';
+
+async function fetchContents() {
+  try {
+    const res  = await fetch(SHEETS_CSV);
+    const text = await res.text();
+    const rows = text.split('\n').slice(1); // pula cabeçalho
+
+    allContents = rows
+      .filter(r => r.trim())
+      .map(r => {
+        // Parse CSV respeitando aspas
+        const cols = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < r.length; i++) {
+          if (r[i] === '"') { inQ = !inQ; continue; }
+          if (r[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
+          cur += r[i];
+        }
+        cols.push(cur.trim());
+
+        return {
+          cupom:     (cols[0] || '').toUpperCase(),
+          data:      cols[1] || '',
+          tipo:      (cols[2] || '').toLowerCase(),
+          link:      cols[3] || '',
+          imagem_id: cols[4] || '',
+          descricao: cols[5] || '',
+          curtidas:  cols[6] || '',
+          alcance:   cols[7] || '',
+          imagem_url:cols[8] || '',
+          produto:   cols[9] || ''
+        };
+      });
+
+    renderContents();
+  } catch(e) {
+    document.getElementById('content-cards').innerHTML =
+      `<div style="text-align:center;color:var(--pink);padding:32px;font-size:11px;border:1px solid var(--gray-line);">Erro ao carregar conteúdos: ${e.message}</div>`;
+  }
+}
+
+function renderContents() {
+  const cupom   = currentInfluencer.cupom.toUpperCase();
+  let filtered  = allContents.filter(c => c.cupom === cupom);
+
+  if (tipoFiltro !== 'todos') {
+    filtered = filtered.filter(c => c.tipo === tipoFiltro);
+  }
+
+  // Ordena por data mais recente
+  filtered.sort((a, b) => b.data.localeCompare(a.data));
+
+  const meta = document.getElementById('conteudos-meta');
+  meta.textContent = filtered.length + ' conteúdo' + (filtered.length !== 1 ? 's' : '') + ' registrado' + (filtered.length !== 1 ? 's' : '');
+
+  const container = document.getElementById('content-cards');
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;color:var(--gray-text);padding:32px;font-size:11px;border:1px solid var(--gray-line);">
+        Nenhum conteúdo registrado ainda.<br>
+        <span style="font-size:9px;letter-spacing:0.1em;color:var(--gray-muted);">Os dados são preenchidos pela equipe VM.</span>
+      </div>`;
+    return;
+  }
+
+  const tipoIcon = { feed: '📷', stories: '⭕', reels: '🎬', tiktok: '🎵' };
+
+  container.innerHTML = filtered.map(c => {
+    const dateFmt = c.data ? c.data.split('-').reverse().join('/') : '—';
+    const icon    = tipoIcon[c.tipo] || '📱';
+    const hasImg  = c.imagem_url && c.imagem_url.startsWith('http');
+    const hasLink = c.link && c.link.startsWith('http');
+
+    return `
+      <div class="content-card">
+        ${hasImg
+          ? `<img src="${c.imagem_url}" style="width:72px;height:72px;object-fit:cover;flex-shrink:0;border:1px solid var(--gray-line);" onerror="this.style.display='none'">`
+          : `<div class="content-thumb">${icon}</div>`
+        }
+        <div class="content-info">
+          <div class="content-date">${dateFmt} · ${c.tipo || '—'}</div>
+          ${c.descricao ? `<div class="content-desc">${c.descricao}</div>` : ''}
+          <div class="content-tags">
+            ${c.produto ? `<span class="content-tag pink">🛍️ ${c.produto}</span>` : ''}
+            ${c.curtidas ? `<span class="content-tag">❤️ ${Number(c.curtidas).toLocaleString('pt-BR')} curtidas</span>` : ''}
+            ${c.alcance ? `<span class="content-tag">👁️ ${Number(c.alcance).toLocaleString('pt-BR')} alcance</span>` : ''}
+            ${hasLink ? `<a href="${c.link}" target="_blank" class="content-tag" style="text-decoration:none;cursor:pointer;">Ver post →</a>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function buildCalendar() {
