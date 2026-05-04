@@ -823,7 +823,6 @@
         <button class="tipo-btn" data-mtype="contrato">Contrato</button>
         <button class="tipo-btn" data-mtype="fotos">Fotos</button>
         <button class="tipo-btn" data-mtype="identidade">Identidade</button>
-        <button class="tipo-btn" data-mtype="tabela">Tabela</button>
         <button class="tipo-btn" data-mtype="outro">Outro</button>
       </div>
       <div class="materials-grid" id="materials-grid">
@@ -832,7 +831,7 @@
     </div>
 
     <!-- MODAL VISUALIZADOR -->
-    <div id="material-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:1000;flex-direction:column;">
+    <div id="material-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:1000;flex-direction:column;align-items:stretch;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid var(--gray-line);background:var(--gray-dark);">
         <div id="modal-title" style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--white);letter-spacing:0.05em;">—</div>
         <button id="modal-close" style="background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;padding:8px 16px;cursor:pointer;">Fechar ✕</button>
@@ -932,6 +931,29 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('modal-close').addEventListener('click', closeMaterial);
   document.getElementById('material-modal').addEventListener('click', function(e) {
     if (e.target === this) closeMaterial();
+  });
+
+  // Abrir material via event delegation
+  document.getElementById('materials-grid').addEventListener('click', function(e) {
+    const card = e.target.closest('[data-idx]');
+    if (!card) return;
+    const idx = parseInt(card.dataset.idx);
+    if (!window._filteredMaterials || !window._filteredMaterials[idx]) return;
+    const m = window._filteredMaterials[idx];
+    if (!m.link) return;
+
+    let previewUrl = m.link;
+    const idMatch  = m.link.match(/\/d\/([^\/]+)/);
+    if (idMatch) {
+      previewUrl = 'https://drive.google.com/file/d/' + idMatch[1] + '/preview';
+    } else if (m.link.includes('docs.google.com')) {
+      previewUrl = m.link.includes('?') ? m.link + '&embedded=true' : m.link + '?embedded=true';
+    }
+
+    document.getElementById('modal-title').textContent = m.titulo;
+    document.getElementById('modal-iframe').src = previewUrl;
+    document.getElementById('material-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
   });
 
   // Eventos das abas
@@ -1484,7 +1506,6 @@ function renderMaterials() {
     contrato:    '📄',
     fotos:       '📸',
     identidade:  '🎨',
-    tabela:      '📊',
     outro:       '📁'
   };
 
@@ -1493,7 +1514,6 @@ function renderMaterials() {
     contrato:    'Contrato',
     fotos:       'Fotos',
     identidade:  'Identidade Visual',
-    tabela:      'Tabela',
     outro:       'Outro'
   };
 
@@ -1504,11 +1524,14 @@ function renderMaterials() {
     return;
   }
 
+  // Store filtered for modal access before rendering
+  window._filteredMaterials = filtered;
+
   grid.innerHTML = filtered.map((m, i) => {
     const icon  = tipoIcon[m.tipo] || '📁';
     const label = tipoLabel[m.tipo] || 'Material';
     return `
-      <div class="material-card" onclick="openMaterial(${i})" data-idx="${i}">
+      <div class="material-card" data-idx="${i}" style="cursor:pointer;">
         <span class="material-icon">${icon}</span>
         <div class="material-type">${label}</div>
         <div class="material-name">${m.titulo}</div>
@@ -1516,9 +1539,6 @@ function renderMaterials() {
         <div class="material-btn">Visualizar →</div>
       </div>`;
   }).join('');
-
-  // Store filtered for modal access
-  window._filteredMaterials = filtered;
 }
 
 function openMaterial(idx) {
@@ -1536,14 +1556,15 @@ function openMaterial(idx) {
       : m.link + '?embedded=true';
   }
 
-  document.getElementById('modal-title').textContent  = m.titulo;
-  document.getElementById('modal-iframe').src         = previewUrl;
-  document.getElementById('material-modal').classList.add('open');
+  document.getElementById('modal-title').textContent = m.titulo;
+  document.getElementById('modal-iframe').src = previewUrl;
+  const modal = document.getElementById('material-modal');
+  modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
 
 function closeMaterial() {
-  document.getElementById('material-modal').classList.remove('open');
+  document.getElementById('material-modal').style.display = 'none';
   document.getElementById('modal-iframe').src = '';
   document.body.style.overflow = '';
 }
