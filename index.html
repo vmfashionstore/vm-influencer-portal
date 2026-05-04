@@ -1736,11 +1736,127 @@ async function fetchMaterials() {
     renderCategoryCards();
   } catch(e) {
     document.getElementById('cat-grid').innerHTML =
-      `<div style="grid-column:span 2;text-align:center;color:var(--pink);padding:32px;font-size:11px;">Erro ao carregar materiais: ${e.message}</div>`;
+      `<div style="grid-column:span 2;text-align:center;color:var(--pink);padding:32px;font-size:11px;">Erro: ${e.message}</div>`;
   }
 }
 
-// renderMaterials replaced by renderCategoryCards
+function getMaterialsForUser() {
+  const cupom = currentInfluencer.cupom.toUpperCase();
+  return allMaterials.filter(m => m.cupom === cupom || m.cupom === 'TODAS');
+}
+
+function renderCategoryCards() {
+  const items = getMaterialsForUser();
+  const byTipo = {};
+  items.forEach(m => {
+    if (!byTipo[m.tipo]) byTipo[m.tipo] = 0;
+    byTipo[m.tipo]++;
+  });
+
+  const galCupom = currentInfluencer.cupom.toUpperCase();
+  const galItems = allGallery.filter(g => g.cupom === galCupom || g.cupom === 'TODAS');
+  if (galItems.length > 0) byTipo['fotos'] = (byTipo['fotos'] || 0) + galItems.length;
+
+  const cats = Object.keys(CAT_CONFIG).filter(c => byTipo[c] > 0);
+  document.getElementById('materiais-meta').textContent =
+    cats.length + ' categoria' + (cats.length !== 1 ? 's' : '');
+
+  const grid = document.getElementById('cat-grid');
+  if (cats.length === 0) {
+    grid.innerHTML = `<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Nenhum material disponível.</div>`;
+    return;
+  }
+
+  grid.innerHTML = cats.map(tipo => {
+    const cfg = CAT_CONFIG[tipo];
+    return `<div class="cat-card" data-cat="${tipo}">
+      <div class="cat-card-icon">${cfg.icon}</div>
+      <div class="cat-card-label">Categoria</div>
+      <div class="cat-card-name">${cfg.label}</div>
+      <div class="cat-card-count">${byTipo[tipo]} item${byTipo[tipo] !== 1 ? 's' : ''}</div>
+    </div>`;
+  }).join('');
+
+  showNivel(1);
+}
+
+function showNivel(n) {
+  document.getElementById('mat-nivel-1').style.display = n === 1 ? 'block' : 'none';
+  document.getElementById('mat-nivel-2').style.display = n === 2 ? 'block' : 'none';
+  document.getElementById('mat-nivel-3').style.display = n === 3 ? 'block' : 'none';
+}
+
+function openCategory(tipo) {
+  if (tipo === 'fotos') { openFotosCategory(); return; }
+  const items = getMaterialsForUser().filter(m => m.tipo === tipo);
+  const cfg   = CAT_CONFIG[tipo] || { label: tipo, icon: '📁' };
+
+  document.getElementById('nivel2-title').textContent = cfg.label;
+  document.getElementById('nivel2-meta').textContent  = items.length + ' material' + (items.length !== 1 ? 'is' : '');
+  window._nivel2Items = items;
+
+  document.getElementById('nivel2-grid').innerHTML = items.map((m, i) => `
+    <div class="material-card" data-n2idx="${i}" style="cursor:pointer;">
+      <span class="material-icon">${cfg.icon}</span>
+      <div class="material-type">${m.lancamento || cfg.label}</div>
+      <div class="material-name">${m.titulo}</div>
+      <div class="material-date">${m.data}</div>
+      <div class="material-btn">Visualizar →</div>
+    </div>`).join('');
+
+  showNivel(2);
+}
+
+function openFotosCategory() {
+  const cupom    = currentInfluencer.cupom.toUpperCase();
+  const galItems = allGallery.filter(g => g.cupom === cupom || g.cupom === 'TODAS');
+  const grupos   = {};
+  galItems.forEach(g => {
+    if (!grupos[g.galeria]) grupos[g.galeria] = [];
+    grupos[g.galeria].push(g);
+  });
+
+  const nomes = Object.keys(grupos);
+  document.getElementById('nivel2-title').textContent = 'Fotos';
+  document.getElementById('nivel2-meta').textContent  = nomes.length + ' lançamento' + (nomes.length !== 1 ? 's' : '');
+
+  document.getElementById('nivel2-grid').innerHTML = nomes.map(nome => {
+    const fotos   = grupos[nome];
+    const preview = fotos.slice(0, 3).map(f =>
+      `<img src="https://drive.google.com/thumbnail?id=${f.imagem_id}&sz=w200" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
+    ).join('');
+    return `<div class="launch-card" data-launch="${nome}">
+      <div class="launch-card-preview">${preview}</div>
+      <div class="launch-card-name">${nome}</div>
+      <div class="launch-card-count">${fotos.length} foto${fotos.length !== 1 ? 's' : ''}</div>
+      <div class="launch-card-arrow">→</div>
+    </div>`;
+  }).join('');
+
+  showNivel(2);
+}
+
+function openLaunch(nome) {
+  const cupom = currentInfluencer.cupom.toUpperCase();
+  const fotos  = allGallery.filter(g =>
+    (g.cupom === cupom || g.cupom === 'TODAS') && g.galeria === nome
+  );
+
+  lightboxItems = fotos;
+  document.getElementById('nivel3-title').textContent = nome;
+  document.getElementById('nivel3-meta').textContent  = fotos.length + ' foto' + (fotos.length !== 1 ? 's' : '');
+
+  document.getElementById('nivel3-grid').innerHTML = fotos.map((g, i) => `
+    <div class="gallery-item" data-gidx="${i}">
+      <img src="https://drive.google.com/thumbnail?id=${g.imagem_id}&sz=w400"
+        alt="${g.titulo}" onerror="this.parentElement.style.display='none'">
+      <div class="gallery-item-title">${g.titulo}</div>
+    </div>`).join('');
+
+  showNivel(3);
+}
+
+
 
 function openMaterial(idx) {
   const m = window._filteredMaterials[idx];
