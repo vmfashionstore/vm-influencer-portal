@@ -1733,11 +1733,12 @@ async function fetchMaterials() {
         }
         cols.push(cur.trim());
         return {
-          cupom:  (cols[0] || '').toUpperCase(),
-          titulo: cols[1] || '',
-          tipo:   (cols[2] || '').toLowerCase(),
-          link:   cols[3] || '',
-          data:   cols[4] || ''
+          cupom:      (cols[0] || '').toUpperCase(),
+          lancamento: cols[1] || '',
+          titulo:     cols[2] || '',
+          tipo:       (cols[3] || '').toLowerCase(),
+          link:       cols[4] || '',
+          data:       cols[5] || ''
         };
       });
 
