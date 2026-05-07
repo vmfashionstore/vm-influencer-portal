@@ -809,6 +809,50 @@
   .launch-card-count { font-size: 8px; letter-spacing: 0.15em; color: var(--gray-text); text-transform: uppercase; }
   .launch-card-arrow { position: absolute; top: 16px; right: 16px; color: var(--pink); font-size: 16px; }
 
+
+  /* CALENDAR NAV */
+  .cal-nav-btn {
+    background: none;
+    border: 1px solid var(--gray-line);
+    color: var(--gray-text);
+    font-size: 16px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1;
+  }
+  .cal-nav-btn:hover { border-color: var(--pink); color: var(--pink); }
+
+  /* CALENDAR EVENTS */
+  .cal-day { position: relative; }
+  .cal-event-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 1px;
+  }
+  .cal-event-dot.planejado { background: var(--pink); opacity: 0.7; }
+  .cal-event-dot.postado { background: #8BC4A0; }
+  .cal-day-events { display: flex; flex-wrap: wrap; gap: 1px; margin-top: 3px; }
+  .cal-day.has-events { cursor: pointer; }
+  .cal-day.has-events:hover { background: #1F1F1F; }
+
+  /* UPCOMING */
+  .upcoming-item { background: var(--gray-card); border: 1px solid var(--gray-line); padding: 14px 16px; display: flex; gap: 14px; align-items: center; margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s; }
+  .upcoming-item:hover { border-color: var(--pink); }
+  .upcoming-item.postado { border-left: 2px solid #8BC4A0; }
+  .upcoming-item.planejado { border-left: 2px solid var(--pink); }
+  .upcoming-date { text-align: center; min-width: 40px; }
+  .upcoming-day { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; color: var(--pink); line-height: 1; }
+  .upcoming-month { font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); }
+  .upcoming-divider { width: 1px; height: 36px; background: var(--gray-line); }
+  .upcoming-info { flex: 1; }
+  .upcoming-title { font-size: 12px; color: var(--white); margin-bottom: 4px; }
+  .upcoming-type { font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); }
+  .upcoming-status { font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase; padding: 2px 8px; border-radius: 0; }
+  .upcoming-status.planejado { color: var(--pink); border: 1px solid var(--pink-dark); }
+  .upcoming-status.postado { color: #8BC4A0; border: 1px solid #4a9e6e; }
+
   @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes fadeDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
@@ -1061,29 +1105,70 @@
 
     <!-- CALENDÁRIO -->
     <div class="tab-panel" id="tab-calendario">
-      <div class="calendar-header">
-        <div class="cal-month" id="cal-month-title">—</div>
+
+      <div class="section-header" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <button class="cal-nav-btn" id="cal-prev">‹</button>
+          <div class="cal-month" id="cal-month-title">—</div>
+          <button class="cal-nav-btn" id="cal-next">›</button>
+        </div>
+        <button class="login-btn" id="add-event-btn" style="width:auto;padding:8px 20px;margin:0;font-size:8px;">+ Planejar postagem</button>
       </div>
+
       <div class="cal-grid" id="cal-grid"></div>
-      <div class="section-header" style="margin-bottom:14px;">
-        <div class="section-title">Próximas postagens</div>
+
+      <div class="section-header" style="margin-bottom:14px;margin-top:8px;">
+        <div class="section-title">Agenda do mês</div>
+        <div class="section-meta" id="agenda-meta">—</div>
       </div>
-      <div class="upcoming-list">
-        <div class="upcoming-item">
-          <div class="upcoming-date"><div class="upcoming-day">30</div><div class="upcoming-month">Abr</div></div>
-          <div class="upcoming-divider"></div>
-          <div class="upcoming-info"><div class="upcoming-title">Post feed — Novidade coleção</div><div class="upcoming-type">Instagram · Feed</div></div>
+      <div class="upcoming-list" id="upcoming-list"></div>
+
+    </div>
+
+    <!-- MODAL NOVO EVENTO -->
+    <div id="event-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:1000;align-items:center;justify-content:center;">
+      <div style="background:var(--gray-dark);border:1px solid var(--gray-line);width:100%;max-width:420px;margin:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--gray-line);">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--white);">Planejar postagem</div>
+          <button id="event-modal-close" style="background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;padding:6px 12px;cursor:pointer;">✕</button>
         </div>
-        <div class="upcoming-item">
-          <div class="upcoming-date"><div class="upcoming-day">05</div><div class="upcoming-month">Mai</div></div>
-          <div class="upcoming-divider"></div>
-          <div class="upcoming-info"><div class="upcoming-title">Stories — Cupom especial</div><div class="upcoming-type">Instagram · Stories</div></div>
+        <div style="padding:24px;display:flex;flex-direction:column;gap:16px;">
+          <div>
+            <label class="input-label">Data prevista</label>
+            <input class="input-field" type="date" id="ev-data">
+          </div>
+          <div>
+            <label class="input-label">Tipo de conteúdo</label>
+            <select class="input-field" id="ev-tipo" style="cursor:pointer;">
+              <option value="feed">Feed</option>
+              <option value="carrossel">Carrossel</option>
+              <option value="stories">Stories</option>
+              <option value="reels">Reels</option>
+            </select>
+          </div>
+          <div>
+            <label class="input-label">Ideia / Descrição</label>
+            <input class="input-field" type="text" id="ev-titulo" placeholder="Ex: Look inverno com cupom">
+          </div>
+          <div>
+            <label class="input-label">Produto a divulgar</label>
+            <input class="input-field" type="text" id="ev-produto" placeholder="Ex: Blazer Sapphir Sand">
+          </div>
+          <div id="ev-error" style="font-size:10px;color:var(--pink);min-height:14px;"></div>
+          <button class="login-btn" id="ev-save-btn" style="margin:0;">Salvar</button>
         </div>
-        <div class="upcoming-item">
-          <div class="upcoming-date"><div class="upcoming-day">12</div><div class="upcoming-month">Mai</div></div>
-          <div class="upcoming-divider"></div>
-          <div class="upcoming-info"><div class="upcoming-title">Reels — Lookbook inverno</div><div class="upcoming-type">Instagram · Reels</div></div>
+      </div>
+    </div>
+
+    <!-- MODAL DETALHES EVENTO -->
+    <div id="event-detail-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:1000;align-items:center;justify-content:center;">
+      <div style="background:var(--gray-dark);border:1px solid var(--gray-line);width:100%;max-width:380px;margin:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--gray-line);">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--white);" id="detail-title">—</div>
+          <button id="detail-close" style="background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;padding:6px 12px;cursor:pointer;">✕</button>
         </div>
+        <div style="padding:24px;display:flex;flex-direction:column;gap:12px;" id="detail-body"></div>
+        <div style="padding:0 24px 24px;display:flex;gap:8px;" id="detail-actions"></div>
       </div>
     </div>
   </main>
@@ -1177,6 +1262,53 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   document.getElementById('back-to-launches').addEventListener('click', function() {
     showNivel(2);
+  });
+
+  // Calendário — navegação meses
+  document.getElementById('cal-prev').addEventListener('click', async function() {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+  document.getElementById('cal-next').addEventListener('click', async function() {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  });
+
+  // Calendário — clique no dia
+  document.getElementById('cal-grid').addEventListener('click', function(e) {
+    const day = e.target.closest('.has-events');
+    if (day) openDayEvents(day.dataset.date);
+  });
+
+  // Calendário — agenda clique
+  document.getElementById('upcoming-list').addEventListener('click', function(e) {
+    const item = e.target.closest('.upcoming-item');
+    if (!item) return;
+    const evId = item.dataset.evid;
+    const ev   = calEventos.find(e => e.id === evId);
+    if (ev) openDayEvents(ev.data);
+  });
+
+  // Modal novo evento
+  document.getElementById('add-event-btn').addEventListener('click', function() {
+    document.getElementById('event-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    // Set default date to today
+    const now = new Date();
+    document.getElementById('ev-data').value = now.toISOString().split('T')[0];
+  });
+  document.getElementById('event-modal-close').addEventListener('click', function() {
+    document.getElementById('event-modal').style.display = 'none';
+    document.body.style.overflow = '';
+  });
+  document.getElementById('ev-save-btn').addEventListener('click', saveEvent);
+
+  // Modal detalhes
+  document.getElementById('detail-close').addEventListener('click', function() {
+    document.getElementById('event-detail-modal').style.display = 'none';
+    document.body.style.overflow = '';
   });
 
   // Galeria — abrir lightbox (handled by nivel3-grid)
@@ -1294,10 +1426,10 @@ async function loadPortal(user) {
   selectedYear  = now.getFullYear();
 
   buildMonthBar();
-  buildCalendar();
   fetchContents();
   fetchMaterials();
   fetchGallery();
+  initCalendar();
 
   // Mostra layout imediatamente
   document.getElementById('loading-state').style.display = 'none';
@@ -1954,29 +2086,229 @@ function closeLightbox() {
   document.body.style.overflow = '';
 }
 
-function buildCalendar() {
-  const now   = new Date();
-  const year  = now.getFullYear();
-  const month = now.getMonth();
-  const today = now.getDate();
+// ─── CALENDAR ───
+let calYear, calMonth, calEventos = [];
 
-  document.getElementById('cal-month-title').textContent = MONTHS[month] + ' ' + year;
+async function initCalendar() {
+  const now = new Date();
+  calYear   = now.getFullYear();
+  calMonth  = now.getMonth();
+  await loadCalendarEvents();
+  renderCalendar();
+}
 
-  const firstDay    = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month+1, 0).getDate();
+async function loadCalendarEvents() {
+  calEventos = [];
+
+  // 1. Eventos planejados do Supabase
+  const { data: planned } = await sb
+    .from('calendario')
+    .select('*')
+    .eq('user_id', currentUser.id);
+
+  if (planned) {
+    planned.forEach(e => calEventos.push({ ...e, fonte: 'planejado', status: 'planejado' }));
+  }
+
+  // 2. Conteúdos postados da planilha
+  allContents.forEach(c => {
+    const cupom = currentInfluencer.cupom.toUpperCase();
+    if (c.cupom !== cupom) return;
+    if (!c.data) return;
+    const iso = toISO(c.data);
+    calEventos.push({
+      id: 'sheet_' + iso + '_' + Math.random(),
+      data: iso,
+      tipo: c.tipo,
+      titulo: c.descricao || c.produto || 'Conteúdo postado',
+      produto: c.produto,
+      imagem_url: c.imagem_url,
+      fonte: 'planilha',
+      status: 'postado'
+    });
+  });
+}
+
+function toISO(d) {
+  if (!d) return '';
+  if (d.includes('/')) { const p = d.split('/'); return p[2]+'-'+p[1]+'-'+p[0]; }
+  return d;
+}
+
+function renderCalendar() {
+  const today    = new Date();
+  const isToday  = (d) => today.getFullYear() === calYear && today.getMonth() === calMonth && today.getDate() === d;
+
+  document.getElementById('cal-month-title').textContent = MONTHS[calMonth] + ' ' + calYear;
+
+  const firstDay    = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
   const days        = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  // Map events by day
+  const eventsByDay = {};
+  calEventos.forEach(e => {
+    if (!e.data) return;
+    const parts = e.data.split('-');
+    if (parseInt(parts[0]) !== calYear || parseInt(parts[1])-1 !== calMonth) return;
+    const d = parseInt(parts[2]);
+    if (!eventsByDay[d]) eventsByDay[d] = [];
+    eventsByDay[d].push(e);
+  });
 
   let html = days.map(d => `<div class="cal-day-header">${d}</div>`).join('');
   for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+
   for (let d = 1; d <= daysInMonth; d++) {
-    const isToday = d === today;
-    html += `<div class="cal-day ${isToday?'today':''}">
-      <div class="cal-num" style="${isToday?'color:var(--pink)':''}">${d}</div>
-      ${isToday?'<div class="cal-event">Hoje</div>':''}
+    const events  = eventsByDay[d] || [];
+    const hasEvts = events.length > 0;
+    const todayCls = isToday(d) ? 'today' : '';
+    const evtCls   = hasEvts ? 'has-events' : '';
+    const dateStr  = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+    const dots = events.map(e =>
+      `<span class="cal-event-dot ${e.status}"></span>`
+    ).join('');
+
+    html += `<div class="cal-day ${todayCls} ${evtCls}" data-date="${dateStr}" data-day="${d}">
+      <div class="cal-num" style="${isToday(d)?'color:var(--pink)':''}">${d}</div>
+      ${dots ? `<div class="cal-day-events">${dots}</div>` : ''}
     </div>`;
   }
 
   document.getElementById('cal-grid').innerHTML = html;
+  renderAgenda();
+}
+
+function renderAgenda() {
+  // Show all events for current month sorted by date
+  const monthEvents = calEventos.filter(e => {
+    if (!e.data) return false;
+    const parts = e.data.split('-');
+    return parseInt(parts[0]) === calYear && parseInt(parts[1])-1 === calMonth;
+  }).sort((a,b) => a.data.localeCompare(b.data));
+
+  document.getElementById('agenda-meta').textContent =
+    monthEvents.length + ' postagem' + (monthEvents.length !== 1 ? 'ns' : '');
+
+  const list = document.getElementById('upcoming-list');
+
+  if (monthEvents.length === 0) {
+    list.innerHTML = `<div style="text-align:center;color:var(--gray-text);padding:24px;font-size:11px;border:1px solid var(--gray-line);">Nenhuma postagem neste mês.</div>`;
+    return;
+  }
+
+  const tipoIcon = { feed:'📷', carrossel:'🖼️', stories:'⭕', reels:'🎬' };
+
+  list.innerHTML = monthEvents.map(e => {
+    const parts = e.data.split('-');
+    const day   = parts[2];
+    const mon   = MONTHS_SHORT[parseInt(parts[1])-1];
+    const icon  = tipoIcon[e.tipo] || '📱';
+    const isPost = e.status === 'postado';
+
+    return `<div class="upcoming-item ${e.status}" data-evid="${e.id}">
+      <div class="upcoming-date">
+        <div class="upcoming-day">${day}</div>
+        <div class="upcoming-month">${mon}</div>
+      </div>
+      <div class="upcoming-divider"></div>
+      <div class="upcoming-info">
+        <div class="upcoming-title">${icon} ${e.titulo || '—'}</div>
+        <div class="upcoming-type">${e.tipo || '—'}${e.produto ? ' · ' + e.produto : ''}</div>
+      </div>
+      <span class="upcoming-status ${e.status}">${isPost ? '✓ Postado' : 'Planejado'}</span>
+    </div>`;
+  }).join('');
+}
+
+function openDayEvents(dateStr) {
+  const events = calEventos.filter(e => e.data === dateStr);
+  if (events.length === 0) return;
+
+  const parts = dateStr.split('-');
+  const day   = parts[2];
+  const mon   = MONTHS[parseInt(parts[1])-1];
+
+  document.getElementById('detail-title').textContent = day + ' de ' + mon;
+
+  const tipoIcon = { feed:'📷', carrossel:'🖼️', stories:'⭕', reels:'🎬' };
+
+  document.getElementById('detail-body').innerHTML = events.map(e => `
+    <div style="border:1px solid var(--gray-line);padding:14px;background:var(--gray-card);">
+      <div style="font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text);margin-bottom:6px;">
+        ${tipoIcon[e.tipo]||'📱'} ${e.tipo||'—'} · <span style="color:${e.status==='postado'?'#8BC4A0':'var(--pink)'};">${e.status==='postado'?'✓ Postado':'Planejado'}</span>
+      </div>
+      <div style="font-size:13px;color:var(--white);margin-bottom:4px;">${e.titulo||'—'}</div>
+      ${e.produto ? `<div style="font-size:10px;color:var(--gray-text);">🛍️ ${e.produto}</div>` : ''}
+    </div>`).join('');
+
+  // Show delete only for planned events from supabase
+  const planned = events.filter(e => e.fonte === 'planejado');
+  document.getElementById('detail-actions').innerHTML = planned.map(e => `
+    <button onclick="deleteEvent('${e.id}')" style="background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;padding:8px 14px;cursor:pointer;">
+      Excluir planejamento
+    </button>`).join('');
+
+  document.getElementById('event-detail-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+async function saveEvent() {
+  const data    = document.getElementById('ev-data').value;
+  const tipo    = document.getElementById('ev-tipo').value;
+  const titulo  = document.getElementById('ev-titulo').value.trim();
+  const produto = document.getElementById('ev-produto').value.trim();
+  const errEl   = document.getElementById('ev-error');
+  const btn     = document.getElementById('ev-save-btn');
+
+  if (!data) { errEl.textContent = 'Selecione uma data.'; return; }
+  if (!titulo) { errEl.textContent = 'Descreva a ideia do conteúdo.'; return; }
+
+  btn.textContent = 'Salvando...';
+  btn.disabled = true;
+  errEl.textContent = '';
+
+  const { error } = await sb.from('calendario').insert({
+    user_id: currentUser.id,
+    cupom:   currentInfluencer.cupom,
+    data, tipo, titulo, produto,
+    status: 'planejado'
+  });
+
+  if (error) {
+    errEl.textContent = 'Erro ao salvar: ' + error.message;
+    btn.textContent = 'Salvar';
+    btn.disabled = false;
+    return;
+  }
+
+  // Reset form
+  document.getElementById('ev-data').value    = '';
+  document.getElementById('ev-titulo').value  = '';
+  document.getElementById('ev-produto').value = '';
+  btn.textContent = 'Salvar';
+  btn.disabled = false;
+
+  document.getElementById('event-modal').style.display = 'none';
+  document.body.style.overflow = '';
+
+  await loadCalendarEvents();
+  renderCalendar();
+}
+
+async function deleteEvent(id) {
+  const { error } = await sb.from('calendario').delete().eq('id', id);
+  if (error) { alert('Erro ao excluir: ' + error.message); return; }
+
+  document.getElementById('event-detail-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  await loadCalendarEvents();
+  renderCalendar();
+}
+
+function buildCalendar() {
+  // kept for compatibility - now handled by initCalendar
 }
 </script>
 </body>
