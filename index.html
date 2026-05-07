@@ -1203,7 +1203,7 @@ const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','A
 const fmt = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtPct = v => (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
 
-let sb, currentInfluencer, allOrders = [], selectedMonth, selectedYear;
+let sb, currentUser, currentInfluencer, allOrders = [], selectedMonth, selectedYear;
 
 document.addEventListener('DOMContentLoaded', function () {
   // Inicializa Supabase
@@ -2101,21 +2101,59 @@ async function loadCalendarEvents() {
   calEventos = [];
 
   // 1. Eventos planejados do Supabase
-  const { data: planned } = await sb
-    .from('calendario')
-    .select('*')
-    .eq('user_id', currentUser.id);
+  try {
+    const { data: planned, error } = await sb
+      .from('calendario')
+      .select('*')
+      .eq('user_id', currentUser.id);
 
-  if (planned) {
-    planned.forEach(e => calEventos.push({ ...e, fonte: 'planejado', status: 'planejado' }));
+    if (error) console.error('Supabase calendar error:', error);
+    if (planned) {
+      planned.forEach(e => calEventos.push({ ...e, fonte: 'planejado', status: 'planejado' }));
+    }
+  } catch(e) {
+    console.error('Calendar load error:', e);
   }
 
-  // 2. Conteúdos postados da planilha
+  // 2. Conteúdos postados da planilha — busca novamente se necessário
+  const cupom = currentInfluencer.cupom.toUpperCase();
+
+  // Se allContents ainda não carregou, busca agora
+  if (allContents.length === 0) {
+    try {
+      const res  = await fetch(SHEETS_CSV);
+      const text = await res.text();
+      const rows = text.split('\n').slice(1);
+      allContents = rows.filter(r => r.trim()).map(r => {
+        const cols = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < r.length; i++) {
+          if (r[i] === '"') { inQ = !inQ; continue; }
+          if (r[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
+          cur += r[i];
+        }
+        cols.push(cur.trim());
+        return {
+          cupom:     (cols[0] || '').toUpperCase(),
+          data:      cols[1] || '',
+          tipo:      (cols[2] || '').toLowerCase(),
+          link:      cols[3] || '',
+          imagem_id: cols[4] || '',
+          descricao: cols[5] || '',
+          curtidas:  cols[6] || '',
+          alcance:   cols[7] || '',
+          imagem_url:cols[8] || '',
+          produto:   cols[9] || ''
+        };
+      });
+    } catch(e) { console.error('Contents reload error:', e); }
+  }
+
   allContents.forEach(c => {
-    const cupom = currentInfluencer.cupom.toUpperCase();
     if (c.cupom !== cupom) return;
     if (!c.data) return;
     const iso = toISO(c.data);
+    if (!iso) return;
     calEventos.push({
       id: 'sheet_' + iso + '_' + Math.random(),
       data: iso,
