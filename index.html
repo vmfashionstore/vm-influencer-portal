@@ -1400,6 +1400,7 @@ function showLogin() {
 }
 
 async function loadPortal(user) {
+  currentUser = user;
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('portal-screen').classList.remove('hidden');
 
