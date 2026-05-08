@@ -897,6 +897,97 @@
 
 <!-- PORTAL -->
 <div id="portal-screen" class="hidden">
+
+  <!-- ─── ADMIN PORTAL ─── -->
+  <div id="admin-screen" class="hidden">
+    <header class="portal-header">
+      <div class="portal-logo">VM</div>
+      <div class="portal-user">
+        <div>
+          <div class="user-name" style="color:var(--pink);">Painel Admin</div>
+          <div class="user-sub">VM Fashion Store</div>
+        </div>
+        <button class="logout-btn" id="admin-logout-btn">Sair</button>
+      </div>
+    </header>
+
+    <!-- ADMIN MONTH BAR -->
+    <div class="month-bar" id="admin-month-bar"></div>
+
+    <!-- ADMIN CONTENT -->
+    <main style="padding:32px 48px;">
+
+      <!-- KPIs GERAIS -->
+      <div class="section-header" style="margin-bottom:20px;">
+        <div class="section-title">Visão Geral — Todas as Influencers</div>
+        <div class="section-meta" id="admin-period-label">—</div>
+      </div>
+
+      <div class="kpi-grid" style="margin-bottom:32px;">
+        <div class="kpi-card hero">
+          <div class="kpi-label">Total a Pagar em Comissões</div>
+          <div class="kpi-value pink" id="admin-total-comissao">—</div>
+          <div class="kpi-sub" id="admin-kpi-period">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Total Vendido (todas)</div>
+          <div class="kpi-value" id="admin-total-vendido">—</div>
+          <div class="kpi-sub">Via cupons</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Total de Pedidos</div>
+          <div class="kpi-value" id="admin-total-pedidos">—</div>
+          <div class="kpi-sub">Confirmados</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Ticket Médio Geral</div>
+          <div class="kpi-value" id="admin-ticket-medio">—</div>
+          <div class="kpi-sub">Por pedido</div>
+        </div>
+      </div>
+
+      <!-- RANKING -->
+      <div class="section-header" style="margin-bottom:16px;">
+        <div class="section-title">Ranking de Influencers</div>
+        <div class="section-meta" id="admin-ranking-meta">—</div>
+      </div>
+      <div id="admin-ranking" style="margin-bottom:32px;"></div>
+
+      <!-- TABELA COMPARATIVA -->
+      <div class="section-header" style="margin-bottom:16px;">
+        <div class="section-title">Tabela Comparativa</div>
+      </div>
+      <div class="table-wrap" style="margin-bottom:32px;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Influencer</th>
+              <th>Cupom</th>
+              <th>Pedidos</th>
+              <th>Total Vendido</th>
+              <th>Comissão Variável</th>
+              <th>Cachê Fixo</th>
+              <th>Total a Pagar</th>
+              <th>Ticket Médio</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="admin-table"></tbody>
+        </table>
+      </div>
+
+    </main>
+
+    <!-- ADMIN SYNC BAR -->
+    <div class="sync-bar hidden" id="admin-sync-bar">
+      <div class="sync-dot" id="admin-sync-dot"></div>
+      <div class="sync-track"><div class="sync-fill" id="admin-sync-fill" style="width:0%"></div></div>
+      <div class="sync-label" id="admin-sync-label">Carregando dados...</div>
+    </div>
+  </div>
+
+  <!-- ─── INFLUENCER PORTAL (normal) ─── -->
   <header class="portal-header">
     <div class="portal-logo">VM</div>
     <div class="portal-user">
@@ -1216,6 +1307,15 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('login-btn').addEventListener('click', handleLogin);
   document.getElementById('password').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
+  document.getElementById('admin-logout-btn').addEventListener('click', handleLogout);
+
+  // Admin ranking and table click
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.view-portal-btn');
+    if (btn && btn.dataset.cupom) viewInfluencerPortal(btn.dataset.cupom);
+    const card = e.target.closest('.admin-influencer-card');
+    if (card && !e.target.closest('.view-portal-btn')) viewInfluencerPortal(card.dataset.cupom);
+  });
 
   // Filtros de tipo de conteúdo
   document.addEventListener('click', function(e) {
@@ -1404,8 +1504,6 @@ function showLogin() {
 
 async function loadPortal(user) {
   currentUser = user;
-  document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('portal-screen').classList.remove('hidden');
 
   const { data: influencer } = await sb
     .from('influencers')
@@ -1414,10 +1512,18 @@ async function loadPortal(user) {
     .single();
 
   if (!influencer) {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('portal-screen').classList.remove('hidden');
     document.getElementById('loading-state').innerHTML = `
       <div class="loading-logo">VM</div>
       <div class="loading-text">Perfil não encontrado. Contate a equipe VM.</div>`;
     document.getElementById('loading-state').style.display = 'flex';
+    return;
+  }
+
+  // Check if admin
+  if (influencer.is_admin) {
+    await loadAdminPortal();
     return;
   }
 
@@ -2165,6 +2271,261 @@ function closeLightbox() {
   document.getElementById('lightbox').classList.remove('open');
   document.getElementById('lightbox-img').src = '';
   document.body.style.overflow = '';
+}
+
+// ─── ADMIN ───
+let allInfluencers = [];
+let adminMonth, adminYear;
+let adminOrders = [];
+
+async function loadAdminPortal() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('portal-screen').classList.remove('hidden');
+  document.getElementById('admin-screen').classList.remove('hidden');
+
+  const now = new Date();
+  adminMonth = now.getMonth();
+  adminYear  = now.getFullYear();
+
+  buildAdminMonthBar();
+
+  // Load all influencers
+  const { data: influencers } = await sb
+    .from('influencers')
+    .select('*')
+    .eq('is_admin', false);
+
+  allInfluencers = influencers || [];
+
+  // Fetch all orders
+  await fetchAdminOrders();
+}
+
+function buildAdminMonthBar() {
+  const bar = document.getElementById('admin-month-bar');
+  bar.innerHTML = '';
+
+  const btnTodos = document.createElement('button');
+  btnTodos.className = 'month-btn';
+  btnTodos.textContent = 'Todos';
+  btnTodos.addEventListener('click', () => {
+    document.querySelectorAll('#admin-month-bar .month-btn').forEach(b => b.classList.remove('active'));
+    btnTodos.classList.add('active');
+    adminMonth = 'todos';
+    renderAdminDashboard();
+  });
+  bar.appendChild(btnTodos);
+
+  MONTHS.forEach((m, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'month-btn' + (i === adminMonth ? ' active' : '');
+    btn.textContent = m;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#admin-month-bar .month-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      adminMonth = i;
+      renderAdminDashboard();
+    });
+    bar.appendChild(btn);
+  });
+}
+
+async function fetchAdminOrders() {
+  adminOrders = [];
+  setAdminSync('Carregando pedidos...', 5, '');
+
+  let page = 1;
+  let hasMore = true;
+  const BATCH = 10;
+
+  while (hasMore) {
+    const pages = Array.from({length: BATCH}, (_, i) => page + i);
+    const results = await Promise.all(
+      pages.map(p =>
+        fetch(`/api/orders?page=${p}`)
+          .then(r => r.json())
+          .catch(() => [])
+      )
+    );
+
+    let anyData = false;
+    for (const data of results) {
+      if (!Array.isArray(data) || data.length === 0) { hasMore = false; break; }
+      adminOrders = adminOrders.concat(data);
+      anyData = true;
+      if (data.length < 100) { hasMore = false; break; }
+    }
+
+    if (!anyData) hasMore = false;
+    page += BATCH;
+
+    const pct = Math.min(Math.round((page / 250) * 90), 90);
+    setAdminSync('Carregando... ' + adminOrders.length + ' pedidos', pct, '');
+  }
+
+  setAdminSync('✓ Sincronizado · ' + adminOrders.length + ' pedidos', 100, 'done');
+  renderAdminDashboard();
+}
+
+function setAdminSync(label, pct, state) {
+  const bar  = document.getElementById('admin-sync-bar');
+  const dot  = document.getElementById('admin-sync-dot');
+  const fill = document.getElementById('admin-sync-fill');
+  const lbl  = document.getElementById('admin-sync-label');
+  bar.classList.remove('hidden');
+  lbl.textContent  = label;
+  fill.style.width = pct + '%';
+  dot.className    = 'sync-dot' + (state ? ' ' + state : '');
+  if (state === 'done' || state === 'error') {
+    setTimeout(() => bar.classList.add('hidden'), 4000);
+  }
+}
+
+function getOrdersForInfluencer(cupom, month, year) {
+  return adminOrders.filter(o => {
+    if (!o.coupon_code) return false;
+    if (o.coupon_code.toUpperCase() !== cupom.toUpperCase()) return false;
+    const dateStr = o.confirmed_at || o.received_at;
+    if (!dateStr) return false;
+    const parts = dateStr.substring(0, 10).split('-');
+    const d_year  = parseInt(parts[0]);
+    const d_month = parseInt(parts[1]) - 1;
+    if (month === 'todos') return true;
+    return d_month === month && d_year === year;
+  });
+}
+
+function renderAdminDashboard() {
+  const mesLabel = adminMonth === 'todos' ? 'Todos os períodos' : MONTHS[adminMonth] + ' ' + adminYear;
+  document.getElementById('admin-period-label').textContent = mesLabel;
+  document.getElementById('admin-kpi-period').textContent   = mesLabel;
+
+  // Calculate metrics per influencer
+  const metrics = allInfluencers.map(inf => {
+    const orders     = getOrdersForInfluencer(inf.cupom, adminMonth, adminYear);
+    const uniqueOrds = [...new Map(orders.map(o => [o.id, o])).values()];
+    const totalVend  = uniqueOrds.reduce((s, o) => s + parseFloat(o.total || 0), 0);
+    const comissao   = totalVend * (inf.perc_comissao || 0);
+    const fixo       = inf.valor_fixo || 0;
+    const total      = comissao + fixo;
+    const qtd        = uniqueOrds.length;
+    const ticket     = qtd > 0 ? totalVend / qtd : 0;
+    return { inf, totalVend, comissao, fixo, total, qtd, ticket };
+  }).sort((a, b) => b.totalVend - a.totalVend);
+
+  // Global KPIs
+  const globalVend     = metrics.reduce((s, m) => s + m.totalVend, 0);
+  const globalComissao = metrics.reduce((s, m) => s + m.total, 0);
+  const globalPedidos  = metrics.reduce((s, m) => s + m.qtd, 0);
+  const globalTicket   = globalPedidos > 0 ? globalVend / globalPedidos : 0;
+
+  document.getElementById('admin-total-comissao').textContent = fmt(globalComissao);
+  document.getElementById('admin-total-vendido').textContent  = fmt(globalVend);
+  document.getElementById('admin-total-pedidos').textContent  = globalPedidos;
+  document.getElementById('admin-ticket-medio').textContent   = fmt(globalTicket);
+
+  const maxVend = metrics.length > 0 ? metrics[0].totalVend : 1;
+
+  // Ranking cards
+  document.getElementById('admin-ranking-meta').textContent =
+    metrics.length + ' influencer' + (metrics.length !== 1 ? 's' : '');
+
+  document.getElementById('admin-ranking').innerHTML = metrics.map((m, i) => `
+    <div class="admin-influencer-card" data-cupom="${m.inf.cupom}">
+      <div class="admin-rank-num ${i < 3 ? 'top' : ''}">${String(i+1).padStart(2,'0')}</div>
+      <div class="admin-inf-info">
+        <div class="admin-inf-name">${m.inf.nome}</div>
+        <div class="admin-inf-cupom">Cupom ${m.inf.cupom}</div>
+        <div class="admin-bar-track">
+          <div class="admin-bar-fill" style="width:${maxVend > 0 ? Math.round((m.totalVend/maxVend)*100) : 0}%"></div>
+        </div>
+      </div>
+      <div class="admin-inf-metrics">
+        <div class="admin-metric">
+          <div class="admin-metric-val">${m.qtd}</div>
+          <div class="admin-metric-label">Pedidos</div>
+        </div>
+        <div class="admin-metric">
+          <div class="admin-metric-val">${fmt(m.totalVend)}</div>
+          <div class="admin-metric-label">Vendido</div>
+        </div>
+        <div class="admin-metric">
+          <div class="admin-metric-val pink">${fmt(m.total)}</div>
+          <div class="admin-metric-label">A pagar</div>
+        </div>
+      </div>
+      <button class="view-portal-btn" data-cupom="${m.inf.cupom}">Ver portal →</button>
+    </div>`).join('');
+
+  // Comparative table
+  document.getElementById('admin-table').innerHTML = metrics.map((m, i) => `
+    <tr style="border-bottom:1px solid #161616;${i%2===0?'background:var(--gray-card)':''}">
+      <td class="td-num" style="padding:12px 14px;color:var(--gray-text);">${i+1}</td>
+      <td style="padding:12px 14px;font-size:12px;color:var(--white);">${m.inf.nome}</td>
+      <td style="padding:12px 14px;font-size:10px;color:var(--gray-text);">${m.inf.cupom}</td>
+      <td class="td-num" style="padding:12px 14px;">${m.qtd}</td>
+      <td class="td-num" style="padding:12px 14px;">${fmt(m.totalVend)}</td>
+      <td class="td-num" style="padding:12px 14px;">${fmt(m.comissao)}</td>
+      <td class="td-num" style="padding:12px 14px;">${fmt(m.fixo)}</td>
+      <td class="td-num td-pink" style="padding:12px 14px;">${fmt(m.total)}</td>
+      <td class="td-num" style="padding:12px 14px;">${fmt(m.ticket)}</td>
+      <td style="padding:12px 14px;">
+        <button class="view-portal-btn" data-cupom="${m.inf.cupom}">Ver →</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function viewInfluencerPortal(cupom) {
+  // Find influencer
+  const inf = allInfluencers.find(i => i.cupom === cupom);
+  if (!inf) return;
+
+  // Set as current influencer and show normal portal
+  currentInfluencer = inf;
+  document.getElementById('admin-screen').classList.add('hidden');
+
+  document.getElementById('user-name').textContent   = inf.nome;
+  document.getElementById('user-coupon').textContent = 'Cupom ' + inf.cupom;
+
+  // Use already loaded orders
+  allOrders = adminOrders;
+
+  const now = new Date();
+  selectedMonth = now.getMonth();
+  selectedYear  = now.getFullYear();
+
+  buildMonthBar();
+  buildCalendar();
+  fetchContents();
+  fetchMaterials();
+  fetchGallery();
+  fetchProdutosEnviados();
+  initCalendar();
+
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('tab-performance').classList.add('active');
+
+  // Add back to admin button
+  const header = document.querySelector('.portal-header');
+  if (!document.getElementById('back-to-admin')) {
+    const backBtn = document.createElement('button');
+    backBtn.id        = 'back-to-admin';
+    backBtn.className = 'logout-btn';
+    backBtn.textContent = '← Admin';
+    backBtn.style.marginRight = '8px';
+    backBtn.addEventListener('click', () => {
+      document.getElementById('admin-screen').classList.remove('hidden');
+      document.getElementById('portal-screen').querySelector('.portal-header').style.display = '';
+      document.getElementById('month-bar').style.display = '';
+      document.querySelector('.nav-tabs').style.display = '';
+      document.querySelector('.portal-content').style.display = 'none';
+      document.querySelector('.portal-footer').style.display = 'none';
+      document.getElementById('admin-screen').classList.remove('hidden');
+      // Restore admin view properly
+      location.reload();
+    });
+    document.querySelector('.portal-user').prepend(backBtn);
+  }
 }
 
 // ─── CALENDAR ───
