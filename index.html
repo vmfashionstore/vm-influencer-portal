@@ -2289,13 +2289,15 @@ async function loadAdminPortal() {
 
   buildAdminMonthBar();
 
-  // Load all influencers
-  const { data: influencers } = await sb
+  // Load all influencers (excluding admin)
+  const { data: influencers, error: infError } = await sb
     .from('influencers')
     .select('*')
-    .eq('is_admin', false);
+    .neq('cupom', 'ADMIN');
 
-  allInfluencers = influencers || [];
+  console.log('Influencers loaded:', influencers, infError);
+  allInfluencers = (influencers || []).filter(i => !i.is_admin);
+  console.log('Filtered influencers:', allInfluencers.length);
 
   // Fetch all orders
   await fetchAdminOrders();
