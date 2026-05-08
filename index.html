@@ -1036,6 +1036,62 @@
           </div>
           <div class="bar-list" id="detail-products-bar"></div>
         </div>
+
+        <!-- ABAS DO PORTAL -->
+        <nav class="nav-tabs" style="margin:0 -0px;">
+          <button class="nav-tab active" data-dtab="performance"><span class="tab-icon">📊</span> Performance</button>
+          <button class="nav-tab" data-dtab="produtos"><span class="tab-icon">🛍️</span> Produtos</button>
+          <button class="nav-tab" data-dtab="conteudos"><span class="tab-icon">📸</span> Conteúdos</button>
+          <button class="nav-tab" data-dtab="materiais"><span class="tab-icon">📁</span> Materiais</button>
+          <button class="nav-tab" data-dtab="calendario"><span class="tab-icon">📅</span> Calendário</button>
+        </nav>
+
+        <!-- PERFORMANCE -->
+        <div class="dtab-panel active" id="dtab-performance" style="padding-top:24px;">
+          <!-- já renderizado acima -->
+          <div style="text-align:center;color:var(--gray-text);padding:16px;font-size:11px;">↑ Performance exibida acima</div>
+        </div>
+
+        <!-- PRODUTOS -->
+        <div class="dtab-panel" id="dtab-produtos" style="display:none;padding-top:24px;">
+          <div class="section-header" style="margin-bottom:16px;">
+            <div class="section-title">Produtos mais vendidos</div>
+            <div class="section-meta" id="detail-produtos-periodo">—</div>
+          </div>
+          <div class="products-grid" id="detail-products-grid"></div>
+          <div class="section-header" style="margin-bottom:14px;margin-top:8px;">
+            <div class="section-title">Por peça mais vendida</div>
+          </div>
+          <div class="bar-list" id="detail-products-bar2"></div>
+        </div>
+
+        <!-- CONTEÚDOS -->
+        <div class="dtab-panel" id="dtab-conteudos" style="display:none;padding-top:24px;">
+          <div class="section-header" style="margin-bottom:16px;">
+            <div class="section-title">Conteúdos postados</div>
+            <div class="section-meta" id="detail-conteudos-meta">—</div>
+          </div>
+          <div class="content-cards" id="detail-content-cards"></div>
+        </div>
+
+        <!-- MATERIAIS -->
+        <div class="dtab-panel" id="dtab-materiais" style="display:none;padding-top:24px;">
+          <div class="section-header" style="margin-bottom:16px;">
+            <div class="section-title">Materiais</div>
+          </div>
+          <div class="materials-grid" id="detail-cat-grid"></div>
+        </div>
+
+        <!-- CALENDÁRIO -->
+        <div class="dtab-panel" id="dtab-calendario" style="display:none;padding-top:24px;">
+          <div class="section-header" style="margin-bottom:16px;">
+            <div class="section-title">Calendário</div>
+            <div class="section-meta" id="detail-agenda-meta">—</div>
+          </div>
+          <div class="cal-grid" id="detail-cal-grid" style="margin-bottom:24px;"></div>
+          <div class="upcoming-list" id="detail-upcoming-list"></div>
+        </div>
+
       </div>
 
     </main>
@@ -1355,6 +1411,7 @@ const GALLERY_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-L
 const PRODUTOS_ENVIADOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=1154247856&single=true&output=csv';
 
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MONTHS_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const fmt = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtPct = v => (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
 
@@ -1370,6 +1427,13 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
   document.getElementById('admin-logout-btn').addEventListener('click', handleLogout);
 
+  // Fix logout for dynamically shown elements
+  document.addEventListener('click', function(e) {
+    if (e.target.id === 'logout-btn' || e.target.id === 'admin-logout-btn') {
+      handleLogout();
+    }
+  });
+
   // Admin table click
   document.addEventListener('click', function(e) {
     const btn = e.target.closest('.view-portal-btn');
@@ -1379,6 +1443,22 @@ document.addEventListener('DOMContentLoaded', function () {
   // Close detail
   document.getElementById('close-detail-btn').addEventListener('click', function() {
     document.getElementById('admin-detail').style.display = 'none';
+  });
+
+  // Detail tabs
+  document.getElementById('admin-detail').addEventListener('click', function(e) {
+    const tab = e.target.closest('[data-dtab]');
+    if (!tab) return;
+    document.querySelectorAll('#admin-detail .nav-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.dtab-panel').forEach(p => p.style.display = 'none');
+    tab.classList.add('active');
+    document.getElementById('dtab-' + tab.dataset.dtab).style.display = 'block';
+
+    const cupom = document.getElementById('admin-detail').dataset.cupom;
+    if (tab.dataset.dtab === 'produtos') renderDetailProdutos(cupom);
+    if (tab.dataset.dtab === 'conteudos') renderDetailConteudos(cupom);
+    if (tab.dataset.dtab === 'materiais') renderDetailMateriais(cupom);
+    if (tab.dataset.dtab === 'calendario') renderDetailCalendario(cupom);
   });
 
   // Filtros de tipo de conteúdo
@@ -2515,6 +2595,7 @@ function viewInfluencerPortal(cupom) {
   // Show detail section
   const detail = document.getElementById('admin-detail');
   detail.style.display = 'block';
+  detail.dataset.cupom = cupom;
 
   // Scroll to detail
   setTimeout(() => detail.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
@@ -2595,6 +2676,185 @@ function viewInfluencerPortal(cupom) {
       </div>
       <div class="bar-track"><div class="bar-fill" style="width:${Math.round((data.qty/maxQty)*100)}%"></div></div>
     </div>`).join('');
+}
+
+// ─── ADMIN DETAIL TABS ───
+function renderDetailProdutos(cupom) {
+  const orders = getOrdersForInfluencer(cupom, adminMonth, adminYear);
+  const inf    = allInfluencers.find(i => i.cupom === cupom);
+  const mesLabel = adminMonth === 'todos' ? 'Todos' : MONTHS[adminMonth] + ' ' + adminYear;
+  document.getElementById('detail-produtos-periodo').textContent = mesLabel;
+
+  const map = {};
+  orders.forEach(o => {
+    if (!Array.isArray(o.items)) return;
+    o.items.forEach(item => {
+      const name = item.product_name || 'Produto';
+      if (!map[name]) map[name] = { qty: 0, val: 0 };
+      map[name].qty += item.quantity || 0;
+      map[name].val += parseFloat(item.total || item.price || 0);
+    });
+  });
+
+  const sorted = Object.entries(map).sort((a,b) => b[1].qty - a[1].qty);
+  const maxQty = sorted.length > 0 ? sorted[0][1].qty : 1;
+
+  document.getElementById('detail-products-grid').innerHTML = sorted.length === 0
+    ? `<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;">Nenhum produto neste período</div>`
+    : sorted.slice(0,6).map(([name, data], i) => `
+      <div class="product-card">
+        <div class="product-rank ${i===0?'top':''}">${String(i+1).padStart(2,'0')}</div>
+        <div class="product-name">${name}</div>
+        <div class="product-stats">
+          <div class="product-qty">${data.qty} venda${data.qty!==1?'s':''}</div>
+          <div class="product-val">${fmt(data.val)}</div>
+        </div>
+      </div>`).join('');
+
+  document.getElementById('detail-products-bar2').innerHTML = sorted.slice(0,8).map(([name, data]) => `
+    <div class="bar-item" style="margin-bottom:14px;">
+      <div class="bar-top">
+        <div class="bar-name">${name}</div>
+        <div class="bar-amount">${data.qty} venda${data.qty!==1?'s':''}</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round((data.qty/maxQty)*100)}%"></div></div>
+    </div>`).join('');
+}
+
+function renderDetailConteudos(cupom) {
+  const filtered = allContents.filter(c => c.cupom === cupom.toUpperCase());
+  filtered.sort((a,b) => {
+    const toISO = d => d && d.includes('/') ? d.split('/').reverse().join('-') : d;
+    return toISO(b.data).localeCompare(toISO(a.data));
+  });
+
+  document.getElementById('detail-conteudos-meta').textContent =
+    filtered.length + ' conteúdo' + (filtered.length !== 1 ? 's' : '');
+
+  const tipoIcon = { feed:'📷', carrossel:'🖼️', stories:'⭕', reels:'🎬' };
+
+  const container = document.getElementById('detail-content-cards');
+  container.innerHTML = filtered.length === 0
+    ? `<div style="text-align:center;color:var(--gray-text);padding:32px;border:1px solid var(--gray-line);">Nenhum conteúdo registrado.</div>`
+    : filtered.map(c => {
+        const dateFmt = c.data ? (c.data.includes('/') ? c.data : c.data.split('-').reverse().join('/')) : '—';
+        const icon    = tipoIcon[c.tipo] || '📱';
+        const hasLink = c.link && c.link.startsWith('http');
+        let imgHtml   = `<div class="content-thumb">${icon}</div>`;
+        if (c.imagem_url && c.imagem_url.includes('drive.google.com')) {
+          const idMatch = c.imagem_url.match(/id=([^&]+)/);
+          if (idMatch) imgHtml = `<img src="https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w200" style="width:56px;height:56px;object-fit:cover;border:1px solid var(--gray-line);" onerror="this.outerHTML='<div class=content-thumb>${icon}</div>'">`;
+        }
+        return `<div class="content-card">
+          ${imgHtml}
+          <div class="content-info">
+            <div class="content-date">${dateFmt} · ${c.tipo || '—'}</div>
+            ${c.descricao ? `<div class="content-desc">${c.descricao}</div>` : ''}
+            <div class="content-tags">
+              ${c.produto ? `<span class="content-tag pink">🛍️ ${c.produto}</span>` : ''}
+              ${c.curtidas ? `<span class="content-tag">❤️ ${Number(c.curtidas).toLocaleString('pt-BR')}</span>` : ''}
+              ${c.alcance ? `<span class="content-tag">👁️ ${Number(c.alcance).toLocaleString('pt-BR')}</span>` : ''}
+              ${hasLink ? `<a href="${c.link}" target="_blank" class="content-tag" style="text-decoration:none;">Ver post →</a>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+}
+
+function renderDetailMateriais(cupom) {
+  const items = allMaterials.filter(m => m.cupom === cupom.toUpperCase() || m.cupom === 'TODAS');
+  const byTipo = {};
+  items.forEach(m => { if (!byTipo[m.tipo]) byTipo[m.tipo] = 0; byTipo[m.tipo]++; });
+
+  const galItems = allGallery.filter(g => g.cupom === cupom.toUpperCase() || g.cupom === 'TODAS');
+  if (galItems.length > 0) byTipo['fotos'] = (byTipo['fotos'] || 0) + galItems.length;
+
+  const prodEnv = allProdutosEnviados.filter(p => p.cupom === cupom.toUpperCase());
+  if (prodEnv.length > 0) byTipo['produtos_enviados'] = prodEnv.length;
+
+  const cats = Object.keys(CAT_CONFIG).filter(c => byTipo[c] > 0);
+  const grid = document.getElementById('detail-cat-grid');
+
+  grid.innerHTML = cats.map(tipo => {
+    const cfg = CAT_CONFIG[tipo];
+    return `<div class="cat-card" style="cursor:default;">
+      <div class="cat-card-icon">${cfg.icon}</div>
+      <div class="cat-card-label">Categoria</div>
+      <div class="cat-card-name">${cfg.label}</div>
+      <div class="cat-card-count">${byTipo[tipo]} item${byTipo[tipo]!==1?'s':''}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderDetailCalendario(cupom) {
+  const now   = new Date();
+  const year  = now.getFullYear();
+  const month = now.getMonth();
+  const today = now.getDate();
+
+  document.getElementById('detail-agenda-meta').textContent = MONTHS[month] + ' ' + year;
+
+  const firstDay    = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const days        = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  // Get events for this influencer
+  const cupomUpper = cupom.toUpperCase();
+  const eventos = allContents
+    .filter(c => c.cupom === cupomUpper && c.data)
+    .map(c => ({
+      data: c.data.includes('/') ? c.data.split('/').reverse().join('-') : c.data,
+      tipo: c.tipo, titulo: c.descricao || c.produto || 'Postagem', status: 'postado'
+    }));
+
+  const eventsByDay = {};
+  eventos.forEach(e => {
+    const parts = e.data.split('-');
+    if (parseInt(parts[0]) !== year || parseInt(parts[1])-1 !== month) return;
+    const d = parseInt(parts[2]);
+    if (!eventsByDay[d]) eventsByDay[d] = [];
+    eventsByDay[d].push(e);
+  });
+
+  let html = days.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const isToday = d === today;
+    const evts    = eventsByDay[d] || [];
+    const dots    = evts.map(e => `<span class="cal-event-dot ${e.status}"></span>`).join('');
+    html += `<div class="cal-day ${isToday?'today':''}">
+      <div class="cal-num" style="${isToday?'color:var(--pink)':''}">${d}</div>
+      ${dots ? `<div class="cal-day-events">${dots}</div>` : ''}
+    </div>`;
+  }
+  document.getElementById('detail-cal-grid').innerHTML = html;
+
+  // Agenda list
+  const sorted = eventos
+    .filter(e => { const p = e.data.split('-'); return parseInt(p[0])===year && parseInt(p[1])-1===month; })
+    .sort((a,b) => a.data.localeCompare(b.data));
+
+  document.getElementById('detail-agenda-meta').textContent =
+    sorted.length + ' postagem' + (sorted.length!==1?'ns':'') + ' · ' + MONTHS[month] + ' ' + year;
+
+  const tipoIcon = { feed:'📷', carrossel:'🖼️', stories:'⭕', reels:'🎬' };
+  document.getElementById('detail-upcoming-list').innerHTML = sorted.length === 0
+    ? `<div style="text-align:center;color:var(--gray-text);padding:24px;border:1px solid var(--gray-line);font-size:11px;">Nenhuma postagem este mês.</div>`
+    : sorted.map(e => {
+        const parts = e.data.split('-');
+        return `<div class="upcoming-item postado">
+          <div class="upcoming-date">
+            <div class="upcoming-day">${parts[2]}</div>
+            <div class="upcoming-month">${MONTHS_SHORT[parseInt(parts[1])-1]}</div>
+          </div>
+          <div class="upcoming-divider"></div>
+          <div class="upcoming-info">
+            <div class="upcoming-title">${tipoIcon[e.tipo]||'📱'} ${e.titulo}</div>
+            <div class="upcoming-type">${e.tipo || '—'}</div>
+          </div>
+          <span class="upcoming-status postado">✓ Postado</span>
+        </div>`;
+      }).join('');
 }
 
 // ─── CALENDAR ───
