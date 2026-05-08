@@ -946,13 +946,6 @@
         </div>
       </div>
 
-      <!-- RANKING -->
-      <div class="section-header" style="margin-bottom:16px;">
-        <div class="section-title">Ranking de Influencers</div>
-        <div class="section-meta" id="admin-ranking-meta">—</div>
-      </div>
-      <div id="admin-ranking" style="margin-bottom:32px;"></div>
-
       <!-- TABELA COMPARATIVA -->
       <div class="section-header" style="margin-bottom:16px;">
         <div class="section-title">Tabela Comparativa</div>
@@ -2426,39 +2419,6 @@ function renderAdminDashboard() {
   document.getElementById('admin-total-pedidos').textContent  = globalPedidos;
   document.getElementById('admin-ticket-medio').textContent   = fmt(globalTicket);
 
-  const maxVend = metrics.length > 0 ? metrics[0].totalVend : 1;
-
-  // Ranking cards
-  document.getElementById('admin-ranking-meta').textContent =
-    metrics.length + ' influencer' + (metrics.length !== 1 ? 's' : '');
-
-  document.getElementById('admin-ranking').innerHTML = metrics.map((m, i) => `
-    <div class="admin-influencer-card" data-cupom="${m.inf.cupom}">
-      <div class="admin-rank-num ${i < 3 ? 'top' : ''}">${String(i+1).padStart(2,'0')}</div>
-      <div class="admin-inf-info">
-        <div class="admin-inf-name">${m.inf.nome}</div>
-        <div class="admin-inf-cupom">Cupom ${m.inf.cupom}</div>
-        <div class="admin-bar-track">
-          <div class="admin-bar-fill" style="width:${maxVend > 0 ? Math.round((m.totalVend/maxVend)*100) : 0}%"></div>
-        </div>
-      </div>
-      <div class="admin-inf-metrics">
-        <div class="admin-metric">
-          <div class="admin-metric-val">${m.qtd}</div>
-          <div class="admin-metric-label">Pedidos</div>
-        </div>
-        <div class="admin-metric">
-          <div class="admin-metric-val">${fmt(m.totalVend)}</div>
-          <div class="admin-metric-label">Vendido</div>
-        </div>
-        <div class="admin-metric">
-          <div class="admin-metric-val pink">${fmt(m.total)}</div>
-          <div class="admin-metric-label">A pagar</div>
-        </div>
-      </div>
-      <button class="view-portal-btn" data-cupom="${m.inf.cupom}">Ver portal →</button>
-    </div>`).join('');
-
   // Comparative table
   document.getElementById('admin-table').innerHTML = metrics.map((m, i) => `
     <tr style="border-bottom:1px solid #161616;${i%2===0?'background:var(--gray-card)':''}">
@@ -2472,19 +2432,20 @@ function renderAdminDashboard() {
       <td class="td-num td-pink" style="padding:12px 14px;">${fmt(m.total)}</td>
       <td class="td-num" style="padding:12px 14px;">${fmt(m.ticket)}</td>
       <td style="padding:12px 14px;">
-        <button class="view-portal-btn" data-cupom="${m.inf.cupom}">Ver →</button>
+        <button style="background:none;border:none;color:var(--pink);font-family:'Cormorant Garamond',serif;font-size:16px;cursor:pointer;letter-spacing:0.05em;" data-cupom="${m.inf.cupom}" class="view-portal-btn">→</button>
       </td>
     </tr>`).join('');
 }
 
 async function viewInfluencerPortal(cupom) {
-  // Find influencer
   const inf = allInfluencers.find(i => i.cupom === cupom);
   if (!inf) return;
 
-  // Set as current influencer and show normal portal
   currentInfluencer = inf;
+
+  // Hide admin, show influencer portal
   document.getElementById('admin-screen').classList.add('hidden');
+  document.getElementById('portal-screen').classList.remove('hidden');
 
   document.getElementById('user-name').textContent   = inf.nome;
   document.getElementById('user-coupon').textContent = 'Cupom ' + inf.cupom;
@@ -2497,7 +2458,6 @@ async function viewInfluencerPortal(cupom) {
   selectedYear  = now.getFullYear();
 
   buildMonthBar();
-  buildCalendar();
   fetchContents();
   fetchMaterials();
   fetchGallery();
@@ -2505,26 +2465,26 @@ async function viewInfluencerPortal(cupom) {
   initCalendar();
 
   document.getElementById('loading-state').style.display = 'none';
-  document.getElementById('tab-performance').classList.add('active');
 
-  // Add back to admin button
-  const header = document.querySelector('.portal-header');
+  // Switch to performance tab
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-performance').classList.add('active');
+  document.querySelector('[data-tab="performance"]').classList.add('active');
+
+  updateDashboard();
+
+  // Add back to admin button if not exists
   if (!document.getElementById('back-to-admin')) {
     const backBtn = document.createElement('button');
     backBtn.id        = 'back-to-admin';
     backBtn.className = 'logout-btn';
-    backBtn.textContent = '← Admin';
-    backBtn.style.marginRight = '8px';
+    backBtn.style.cssText = 'margin-right:8px;border-color:var(--pink);color:var(--pink);';
+    backBtn.textContent   = '← Voltar ao Admin';
     backBtn.addEventListener('click', () => {
+      document.getElementById('portal-screen').classList.add('hidden');
       document.getElementById('admin-screen').classList.remove('hidden');
-      document.getElementById('portal-screen').querySelector('.portal-header').style.display = '';
-      document.getElementById('month-bar').style.display = '';
-      document.querySelector('.nav-tabs').style.display = '';
-      document.querySelector('.portal-content').style.display = 'none';
-      document.querySelector('.portal-footer').style.display = 'none';
-      document.getElementById('admin-screen').classList.remove('hidden');
-      // Restore admin view properly
-      location.reload();
+      backBtn.remove();
     });
     document.querySelector('.portal-user').prepend(backBtn);
   }
