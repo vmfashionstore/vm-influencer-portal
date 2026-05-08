@@ -970,6 +970,74 @@
         </table>
       </div>
 
+      <!-- INFLUENCER DETAIL -->
+      <div id="admin-detail" style="display:none;padding:0 48px 48px;">
+        <div style="border-top:2px solid var(--pink);margin-bottom:28px;padding-top:28px;">
+          <div class="section-header" style="margin-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:16px;">
+              <button id="close-detail-btn" style="background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;padding:6px 14px;cursor:pointer;">✕ Fechar</button>
+              <div class="section-title" id="detail-inf-name" style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--pink);letter-spacing:0.1em;">—</div>
+            </div>
+            <div class="section-meta" id="detail-inf-cupom">—</div>
+          </div>
+
+          <!-- KPIs da influencer -->
+          <div class="kpi-grid" style="margin-bottom:24px;">
+            <div class="kpi-card hero">
+              <div class="kpi-label">Total a Receber</div>
+              <div class="kpi-value pink" id="detail-total-receber">—</div>
+              <div class="kpi-sub" id="detail-period">—</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Total Vendido</div>
+              <div class="kpi-value" id="detail-total-vendido">—</div>
+              <div class="kpi-sub">Via cupom</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Pedidos Gerados</div>
+              <div class="kpi-value" id="detail-pedidos">—</div>
+              <div class="kpi-sub">Confirmados</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Ticket Médio</div>
+              <div class="kpi-value" id="detail-ticket">—</div>
+              <div class="kpi-sub">Por pedido</div>
+            </div>
+          </div>
+
+          <!-- Resumo comissão -->
+          <div class="commission-box" style="margin-bottom:24px;">
+            <div class="c-row"><div class="c-label">Total vendido</div><div class="c-val" id="detail-comm-vendido">—</div></div>
+            <div class="c-row"><div class="c-label">% Comissão</div><div class="c-val" id="detail-comm-perc">—</div></div>
+            <div class="c-row"><div class="c-label">Comissão variável</div><div class="c-val" id="detail-comm-variavel">—</div></div>
+            <div class="c-row"><div class="c-label">Cachê fixo</div><div class="c-val" id="detail-comm-fixo">—</div></div>
+            <div class="c-row total"><div class="c-label">Total a receber</div><div class="c-val pink" id="detail-comm-total">—</div></div>
+          </div>
+
+          <!-- Pedidos -->
+          <div class="section-header" style="margin-bottom:14px;">
+            <div class="section-title">Pedidos do período</div>
+            <div class="section-meta" id="detail-pedidos-count">—</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th><th>Produto</th><th>Qtd</th><th>Total</th><th>Comissão</th>
+                </tr>
+              </thead>
+              <tbody id="detail-orders-table"></tbody>
+            </table>
+          </div>
+
+          <!-- Produtos mais vendidos -->
+          <div class="section-header" style="margin-bottom:14px;margin-top:24px;">
+            <div class="section-title">Por peça mais vendida</div>
+          </div>
+          <div class="bar-list" id="detail-products-bar"></div>
+        </div>
+      </div>
+
     </main>
 
     <!-- ADMIN SYNC BAR -->
@@ -1302,12 +1370,15 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
   document.getElementById('admin-logout-btn').addEventListener('click', handleLogout);
 
-  // Admin ranking and table click
+  // Admin table click
   document.addEventListener('click', function(e) {
     const btn = e.target.closest('.view-portal-btn');
     if (btn && btn.dataset.cupom) viewInfluencerPortal(btn.dataset.cupom);
-    const card = e.target.closest('.admin-influencer-card');
-    if (card && !e.target.closest('.view-portal-btn')) viewInfluencerPortal(card.dataset.cupom);
+  });
+
+  // Close detail
+  document.getElementById('close-detail-btn').addEventListener('click', function() {
+    document.getElementById('admin-detail').style.display = 'none';
   });
 
   // Filtros de tipo de conteúdo
@@ -2437,57 +2508,93 @@ function renderAdminDashboard() {
     </tr>`).join('');
 }
 
-async function viewInfluencerPortal(cupom) {
+function viewInfluencerPortal(cupom) {
   const inf = allInfluencers.find(i => i.cupom === cupom);
   if (!inf) return;
 
-  currentInfluencer = inf;
+  // Show detail section
+  const detail = document.getElementById('admin-detail');
+  detail.style.display = 'block';
 
-  // Hide admin, show influencer portal
-  document.getElementById('admin-screen').classList.add('hidden');
-  document.getElementById('portal-screen').classList.remove('hidden');
+  // Scroll to detail
+  setTimeout(() => detail.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 
-  document.getElementById('user-name').textContent   = inf.nome;
-  document.getElementById('user-coupon').textContent = 'Cupom ' + inf.cupom;
+  // Set header info
+  document.getElementById('detail-inf-name').textContent  = inf.nome;
+  document.getElementById('detail-inf-cupom').textContent = 'Cupom ' + inf.cupom;
 
-  // Use already loaded orders
-  allOrders = adminOrders;
+  // Get orders for this influencer in current admin period
+  const orders = getOrdersForInfluencer(inf.cupom, adminMonth, adminYear);
+  const uniqueOrders = [...new Map(orders.map(o => [o.id, o])).values()];
 
-  const now = new Date();
-  selectedMonth = now.getMonth();
-  selectedYear  = now.getFullYear();
+  const totalVend   = uniqueOrders.reduce((s, o) => s + parseFloat(o.total || 0), 0);
+  const percComissao = inf.perc_comissao || 0;
+  const valorFixo   = inf.valor_fixo || 0;
+  const comissaoVar = totalVend * percComissao;
+  const totalReceber = comissaoVar + valorFixo;
+  const qtdPedidos  = uniqueOrders.length;
+  const ticketMedio = qtdPedidos > 0 ? totalVend / qtdPedidos : 0;
+  const mesLabel    = adminMonth === 'todos' ? 'Todos os períodos' : MONTHS[adminMonth] + ' ' + adminYear;
 
-  buildMonthBar();
-  fetchContents();
-  fetchMaterials();
-  fetchGallery();
-  fetchProdutosEnviados();
-  initCalendar();
+  // KPIs
+  document.getElementById('detail-total-receber').textContent = fmt(totalReceber);
+  document.getElementById('detail-total-vendido').textContent = fmt(totalVend);
+  document.getElementById('detail-pedidos').textContent       = qtdPedidos;
+  document.getElementById('detail-ticket').textContent        = fmt(ticketMedio);
+  document.getElementById('detail-period').textContent        = mesLabel;
 
-  document.getElementById('loading-state').style.display = 'none';
+  // Commission
+  document.getElementById('detail-comm-vendido').textContent  = fmt(totalVend);
+  document.getElementById('detail-comm-perc').textContent     = (percComissao * 100).toFixed(0) + '%';
+  document.getElementById('detail-comm-variavel').textContent = fmt(comissaoVar);
+  document.getElementById('detail-comm-fixo').textContent     = fmt(valorFixo);
+  document.getElementById('detail-comm-total').textContent    = fmt(totalReceber);
 
-  // Switch to performance tab
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-performance').classList.add('active');
-  document.querySelector('[data-tab="performance"]').classList.add('active');
+  // Orders table
+  document.getElementById('detail-pedidos-count').textContent = qtdPedidos + ' pedidos · ' + mesLabel;
 
-  updateDashboard();
+  const tbody = document.getElementById('detail-orders-table');
+  tbody.innerHTML = uniqueOrders.length === 0
+    ? `<tr><td colspan="5" style="text-align:center;color:var(--gray-text);padding:24px;">Nenhum pedido neste período</td></tr>`
+    : uniqueOrders.map(o => {
+        const dateStr   = o.confirmed_at || o.received_at;
+        const date      = dateStr ? dateStr.substring(0,10).split('-').reverse().join('/') : '—';
+        const total     = parseFloat(o.total || 0);
+        const comm      = total * percComissao;
+        const firstItem = Array.isArray(o.items) && o.items.length > 0 ? o.items[0].product_name || '—' : '—';
+        const qty       = Array.isArray(o.items) ? o.items.reduce((s,i) => s + (i.quantity||0), 0) : '—';
+        return `<tr>
+          <td class="td-date">${date}</td>
+          <td>${firstItem}</td>
+          <td>${qty}</td>
+          <td class="td-num">${fmt(total)}</td>
+          <td class="td-pink">+ ${fmt(comm)}</td>
+        </tr>`;
+      }).join('');
 
-  // Add back to admin button if not exists
-  if (!document.getElementById('back-to-admin')) {
-    const backBtn = document.createElement('button');
-    backBtn.id        = 'back-to-admin';
-    backBtn.className = 'logout-btn';
-    backBtn.style.cssText = 'margin-right:8px;border-color:var(--pink);color:var(--pink);';
-    backBtn.textContent   = '← Voltar ao Admin';
-    backBtn.addEventListener('click', () => {
-      document.getElementById('portal-screen').classList.add('hidden');
-      document.getElementById('admin-screen').classList.remove('hidden');
-      backBtn.remove();
+  // Products bar
+  const productMap = {};
+  orders.forEach(o => {
+    if (!Array.isArray(o.items)) return;
+    o.items.forEach(item => {
+      const name = item.product_name || 'Produto';
+      if (!productMap[name]) productMap[name] = { qty: 0, val: 0 };
+      productMap[name].qty += item.quantity || 0;
+      productMap[name].val += parseFloat(item.total || item.price || 0);
     });
-    document.querySelector('.portal-user').prepend(backBtn);
-  }
+  });
+
+  const sorted = Object.entries(productMap).sort((a,b) => b[1].qty - a[1].qty);
+  const maxQty = sorted.length > 0 ? sorted[0][1].qty : 1;
+
+  document.getElementById('detail-products-bar').innerHTML = sorted.slice(0,8).map(([name, data]) => `
+    <div class="bar-item" style="margin-bottom:14px;">
+      <div class="bar-top">
+        <div class="bar-name">${name}</div>
+        <div class="bar-amount">${data.qty} venda${data.qty !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round((data.qty/maxQty)*100)}%"></div></div>
+    </div>`).join('');
 }
 
 // ─── CALENDAR ───
