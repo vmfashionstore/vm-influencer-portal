@@ -1199,6 +1199,9 @@ const MATERIALS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9
 // Google Sheets — Galeria de fotos
 const GALLERY_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=1960193422&single=true&output=csv';
 
+// Google Sheets — Produtos Enviados
+const PRODUTOS_ENVIADOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=1154247856&single=true&output=csv';
+
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const fmt = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtPct = v => (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
@@ -1430,6 +1433,7 @@ async function loadPortal(user) {
   fetchContents();
   fetchMaterials();
   fetchGallery();
+  fetchProdutosEnviados();
   initCalendar();
 
   // Mostra layout imediatamente
@@ -1838,13 +1842,15 @@ function renderContents() {
 
 // ─── MATERIALS ───
 let allMaterials = [];
+let allProdutosEnviados = [];
 
 const CAT_CONFIG = {
-  briefing:   { icon: '📋', label: 'Briefing' },
-  contrato:   { icon: '📄', label: 'Contrato' },
-  fotos:      { icon: '📸', label: 'Fotos' },
-  identidade: { icon: '🎨', label: 'Identidade Visual' },
-  outro:      { icon: '📁', label: 'Outro' }
+  briefing:          { icon: '📋', label: 'Briefing' },
+  contrato:          { icon: '📄', label: 'Contrato' },
+  fotos:             { icon: '📸', label: 'Fotos' },
+  identidade:        { icon: '🎨', label: 'Identidade Visual' },
+  produtos_enviados: { icon: '📦', label: 'Produtos Enviados' },
+  outro:             { icon: '📁', label: 'Outro' }
 };
 let materialTipoFiltro = 'todos';
 
@@ -1899,6 +1905,9 @@ function renderCategoryCards() {
   const galItems = allGallery.filter(g => g.cupom === galCupom || g.cupom === 'TODAS');
   if (galItems.length > 0) byTipo['fotos'] = (byTipo['fotos'] || 0) + galItems.length;
 
+  const prodEnviados = allProdutosEnviados.filter(p => p.cupom === galCupom);
+  if (prodEnviados.length > 0) byTipo['produtos_enviados'] = prodEnviados.length;
+
   const cats = Object.keys(CAT_CONFIG).filter(c => byTipo[c] > 0);
   document.getElementById('materiais-meta').textContent =
     cats.length + ' categoria' + (cats.length !== 1 ? 's' : '');
@@ -1930,6 +1939,7 @@ function showNivel(n) {
 
 function openCategory(tipo) {
   if (tipo === 'fotos') { openFotosCategory(); return; }
+  if (tipo === 'produtos_enviados') { openProdutosEnviados(); return; }
   const items = getMaterialsForUser().filter(m => m.tipo === tipo);
   const cfg   = CAT_CONFIG[tipo] || { label: tipo, icon: '📁' };
 
@@ -1945,6 +1955,46 @@ function openCategory(tipo) {
       <div class="material-date">${m.data}</div>
       <div class="material-btn">Visualizar →</div>
     </div>`).join('');
+
+  showNivel(2);
+}
+
+function openProdutosEnviados() {
+  const cupom   = currentInfluencer.cupom.toUpperCase();
+  const items   = allProdutosEnviados.filter(p => p.cupom === cupom);
+
+  document.getElementById('nivel2-title').textContent = 'Produtos Enviados';
+  document.getElementById('nivel2-meta').textContent  = items.length + ' produto' + (items.length !== 1 ? 's' : '');
+
+  window._nivel2Items = items;
+
+  // Sort by date desc
+  const sorted = [...items].sort((a, b) => {
+    const toISO = d => d && d.includes('/') ? d.split('/').reverse().join('-') : d;
+    return toISO(b.data_envio).localeCompare(toISO(a.data_envio));
+  });
+
+  document.getElementById('nivel2-grid').innerHTML = sorted.length === 0
+    ? `<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Nenhum produto enviado ainda.</div>`
+    : `<div style="grid-column:span 3;border:1px solid var(--gray-line);overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--gray-line);background:var(--gray-dark);">
+              <th style="font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-text);padding:12px 16px;text-align:left;font-weight:400;">Produto</th>
+              <th style="font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-text);padding:12px 16px;text-align:left;font-weight:400;">Tamanho</th>
+              <th style="font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-text);padding:12px 16px;text-align:left;font-weight:400;">Data Envio</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sorted.map((p, i) => `
+              <tr style="border-bottom:1px solid ${i % 2 === 0 ? '#161616' : 'transparent'};background:${i % 2 === 0 ? 'var(--gray-card)' : 'var(--gray-dark)'};">
+                <td style="padding:14px 16px;font-size:12px;color:var(--white);">${p.produto}</td>
+                <td style="padding:14px 16px;font-size:12px;color:var(--gray-text);">${p.tamanho || '—'}</td>
+                <td style="padding:14px 16px;font-size:11px;color:var(--gray-text);">${p.data_envio || '—'}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
 
   showNivel(2);
 }
@@ -2026,6 +2076,36 @@ function closeMaterial() {
   document.getElementById('material-modal').style.display = 'none';
   document.getElementById('modal-iframe').src = '';
   document.body.style.overflow = '';
+}
+
+// ─── PRODUTOS ENVIADOS ───
+async function fetchProdutosEnviados() {
+  try {
+    const res  = await fetch(PRODUTOS_ENVIADOS_CSV);
+    const text = await res.text();
+    const rows = text.split('\n').slice(1);
+
+    allProdutosEnviados = rows
+      .filter(r => r.trim())
+      .map(r => {
+        const cols = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < r.length; i++) {
+          if (r[i] === '"') { inQ = !inQ; continue; }
+          if (r[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
+          cur += r[i];
+        }
+        cols.push(cur.trim());
+        return {
+          cupom:      (cols[0] || '').toUpperCase(),
+          produto:    cols[1] || '',
+          tamanho:    cols[2] || '',
+          data_envio: cols[3] || ''
+        };
+      });
+  } catch(e) {
+    console.error('Erro produtos enviados:', e);
+  }
 }
 
 // ─── GALLERY ───
