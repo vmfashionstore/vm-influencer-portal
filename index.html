@@ -6,1004 +6,243 @@
 <title>VM — Portal de Influencers</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --black: #080808;
-    --white: #F4F0EB;
-    --pink: #E8A0B0;
-    --pink-light: #F2C4CE;
-    --pink-dark: #C4607A;
-    --gray-dark: #141414;
-    --gray-mid: #1C1C1C;
-    --gray-card: #181818;
-    --gray-line: #282828;
-    --gray-text: #6A6A6A;
-    --gray-muted: #3A3A3A;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-  html, body {
-    height: 100%;
-    background: var(--black);
-    color: var(--white);
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 300;
-    overflow-x: hidden;
-  }
-
-  .hidden { display: none !important; }
-
-  /* LOGIN */
-  #login-screen {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  #login-screen::before {
-    content: '';
-    position: absolute;
-    top: -200px; left: 50%;
-    transform: translateX(-50%);
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(232,160,176,0.06) 0%, transparent 65%);
-    pointer-events: none;
-  }
-
-  .login-logo {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 42px;
-    font-weight: 300;
-    letter-spacing: 0.5em;
-    color: var(--white);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    animation: fadeDown 0.8s ease both;
-  }
-
-  .login-tagline {
-    font-size: 9px;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-    margin-bottom: 56px;
-    animation: fadeDown 0.8s 0.1s ease both;
-  }
-
-  .login-box {
-    width: 100%;
-    max-width: 360px;
-    animation: fadeUp 0.8s 0.2s ease both;
-  }
-
-  .login-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22px;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    color: var(--white);
-    margin-bottom: 32px;
-    text-align: center;
-  }
-
-  .input-group { margin-bottom: 16px; }
-
-  .input-label {
-    font-size: 8px;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-    display: block;
-    margin-bottom: 8px;
-  }
-
-  .input-field {
-    width: 100%;
-    background: var(--gray-dark);
-    border: 1px solid var(--gray-line);
-    color: var(--white);
-    font-family: 'Montserrat', sans-serif;
-    font-size: 13px;
-    font-weight: 300;
-    padding: 14px 16px;
-    outline: none;
-    transition: border-color 0.2s;
-    -webkit-appearance: none;
-    border-radius: 0;
-  }
-
-  .input-field:focus { border-color: var(--pink); }
-  .input-field::placeholder { color: var(--gray-muted); }
-
-  .login-btn {
-    width: 100%;
-    background: var(--pink);
-    color: var(--black);
-    border: none;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    padding: 16px;
-    cursor: pointer;
-    margin-top: 8px;
-    transition: background 0.2s, transform 0.1s;
-    border-radius: 0;
-    display: block;
-  }
-
-  .login-btn:hover { background: var(--pink-light); }
-  .login-btn:active { transform: scale(0.99); }
-  .login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
-
-  .login-error {
-    font-size: 10px;
-    color: var(--pink);
-    letter-spacing: 0.1em;
-    text-align: center;
-    margin-top: 12px;
-    min-height: 16px;
-  }
-
-  /* PORTAL */
-  #portal-screen { min-height: 100vh; display: flex; flex-direction: column; }
-
-  .portal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--gray-line);
-    position: sticky;
-    top: 0;
-    background: var(--black);
-    z-index: 100;
-  }
-
-  .portal-logo {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 20px;
-    font-weight: 300;
-    letter-spacing: 0.4em;
-    color: var(--white);
-    text-transform: uppercase;
-  }
-
-  .portal-user { display: flex; align-items: center; gap: 12px; }
-
-  .user-name {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--pink);
-    text-align: right;
-  }
-
-  .user-sub {
-    font-size: 8px;
-    letter-spacing: 0.12em;
-    color: var(--gray-text);
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
-
-  .logout-btn {
-    background: none;
-    border: 1px solid var(--gray-line);
-    color: var(--gray-text);
-    font-family: 'Montserrat', sans-serif;
-    font-size: 7px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    padding: 6px 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    border-radius: 0;
-  }
-
-  .logout-btn:hover { border-color: var(--pink); color: var(--pink); }
-
-  .month-bar {
-    display: flex;
-    padding: 0 24px;
-    border-bottom: 1px solid var(--gray-line);
-    overflow-x: auto;
-    scrollbar-width: none;
-    background: var(--black);
-  }
-  .month-bar::-webkit-scrollbar { display: none; }
-
-  .month-btn {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 8px;
-    font-weight: 400;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-    padding: 12px 14px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
-
-  .month-btn:hover { color: var(--white); }
-  .month-btn.active { color: var(--pink); border-bottom: 2px solid var(--pink); }
-
-  .nav-tabs {
-    display: flex;
-    padding: 0 24px;
-    border-bottom: 1px solid var(--gray-line);
-    overflow-x: auto;
-    scrollbar-width: none;
-    background: var(--gray-dark);
-  }
-  .nav-tabs::-webkit-scrollbar { display: none; }
-
-  .nav-tab {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 8px;
-    font-weight: 400;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-    padding: 13px 16px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .nav-tab:hover { color: var(--white); }
-  .nav-tab.active { color: var(--white); border-bottom: 2px solid var(--pink); }
-  .nav-tab .tab-icon { font-size: 10px; }
-
-  .portal-content { flex: 1; padding: 24px; }
-
-  .tab-panel { display: none; animation: fadeUp 0.3s ease both; }
-  .tab-panel.active { display: block; }
-
-  /* KPI */
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1px;
-    background: var(--gray-line);
-    border: 1px solid var(--gray-line);
-    margin-bottom: 24px;
-  }
-
-  .kpi-card { background: var(--gray-card); padding: 20px 18px; position: relative; }
-
-  .kpi-card.hero { background: var(--gray-mid); grid-column: span 2; }
-
-  .kpi-card.hero::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--pink-dark), var(--pink), var(--pink-light));
-  }
-
-  .kpi-label {
-    font-size: 7px;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-    margin-bottom: 8px;
-  }
-
-  .kpi-value {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 32px;
-    font-weight: 300;
-    color: var(--white);
-    line-height: 1;
-  }
-
-  .kpi-value.pink { color: var(--pink); font-size: 40px; }
-
-  .kpi-sub {
-    font-size: 7px;
-    letter-spacing: 0.12em;
-    color: var(--gray-muted);
-    margin-top: 6px;
-    text-transform: uppercase;
-  }
-
-  .comparativo-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 24px;
-  }
-
-  .comp-card {
-    background: var(--gray-card);
-    border: 1px solid var(--gray-line);
-    padding: 14px;
-  }
-
-  .comp-label {
-    font-size: 7px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-    margin-bottom: 6px;
-  }
-
-  .comp-value { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--white); }
-
-  .comp-badge { font-size: 8px; letter-spacing: 0.1em; margin-top: 4px; color: var(--gray-text); }
-  .comp-badge.up { color: #8BC4A0; }
-  .comp-badge.down { color: var(--pink); }
-
-  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-
-  .section-title {
-    font-size: 8px;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-  }
-
-  .section-meta {
-    font-size: 7px;
-    letter-spacing: 0.15em;
-    color: var(--gray-muted);
-    text-transform: uppercase;
-  }
-
-  .table-wrap { border: 1px solid var(--gray-line); overflow-x: auto; margin-bottom: 24px; }
-
-  table { width: 100%; border-collapse: collapse; min-width: 460px; }
-  thead tr { border-bottom: 1px solid var(--gray-line); }
-
-  th {
-    font-size: 7px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-    padding: 10px 14px;
-    text-align: left;
-    font-weight: 400;
-    background: var(--gray-dark);
-  }
-
-  td {
-    padding: 12px 14px;
-    font-size: 11px;
-    color: var(--white);
-    font-weight: 300;
-    border-bottom: 1px solid #161616;
-  }
-
-  tr:last-child td { border-bottom: none; }
-  tbody tr:hover { background: #111; }
-  .td-date { color: var(--gray-text); font-size: 10px; }
-  .td-num { font-family: 'Cormorant Garamond', serif; font-size: 15px; }
-  .td-pink { color: var(--pink); font-size: 10px; }
-
-  .bar-section { margin-bottom: 24px; }
-  .bar-list { display: flex; flex-direction: column; gap: 14px; }
-  .bar-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
-  .bar-name { font-size: 10px; color: var(--gray-text); flex: 1; padding-right: 8px; }
-  .bar-amount { font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--white); }
-  .bar-track { height: 1px; background: var(--gray-line); }
-  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--pink-dark), var(--pink-light)); }
-
-  .commission-box { border: 1px solid var(--gray-line); margin-bottom: 24px; }
-
-  .c-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--gray-line);
-  }
-
-  .c-row:last-child { border-bottom: none; }
-
-  .c-row.total { background: var(--gray-mid); position: relative; }
-
-  .c-row.total::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, var(--pink-dark), var(--pink), var(--pink-light));
-  }
-
-  .c-label { font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gray-text); }
-  .c-val { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--white); }
-  .c-val.pink { color: var(--pink); font-size: 22px; }
-
-  .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 24px; }
-
-  .product-card { background: var(--gray-card); border: 1px solid var(--gray-line); padding: 16px; }
-
-  .product-rank {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 32px;
-    font-weight: 300;
-    color: var(--gray-muted);
-    line-height: 1;
-    margin-bottom: 8px;
-  }
-
-  .product-rank.top { color: var(--pink); }
-  .product-name { font-size: 11px; color: var(--white); line-height: 1.4; margin-bottom: 8px; }
-  .product-stats { display: flex; justify-content: space-between; align-items: center; }
-  .product-qty { font-size: 8px; letter-spacing: 0.15em; color: var(--gray-text); text-transform: uppercase; }
-  .product-val { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--pink); }
-
-
-  .tipo-btn {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 8px;
-    font-weight: 400;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-    padding: 6px 14px;
-    border: 1px solid var(--gray-line);
-    background: none;
-    cursor: pointer;
-    transition: all 0.2s;
-    border-radius: 0;
-  }
-
-  .tipo-btn:hover { color: var(--white); border-color: var(--gray-text); }
-  .tipo-btn.active { color: var(--black); background: var(--pink); border-color: var(--pink); }
-
-  .content-cards { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
-
-  .content-card {
-    background: var(--gray-card);
-    border: 1px solid var(--gray-line);
-    padding: 16px;
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-  }
-
-  .content-thumb {
-    width: 56px; height: 56px;
-    background: var(--gray-mid);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    border: 1px solid var(--gray-line);
-  }
-
-  .content-info { flex: 1; }
-  .content-date { font-size: 8px; letter-spacing: 0.15em; color: var(--gray-text); text-transform: uppercase; margin-bottom: 5px; }
-  .content-desc { font-size: 12px; color: var(--white); line-height: 1.5; margin-bottom: 8px; }
-  .content-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-
-  .content-tag {
-    font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase;
-    padding: 3px 8px; border: 1px solid var(--gray-line); color: var(--gray-text);
-  }
-
-  .content-tag.pink { border-color: var(--pink-dark); color: var(--pink); }
-
-  .materials-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 24px; }
-
-  .material-card {
-    background: var(--gray-card);
-    border: 1px solid var(--gray-line);
-    padding: 16px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    text-decoration: none;
-    display: block;
-  }
-
-  .material-card:hover { border-color: var(--pink); }
-  .material-icon { font-size: 24px; margin-bottom: 10px; display: block; }
-  .material-type { font-size: 7px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gray-text); margin-bottom: 5px; }
-  .material-name { font-size: 11px; color: var(--white); line-height: 1.4; margin-bottom: 8px; }
-  .material-date { font-size: 8px; letter-spacing: 0.1em; color: var(--gray-muted); text-transform: uppercase; }
-  .material-btn { display: inline-block; margin-top: 10px; font-size: 7px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--pink); border: 1px solid var(--pink-dark); padding: 4px 10px; }
-
-  .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-
-  .cal-month { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; letter-spacing: 0.1em; color: var(--white); }
-
-  .cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
-    background: var(--gray-line);
-    border: 1px solid var(--gray-line);
-    margin-bottom: 24px;
-  }
-
-  .cal-day-header { background: var(--gray-dark); padding: 8px 4px; text-align: center; font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); }
-
-  .cal-day { background: var(--gray-card); padding: 8px 6px; min-height: 52px; position: relative; }
-  .cal-day.empty { background: var(--gray-dark); opacity: 0.4; }
-  .cal-day.today { background: var(--gray-mid); }
-
-  .cal-day.today::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--pink); }
-
-  .cal-num { font-size: 10px; color: var(--gray-text); margin-bottom: 4px; }
-
-  .cal-event { font-size: 7px; background: rgba(232,160,176,0.15); color: var(--pink-light); padding: 2px 4px; margin-top: 2px; letter-spacing: 0.05em; line-height: 1.3; border-left: 1px solid var(--pink-dark); }
-
-  .upcoming-list { display: flex; flex-direction: column; gap: 8px; }
-
-  .upcoming-item { background: var(--gray-card); border: 1px solid var(--gray-line); padding: 14px 16px; display: flex; gap: 14px; align-items: center; }
-
-  .upcoming-date { text-align: center; min-width: 40px; }
-  .upcoming-day { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; color: var(--pink); line-height: 1; }
-  .upcoming-month { font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); }
-  .upcoming-divider { width: 1px; height: 36px; background: var(--gray-line); }
-  .upcoming-info { flex: 1; }
-  .upcoming-title { font-size: 12px; color: var(--white); margin-bottom: 4px; }
-  .upcoming-type { font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); }
-
-  .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; gap: 16px; }
-
-  .loading-logo { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; letter-spacing: 0.4em; color: var(--gray-text); animation: pulse 1.5s ease infinite; }
-
-  .loading-text { font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gray-muted); }
-
-  .portal-footer { border-top: 1px solid var(--gray-line); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
-
-  .footer-text { font-size: 7px; letter-spacing: 0.18em; color: var(--gray-muted); text-transform: uppercase; }
-
-
-  /* PROGRESS BAR */
-  .sync-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 24px;
-    background: var(--gray-dark);
-    border-bottom: 1px solid var(--gray-line);
-    font-size: 8px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--gray-text);
-  }
-
-  .sync-bar.hidden { display: none !important; }
-
-  .sync-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--pink);
-    animation: blink 1s ease infinite;
-    flex-shrink: 0;
-  }
-
-  .sync-dot.done { background: #8BC4A0; animation: none; }
-  .sync-dot.error { background: #E88080; animation: none; }
-
-  .sync-track {
-    flex: 1;
-    height: 1px;
-    background: var(--gray-line);
-  }
-
-  .sync-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--pink-dark), var(--pink-light));
-    transition: width 0.4s ease;
-  }
-
-  .sync-label { white-space: nowrap; }
-
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  @media (min-width: 768px) { .sync-bar { padding: 8px 48px; } }
-
-
-  /* GALERIA */
-  .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 24px;
-  }
-
-  @media (min-width: 768px) {
-    .gallery-grid { grid-template-columns: repeat(4, 1fr); }
-  }
-
-  .gallery-item {
-    aspect-ratio: 1;
-    overflow: hidden;
-    cursor: pointer;
-    border: 1px solid var(--gray-line);
-    position: relative;
-    background: var(--gray-card);
-    transition: border-color 0.2s;
-  }
-
-  .gallery-item:hover { border-color: var(--pink); }
-
-  .gallery-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  .gallery-item:hover img { transform: scale(1.04); }
-
-  .gallery-item-title {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    background: linear-gradient(transparent, rgba(0,0,0,0.8));
-    padding: 20px 8px 8px;
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    color: var(--white);
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-
-  .gallery-item:hover .gallery-item-title { opacity: 1; }
-
-  /* LIGHTBOX */
-  #lightbox {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.96);
-    z-index: 2000;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #lightbox.open { display: flex; }
-
-  .lightbox-header {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 24px;
-    background: linear-gradient(rgba(0,0,0,0.8), transparent);
-  }
-
-  .lightbox-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 16px;
-    color: var(--white);
-    letter-spacing: 0.05em;
-  }
-
-  .lightbox-close {
-    background: none;
-    border: 1px solid rgba(255,255,255,0.3);
-    color: var(--white);
-    font-family: 'Montserrat', sans-serif;
-    font-size: 8px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    padding: 8px 16px;
-    cursor: pointer;
-  }
-
-  .lightbox-img {
-    max-width: 90vw;
-    max-height: 85vh;
-    object-fit: contain;
-    border: 1px solid var(--gray-line);
-  }
-
-  .lightbox-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0,0,0,0.6);
-    border: 1px solid var(--gray-line);
-    color: var(--white);
-    font-size: 18px;
-    padding: 12px 16px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  .lightbox-nav:hover { background: rgba(232,160,176,0.3); }
-  .lightbox-prev { left: 16px; }
-  .lightbox-next { right: 16px; }
-
-  .lightbox-counter {
-    position: absolute;
-    bottom: 16px;
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    color: var(--gray-text);
-    text-transform: uppercase;
-  }
-
-
-  .mat-back-btn {
-    background: none;
-    border: 1px solid var(--gray-line);
-    color: var(--gray-text);
-    font-family: 'Montserrat', sans-serif;
-    font-size: 8px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    padding: 6px 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-right: 16px;
-    flex-shrink: 0;
-  }
-
-  .mat-back-btn:hover { border-color: var(--pink); color: var(--pink); }
-
-  .cat-card {
-    background: var(--gray-card);
-    border: 1px solid var(--gray-line);
-    padding: 28px 20px;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .cat-card:hover { border-color: var(--pink); background: var(--gray-mid); }
-
-  .cat-card-icon { font-size: 28px; }
-  .cat-card-label { font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gray-text); }
-  .cat-card-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--white); }
-  .cat-card-count { font-size: 8px; letter-spacing: 0.12em; color: var(--gray-muted); text-transform: uppercase; }
-
-  .launch-card {
-    background: var(--gray-card);
-    border: 1px solid var(--gray-line);
-    padding: 20px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .launch-card:hover { border-color: var(--pink); }
-
-  .launch-card-preview {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
-    margin-bottom: 12px;
-    aspect-ratio: 3/1;
-  }
-
-  .launch-card-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .launch-card-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--white); margin-bottom: 4px; }
-  .launch-card-count { font-size: 8px; letter-spacing: 0.15em; color: var(--gray-text); text-transform: uppercase; }
-  .launch-card-arrow { position: absolute; top: 16px; right: 16px; color: var(--pink); font-size: 16px; }
-
-
-  /* CALENDAR NAV */
-  .cal-nav-btn {
-    background: none;
-    border: 1px solid var(--gray-line);
-    color: var(--gray-text);
-    font-size: 16px;
-    padding: 4px 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    line-height: 1;
-  }
-  .cal-nav-btn:hover { border-color: var(--pink); color: var(--pink); }
-
-  /* CALENDAR EVENTS */
-  .cal-day { position: relative; }
-  .cal-event-dot {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    display: inline-block;
-    margin: 1px;
-  }
-  .cal-event-dot.planejado { background: var(--pink); opacity: 0.7; }
-  .cal-event-dot.postado { background: #8BC4A0; }
-  .cal-day-events { display: flex; flex-wrap: wrap; gap: 1px; margin-top: 3px; }
-  .cal-day.has-events { cursor: pointer; }
-  .cal-day.has-events:hover { background: #1F1F1F; }
-
-  /* UPCOMING */
-  .upcoming-item { background: var(--gray-card); border: 1px solid var(--gray-line); padding: 14px 16px; display: flex; gap: 14px; align-items: center; margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s; }
-  .upcoming-item:hover { border-color: var(--pink); }
-  .upcoming-item.postado { border-left: 2px solid #8BC4A0; }
-  .upcoming-item.planejado { border-left: 2px solid var(--pink); }
-  .upcoming-date { text-align: center; min-width: 40px; }
-  .upcoming-day { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; color: var(--pink); line-height: 1; }
-  .upcoming-month { font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); }
-  .upcoming-divider { width: 1px; height: 36px; background: var(--gray-line); }
-  .upcoming-info { flex: 1; }
-  .upcoming-title { font-size: 12px; color: var(--white); margin-bottom: 4px; }
-  .upcoming-type { font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray-text); }
-  .upcoming-status { font-size: 7px; letter-spacing: 0.15em; text-transform: uppercase; padding: 2px 8px; border-radius: 0; }
-  .upcoming-status.planejado { color: var(--pink); border: 1px solid var(--pink-dark); }
-  .upcoming-status.postado { color: #8BC4A0; border: 1px solid #4a9e6e; }
-
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes fadeDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-
-  @media (min-width: 768px) {
-    .portal-header { padding: 18px 48px; }
-    .month-bar { padding: 0 48px; }
-    .nav-tabs { padding: 0 48px; }
-    .portal-content { padding: 32px 48px; }
-    .portal-footer { padding: 16px 48px; }
-    .kpi-grid { grid-template-columns: repeat(4, 1fr); }
-    .kpi-card.hero { grid-column: span 1; }
-    .kpi-value.pink { font-size: 36px; }
-    .comparativo-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .products-grid { grid-template-columns: repeat(3, 1fr); }
-    .materials-grid { grid-template-columns: repeat(3, 1fr); }
-    .content-card { padding: 20px; }
-    .content-thumb { width: 72px; height: 72px; }
+  :root { --black:#080808;--white:#F4F0EB;--pink:#E8A0B0;--pink-light:#F2C4CE;--pink-dark:#C4607A;--gray-dark:#141414;--gray-mid:#1C1C1C;--gray-card:#181818;--gray-line:#282828;--gray-text:#6A6A6A;--gray-muted:#3A3A3A; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;background:var(--black);color:var(--white);font-family:'Montserrat',sans-serif;font-weight:300;overflow-x:hidden}
+  .hidden{display:none!important}
+  #login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden}
+  #login-screen::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(232,160,176,0.06) 0%,transparent 65%);pointer-events:none}
+  .login-logo{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;letter-spacing:0.5em;color:var(--white);text-transform:uppercase;margin-bottom:8px;animation:fadeDown 0.8s ease both}
+  .login-tagline{font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gray-text);margin-bottom:56px;animation:fadeDown 0.8s 0.1s ease both}
+  .login-box{width:100%;max-width:360px;animation:fadeUp 0.8s 0.2s ease both}
+  .login-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:0.1em;color:var(--white);margin-bottom:32px;text-align:center}
+  .input-group{margin-bottom:16px}
+  .input-label{font-size:8px;letter-spacing:0.28em;text-transform:uppercase;color:var(--gray-text);display:block;margin-bottom:8px}
+  .input-field{width:100%;background:var(--gray-dark);border:1px solid var(--gray-line);color:var(--white);font-family:'Montserrat',sans-serif;font-size:13px;font-weight:300;padding:14px 16px;outline:none;transition:border-color 0.2s;-webkit-appearance:none;border-radius:0}
+  .input-field:focus{border-color:var(--pink)}
+  .input-field::placeholder{color:var(--gray-muted)}
+  .login-btn{width:100%;background:var(--pink);color:var(--black);border:none;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.3em;text-transform:uppercase;padding:16px;cursor:pointer;margin-top:8px;transition:background 0.2s,transform 0.1s;border-radius:0;display:block}
+  .login-btn:hover{background:var(--pink-light)}
+  .login-btn:active{transform:scale(0.99)}
+  .login-btn:disabled{opacity:0.7;cursor:not-allowed}
+  .login-error{font-size:10px;color:var(--pink);letter-spacing:0.1em;text-align:center;margin-top:12px;min-height:16px}
+  #portal-screen{min-height:100vh;flex-direction:column}
+  #portal-screen:not(.hidden){display:flex}
+  .portal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--gray-line);position:sticky;top:0;background:var(--black);z-index:100}
+  .portal-logo{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;letter-spacing:0.4em;color:var(--white);text-transform:uppercase}
+  .portal-user{display:flex;align-items:center;gap:12px}
+  .user-name{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--pink);text-align:right}
+  .user-sub{font-size:8px;letter-spacing:0.12em;color:var(--gray-text);text-transform:uppercase;margin-top:2px}
+  .logout-btn{background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:7px;letter-spacing:0.2em;text-transform:uppercase;padding:6px 12px;cursor:pointer;transition:all 0.2s;border-radius:0}
+  .logout-btn:hover{border-color:var(--pink);color:var(--pink)}
+  .month-bar{display:flex;padding:0 24px;border-bottom:1px solid var(--gray-line);overflow-x:auto;scrollbar-width:none;background:var(--black)}
+  .month-bar::-webkit-scrollbar{display:none}
+  .month-btn{font-family:'Montserrat',sans-serif;font-size:8px;font-weight:400;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text);padding:12px 14px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap}
+  .month-btn:hover{color:var(--white)}
+  .month-btn.active{color:var(--pink);border-bottom:2px solid var(--pink)}
+  .nav-tabs{display:flex;padding:0 24px;border-bottom:1px solid var(--gray-line);overflow-x:auto;scrollbar-width:none;background:var(--gray-dark)}
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .nav-tab{font-family:'Montserrat',sans-serif;font-size:8px;font-weight:400;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-text);padding:13px 16px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+  .nav-tab:hover{color:var(--white)}
+  .nav-tab.active{color:var(--white);border-bottom:2px solid var(--pink)}
+  .nav-tab .tab-icon{font-size:10px}
+  .portal-content{flex:1;padding:24px}
+  .tab-panel{display:none;animation:fadeUp 0.3s ease both}
+  .tab-panel.active{display:block}
+  .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--gray-line);border:1px solid var(--gray-line);margin-bottom:24px}
+  .kpi-card{background:var(--gray-card);padding:20px 18px;position:relative}
+  .kpi-card.hero{background:var(--gray-mid);grid-column:span 2}
+  .kpi-card.hero::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--pink-dark),var(--pink),var(--pink-light))}
+  .kpi-label{font-size:7px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gray-text);margin-bottom:8px}
+  .kpi-value{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:var(--white);line-height:1}
+  .kpi-value.pink{color:var(--pink);font-size:40px}
+  .kpi-sub{font-size:7px;letter-spacing:0.12em;color:var(--gray-muted);margin-top:6px;text-transform:uppercase}
+  .comparativo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px}
+  .comp-card{background:var(--gray-card);border:1px solid var(--gray-line);padding:14px}
+  .comp-label{font-size:7px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text);margin-bottom:6px}
+  .comp-value{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--white)}
+  .comp-badge{font-size:8px;letter-spacing:0.1em;margin-top:4px;color:var(--gray-text)}
+  .comp-badge.up{color:#8BC4A0}
+  .comp-badge.down{color:var(--pink)}
+  .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .section-title{font-size:8px;letter-spacing:0.28em;text-transform:uppercase;color:var(--gray-text)}
+  .section-meta{font-size:7px;letter-spacing:0.15em;color:var(--gray-muted);text-transform:uppercase}
+  .table-wrap{border:1px solid var(--gray-line);overflow-x:auto;margin-bottom:24px}
+  table{width:100%;border-collapse:collapse;min-width:460px}
+  thead tr{border-bottom:1px solid var(--gray-line)}
+  th{font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-text);padding:10px 14px;text-align:left;font-weight:400;background:var(--gray-dark)}
+  td{padding:12px 14px;font-size:11px;color:var(--white);font-weight:300;border-bottom:1px solid #161616}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#111}
+  .td-date{color:var(--gray-text);font-size:10px}
+  .td-num{font-family:'Cormorant Garamond',serif;font-size:15px}
+  .td-pink{color:var(--pink);font-size:10px}
+  .bar-list{display:flex;flex-direction:column;gap:14px}
+  .bar-top{display:flex;justify-content:space-between;margin-bottom:6px}
+  .bar-name{font-size:10px;color:var(--gray-text);flex:1;padding-right:8px}
+  .bar-amount{font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--white)}
+  .bar-track{height:1px;background:var(--gray-line)}
+  .bar-fill{height:100%;background:linear-gradient(90deg,var(--pink-dark),var(--pink-light))}
+  .commission-box{border:1px solid var(--gray-line);margin-bottom:24px}
+  .c-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--gray-line)}
+  .c-row:last-child{border-bottom:none}
+  .c-row.total{background:var(--gray-mid);position:relative}
+  .c-row.total::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--pink-dark),var(--pink),var(--pink-light))}
+  .c-label{font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-text)}
+  .c-val{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--white)}
+  .c-val.pink{color:var(--pink);font-size:22px}
+  .products-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:24px}
+  .product-card{background:var(--gray-card);border:1px solid var(--gray-line);padding:16px}
+  .product-rank{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:var(--gray-muted);line-height:1;margin-bottom:8px}
+  .product-rank.top{color:var(--pink)}
+  .product-name{font-size:11px;color:var(--white);line-height:1.4;margin-bottom:8px}
+  .product-stats{display:flex;justify-content:space-between;align-items:center}
+  .product-qty{font-size:8px;letter-spacing:0.15em;color:var(--gray-text);text-transform:uppercase}
+  .product-val{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--pink)}
+  .tipo-btn{font-family:'Montserrat',sans-serif;font-size:8px;font-weight:400;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-text);padding:6px 14px;border:1px solid var(--gray-line);background:none;cursor:pointer;transition:all 0.2s;border-radius:0}
+  .tipo-btn:hover{color:var(--white);border-color:var(--gray-text)}
+  .tipo-btn.active{color:var(--black);background:var(--pink);border-color:var(--pink)}
+  .content-cards{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+  .content-card{background:var(--gray-card);border:1px solid var(--gray-line);padding:16px;display:flex;gap:14px;align-items:flex-start}
+  .content-thumb{width:56px;height:56px;background:var(--gray-mid);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid var(--gray-line)}
+  .content-info{flex:1}
+  .content-date{font-size:8px;letter-spacing:0.15em;color:var(--gray-text);text-transform:uppercase;margin-bottom:5px}
+  .content-desc{font-size:12px;color:var(--white);line-height:1.5;margin-bottom:8px}
+  .content-tags{display:flex;gap:6px;flex-wrap:wrap}
+  .content-tag{font-size:7px;letter-spacing:0.15em;text-transform:uppercase;padding:3px 8px;border:1px solid var(--gray-line);color:var(--gray-text)}
+  .content-tag.pink{border-color:var(--pink-dark);color:var(--pink)}
+  .materials-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:24px}
+  .material-card{background:var(--gray-card);border:1px solid var(--gray-line);padding:16px;cursor:pointer;transition:border-color 0.2s;text-decoration:none;display:block}
+  .material-card:hover{border-color:var(--pink)}
+  .material-icon{font-size:24px;margin-bottom:10px;display:block}
+  .material-type{font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-text);margin-bottom:5px}
+  .material-name{font-size:11px;color:var(--white);line-height:1.4;margin-bottom:8px}
+  .material-date{font-size:8px;letter-spacing:0.1em;color:var(--gray-muted);text-transform:uppercase}
+  .material-btn{display:inline-block;margin-top:10px;font-size:7px;letter-spacing:0.2em;text-transform:uppercase;color:var(--pink);border:1px solid var(--pink-dark);padding:4px 10px}
+  .sync-bar{display:flex;align-items:center;gap:10px;padding:8px 24px;background:var(--gray-dark);border-bottom:1px solid var(--gray-line);font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-text)}
+  .sync-bar.hidden{display:none!important}
+  .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--pink);animation:blink 1s ease infinite;flex-shrink:0}
+  .sync-dot.done{background:#8BC4A0;animation:none}
+  .sync-dot.error{background:#E88080;animation:none}
+  .sync-track{flex:1;height:1px;background:var(--gray-line)}
+  .sync-fill{height:100%;background:linear-gradient(90deg,var(--pink-dark),var(--pink-light));transition:width 0.4s ease}
+  .sync-label{white-space:nowrap}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  @media(min-width:768px){.sync-bar{padding:8px 48px}}
+  .gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px}
+  @media(min-width:768px){.gallery-grid{grid-template-columns:repeat(4,1fr)}}
+  .gallery-item{aspect-ratio:1;overflow:hidden;cursor:pointer;border:1px solid var(--gray-line);position:relative;background:var(--gray-card);transition:border-color 0.2s}
+  .gallery-item:hover{border-color:var(--pink)}
+  .gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform 0.3s ease}
+  .gallery-item:hover img{transform:scale(1.04)}
+  .gallery-item-title{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.8));padding:20px 8px 8px;font-size:9px;letter-spacing:0.1em;color:var(--white);opacity:0;transition:opacity 0.2s}
+  .gallery-item:hover .gallery-item-title{opacity:1}
+  #lightbox{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.96);z-index:2000;flex-direction:column;align-items:center;justify-content:center}
+  #lightbox.open{display:flex}
+  .lightbox-header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:linear-gradient(rgba(0,0,0,0.8),transparent)}
+  .lightbox-title{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--white);letter-spacing:0.05em}
+  .lightbox-close{background:none;border:1px solid rgba(255,255,255,0.3);color:var(--white);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;padding:8px 16px;cursor:pointer}
+  .lightbox-img{max-width:90vw;max-height:85vh;object-fit:contain;border:1px solid var(--gray-line)}
+  .lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.6);border:1px solid var(--gray-line);color:var(--white);font-size:18px;padding:12px 16px;cursor:pointer;transition:background 0.2s}
+  .lightbox-nav:hover{background:rgba(232,160,176,0.3)}
+  .lightbox-prev{left:16px}
+  .lightbox-next{right:16px}
+  .lightbox-counter{position:absolute;bottom:16px;font-size:9px;letter-spacing:0.2em;color:var(--gray-text);text-transform:uppercase}
+  .mat-back-btn{background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;padding:6px 14px;cursor:pointer;transition:all 0.2s;margin-right:16px;flex-shrink:0}
+  .mat-back-btn:hover{border-color:var(--pink);color:var(--pink)}
+  .cat-card{background:var(--gray-card);border:1px solid var(--gray-line);padding:28px 20px;cursor:pointer;transition:border-color 0.2s,background 0.2s;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+  .cat-card:hover{border-color:var(--pink);background:var(--gray-mid)}
+  .cat-card-icon{font-size:28px}
+  .cat-card-label{font-size:8px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gray-text)}
+  .cat-card-name{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--white)}
+  .cat-card-count{font-size:8px;letter-spacing:0.12em;color:var(--gray-muted);text-transform:uppercase}
+  .launch-card{background:var(--gray-card);border:1px solid var(--gray-line);padding:20px;cursor:pointer;transition:border-color 0.2s;position:relative;overflow:hidden}
+  .launch-card:hover{border-color:var(--pink)}
+  .launch-card-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:12px;aspect-ratio:3/1}
+  .launch-card-preview img{width:100%;height:100%;object-fit:cover}
+  .launch-card-name{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--white);margin-bottom:4px}
+  .launch-card-count{font-size:8px;letter-spacing:0.15em;color:var(--gray-text);text-transform:uppercase}
+  .launch-card-arrow{position:absolute;top:16px;right:16px;color:var(--pink);font-size:16px}
+  .cal-nav-btn{background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-size:16px;padding:4px 12px;cursor:pointer;transition:all 0.2s;line-height:1}
+  .cal-nav-btn:hover{border-color:var(--pink);color:var(--pink)}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--gray-line);border:1px solid var(--gray-line);margin-bottom:24px}
+  .cal-day-header{background:var(--gray-dark);padding:8px 4px;text-align:center;font-size:7px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-text)}
+  .cal-day{background:var(--gray-card);padding:8px 6px;min-height:52px;position:relative}
+  .cal-day.empty{background:var(--gray-dark);opacity:0.4}
+  .cal-day.today{background:var(--gray-mid)}
+  .cal-day.today::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--pink)}
+  .cal-num{font-size:10px;color:var(--gray-text);margin-bottom:4px}
+  .cal-event-dot{width:5px;height:5px;border-radius:50%;display:inline-block;margin:1px}
+  .cal-event-dot.planejado{background:var(--pink);opacity:0.7}
+  .cal-event-dot.postado{background:#8BC4A0}
+  .cal-day-events{display:flex;flex-wrap:wrap;gap:1px;margin-top:3px}
+  .cal-day.has-events{cursor:pointer}
+  .cal-day.has-events:hover{background:#1F1F1F}
+  .upcoming-list{display:flex;flex-direction:column;gap:8px}
+  .upcoming-item{background:var(--gray-card);border:1px solid var(--gray-line);padding:14px 16px;display:flex;gap:14px;align-items:center;cursor:pointer;transition:border-color 0.2s}
+  .upcoming-item:hover{border-color:var(--pink)}
+  .upcoming-item.postado{border-left:2px solid #8BC4A0}
+  .upcoming-item.planejado{border-left:2px solid var(--pink)}
+  .upcoming-date{text-align:center;min-width:40px}
+  .upcoming-day{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--pink);line-height:1}
+  .upcoming-month{font-size:7px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-text)}
+  .upcoming-divider{width:1px;height:36px;background:var(--gray-line)}
+  .upcoming-info{flex:1}
+  .upcoming-title{font-size:12px;color:var(--white);margin-bottom:4px}
+  .upcoming-type{font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-text)}
+  .upcoming-status{font-size:7px;letter-spacing:0.15em;text-transform:uppercase;padding:2px 8px}
+  .upcoming-status.planejado{color:var(--pink);border:1px solid var(--pink-dark)}
+  .upcoming-status.postado{color:#8BC4A0;border:1px solid #4a9e6e}
+  .loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;gap:16px}
+  .loading-logo{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;letter-spacing:0.4em;color:var(--gray-text);animation:pulse 1.5s ease infinite}
+  .loading-text{font-size:8px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gray-muted)}
+  .portal-footer{border-top:1px solid var(--gray-line);padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+  .footer-text{font-size:7px;letter-spacing:0.18em;color:var(--gray-muted);text-transform:uppercase}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pulse{0%,100%{opacity:0.4}50%{opacity:1}}
+  @media(min-width:768px){
+    .portal-header,.portal-footer{padding:18px 48px}
+    .month-bar,.nav-tabs{padding:0 48px}
+    .portal-content{padding:32px 48px}
+    .kpi-grid{grid-template-columns:repeat(4,1fr)}
+    .kpi-card.hero{grid-column:span 1}
+    .kpi-value.pink{font-size:36px}
+    .comparativo-grid{grid-template-columns:repeat(3,1fr);gap:16px}
+    .products-grid{grid-template-columns:repeat(3,1fr)}
+    .materials-grid{grid-template-columns:repeat(3,1fr)}
+    .content-card{padding:20px}
+    .content-thumb{width:72px;height:72px}
   }
 </style>
 </head>
 <body>
-
-<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-logo">VM</div>
   <div class="login-tagline">Portal de Influencers</div>
   <div class="login-box">
     <div class="login-title">Acesse sua conta</div>
-    <div class="input-group">
-      <label class="input-label" for="email">E-mail</label>
-      <input class="input-field" type="email" id="email" placeholder="seu@email.com" autocomplete="email">
-    </div>
-    <div class="input-group">
-      <label class="input-label" for="password">Senha</label>
-      <input class="input-field" type="password" id="password" placeholder="••••••••" autocomplete="current-password">
-    </div>
+    <div class="input-group"><label class="input-label" for="email">E-mail</label><input class="input-field" type="email" id="email" placeholder="seu@email.com" autocomplete="email"></div>
+    <div class="input-group"><label class="input-label" for="password">Senha</label><input class="input-field" type="password" id="password" placeholder="••••••••" autocomplete="current-password"></div>
     <button class="login-btn" id="login-btn">Entrar</button>
     <div class="login-error" id="login-error"></div>
   </div>
 </div>
 
-<!-- PORTAL -->
 <div id="portal-screen" class="hidden">
-
-  <!-- ─── ADMIN PORTAL ─── -->
-  <div id="admin-screen" class="hidden">
-    <header class="portal-header">
-      <div class="portal-logo">VM</div>
-      <div class="portal-user">
-        <div>
-          <div class="user-name" style="color:var(--pink);">Painel Admin</div>
-          <div class="user-sub">VM Fashion Store</div>
-        </div>
-        <button class="logout-btn" id="admin-logout-btn">Sair</button>
-      </div>
-    </header>
-
-    <!-- ADMIN MONTH BAR -->
-    <div class="month-bar" id="admin-month-bar"></div>
-
-    <!-- ADMIN CONTENT -->
-    <main style="padding:32px 48px;">
-
-      <!-- KPIs GERAIS -->
-      <div class="section-header" style="margin-bottom:20px;">
-        <div class="section-title">Visão Geral — Todas as Influencers</div>
-        <div class="section-meta" id="admin-period-label">—</div>
-      </div>
-
-      <div class="kpi-grid" style="margin-bottom:32px;">
-        <div class="kpi-card hero">
-          <div class="kpi-label">Total a Pagar em Comissões</div>
-          <div class="kpi-value pink" id="admin-total-comissao">—</div>
-          <div class="kpi-sub" id="admin-kpi-period">—</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Total Vendido (todas)</div>
-          <div class="kpi-value" id="admin-total-vendido">—</div>
-          <div class="kpi-sub">Via cupons</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Total de Pedidos</div>
-          <div class="kpi-value" id="admin-total-pedidos">—</div>
-          <div class="kpi-sub">Confirmados</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Ticket Médio Geral</div>
-          <div class="kpi-value" id="admin-ticket-medio">—</div>
-          <div class="kpi-sub">Por pedido</div>
-        </div>
-      </div>
-
-      <!-- TABELA COMPARATIVA -->
-      <div class="section-header" style="margin-bottom:16px;">
-        <div class="section-title">Tabela Comparativa</div>
-      </div>
-      <div class="table-wrap" style="margin-bottom:32px;">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Influencer</th>
-              <th>Cupom</th>
-              <th>Pedidos</th>
-              <th>Total Vendido</th>
-              <th>Comissão Variável</th>
-              <th>Cachê Fixo</th>
-              <th>Total a Pagar</th>
-              <th>Ticket Médio</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="admin-table"></tbody>
-        </table>
-      </div>
-
-      </div>
-
-    </main>
-
-    <!-- ADMIN SYNC BAR -->
-    <div class="sync-bar hidden" id="admin-sync-bar">
-      <div class="sync-dot" id="admin-sync-dot"></div>
-      <div class="sync-track"><div class="sync-fill" id="admin-sync-fill" style="width:0%"></div></div>
-      <div class="sync-label" id="admin-sync-label">Carregando dados...</div>
-    </div>
-  </div>
-
-  <!-- ─── INFLUENCER PORTAL (normal) ─── -->
   <header class="portal-header">
     <div class="portal-logo">VM</div>
     <div class="portal-user">
-      <div>
-        <div class="user-name" id="user-name">—</div>
-        <div class="user-sub" id="user-coupon">—</div>
-      </div>
+      <div><div class="user-name" id="user-name">—</div><div class="user-sub" id="user-coupon">—</div></div>
       <button class="logout-btn" id="logout-btn">Sair</button>
     </div>
   </header>
-
   <div class="month-bar" id="month-bar"></div>
-
-
-  <!-- SYNC BAR -->
   <div class="sync-bar hidden" id="sync-bar">
     <div class="sync-dot" id="sync-dot"></div>
     <div class="sync-track"><div class="sync-fill" id="sync-fill" style="width:0%"></div></div>
     <div class="sync-label" id="sync-label">Carregando dados...</div>
   </div>
-
   <nav class="nav-tabs">
     <button class="nav-tab active" data-tab="performance"><span class="tab-icon">📊</span> Performance</button>
     <button class="nav-tab" data-tab="produtos"><span class="tab-icon">🛍️</span> Produtos</button>
@@ -1011,62 +250,22 @@
     <button class="nav-tab" data-tab="materiais"><span class="tab-icon">📁</span> Materiais</button>
     <button class="nav-tab" data-tab="calendario"><span class="tab-icon">📅</span> Calendário</button>
   </nav>
-
   <main class="portal-content">
-    <div class="loading-state" id="loading-state">
-      <div class="loading-logo">VM</div>
-      <div class="loading-text">Carregando seus dados...</div>
-    </div>
-
-    <!-- PERFORMANCE -->
+    <div class="loading-state" id="loading-state"><div class="loading-logo">VM</div><div class="loading-text">Carregando seus dados...</div></div>
     <div class="tab-panel" id="tab-performance">
       <div class="kpi-grid">
-        <div class="kpi-card hero">
-          <div class="kpi-label">Total a Receber</div>
-          <div class="kpi-value pink" id="kpi-total-receber">—</div>
-          <div class="kpi-sub" id="kpi-mes-label">—</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Total Vendido</div>
-          <div class="kpi-value" id="kpi-total-vendido">—</div>
-          <div class="kpi-sub">Via cupom</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Pedidos Gerados</div>
-          <div class="kpi-value" id="kpi-pedidos">—</div>
-          <div class="kpi-sub">Confirmados</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Ticket Médio</div>
-          <div class="kpi-value" id="kpi-ticket">—</div>
-          <div class="kpi-sub">Por pedido</div>
-        </div>
+        <div class="kpi-card hero"><div class="kpi-label">Total a Receber</div><div class="kpi-value pink" id="kpi-total-receber">—</div><div class="kpi-sub" id="kpi-mes-label">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Vendido</div><div class="kpi-value" id="kpi-total-vendido">—</div><div class="kpi-sub">Via cupom</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pedidos Gerados</div><div class="kpi-value" id="kpi-pedidos">—</div><div class="kpi-sub">Confirmados</div></div>
+        <div class="kpi-card"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="kpi-ticket">—</div><div class="kpi-sub">Por pedido</div></div>
       </div>
-
-      <div class="section-header">
-        <div class="section-title">Comparativo — mês anterior</div>
-      </div>
+      <div class="section-header"><div class="section-title">Comparativo — mês anterior</div></div>
       <div class="comparativo-grid">
-        <div class="comp-card">
-          <div class="comp-label">Mês Atual</div>
-          <div class="comp-value" id="comp-atual">—</div>
-          <div class="comp-badge" id="comp-mes-atual">—</div>
-        </div>
-        <div class="comp-card">
-          <div class="comp-label">Mês Anterior</div>
-          <div class="comp-value" id="comp-anterior">—</div>
-          <div class="comp-badge" id="comp-mes-anterior">—</div>
-        </div>
-        <div class="comp-card">
-          <div class="comp-label">Variação</div>
-          <div class="comp-value" id="comp-variacao">—</div>
-          <div class="comp-badge" id="comp-badge">vs mês anterior</div>
-        </div>
+        <div class="comp-card"><div class="comp-label">Mês Atual</div><div class="comp-value" id="comp-atual">—</div><div class="comp-badge" id="comp-mes-atual">—</div></div>
+        <div class="comp-card"><div class="comp-label">Mês Anterior</div><div class="comp-value" id="comp-anterior">—</div><div class="comp-badge" id="comp-mes-anterior">—</div></div>
+        <div class="comp-card"><div class="comp-label">Variação</div><div class="comp-value" id="comp-variacao">—</div><div class="comp-badge" id="comp-badge">vs mês anterior</div></div>
       </div>
-
-      <div class="section-header">
-        <div class="section-title">Resumo da comissão</div>
-      </div>
+      <div class="section-header"><div class="section-title">Resumo da comissão</div></div>
       <div class="commission-box">
         <div class="c-row"><div class="c-label">Total vendido</div><div class="c-val" id="comm-vendido">—</div></div>
         <div class="c-row"><div class="c-label">% Comissão</div><div class="c-val" id="comm-perc">—</div></div>
@@ -1074,144 +273,57 @@
         <div class="c-row"><div class="c-label">Cachê fixo</div><div class="c-val" id="comm-fixo">—</div></div>
         <div class="c-row total"><div class="c-label">Total a receber</div><div class="c-val pink" id="comm-total">—</div></div>
       </div>
-
-      <div class="section-header">
-        <div class="section-title">Pedidos do período</div>
-        <div class="section-meta" id="pedidos-count">—</div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th><th>Produto</th><th>Qtd</th><th>Total</th><th>Comissão</th>
-            </tr>
-          </thead>
-          <tbody id="orders-table">
-            <tr><td colspan="5" style="text-align:center;color:var(--gray-text);padding:24px;">Carregando...</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="section-header"><div class="section-title">Pedidos do período</div><div class="section-meta" id="pedidos-count">—</div></div>
+      <div class="table-wrap"><table><thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Total</th><th>Comissão</th></tr></thead><tbody id="orders-table"><tr><td colspan="5" style="text-align:center;color:var(--gray-text);padding:24px;">Carregando...</td></tr></tbody></table></div>
     </div>
-
-    <!-- PRODUTOS -->
     <div class="tab-panel" id="tab-produtos">
-      <div class="section-header" style="margin-bottom:16px;">
-        <div class="section-title">Produtos mais vendidos</div>
-        <div class="section-meta" id="produtos-periodo">—</div>
-      </div>
-      <div class="products-grid" id="products-grid">
-        <div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Carregando...</div>
-      </div>
-      <div class="section-header" style="margin-bottom:14px;">
-        <div class="section-title">Por peça mais vendida</div>
-      </div>
-      <div class="bar-section">
-        <div class="bar-list" id="products-bar-list"></div>
-      </div>
+      <div class="section-header" style="margin-bottom:16px;"><div class="section-title">Produtos mais vendidos</div><div class="section-meta" id="produtos-periodo">—</div></div>
+      <div class="products-grid" id="products-grid"><div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Carregando...</div></div>
+      <div class="section-header" style="margin-bottom:14px;"><div class="section-title">Por peça mais vendida</div></div>
+      <div><div class="bar-list" id="products-bar-list"></div></div>
     </div>
-
-    <!-- CONTEÚDOS -->
     <div class="tab-panel" id="tab-conteudos">
-      <div class="section-header" style="margin-bottom:16px;">
-        <div class="section-title">Conteúdos postados</div>
-        <div class="section-meta" id="conteudos-meta">Carregando...</div>
-      </div>
-      <div class="section-header" style="margin-bottom:12px;">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="tipo-filters">
-          <button class="tipo-btn active" data-tipo="todos">Todos</button>
-          <button class="tipo-btn" data-tipo="feed">Feed</button>
-          <button class="tipo-btn" data-tipo="carrossel">Carrossel</button>
-          <button class="tipo-btn" data-tipo="stories">Stories</button>
-          <button class="tipo-btn" data-tipo="reels">Reels</button>
-        </div>
-      </div>
-      <div class="content-cards" id="content-cards">
-        <div style="text-align:center;color:var(--gray-text);padding:32px;font-size:11px;border:1px solid var(--gray-line);">
-          Carregando conteúdos...
-        </div>
-      </div>
+      <div class="section-header" style="margin-bottom:16px;"><div class="section-title">Conteúdos postados</div><div class="section-meta" id="conteudos-meta">Carregando...</div></div>
+      <div class="section-header" style="margin-bottom:12px;"><div style="display:flex;gap:8px;flex-wrap:wrap;" id="tipo-filters"><button class="tipo-btn active" data-tipo="todos">Todos</button><button class="tipo-btn" data-tipo="feed">Feed</button><button class="tipo-btn" data-tipo="carrossel">Carrossel</button><button class="tipo-btn" data-tipo="stories">Stories</button><button class="tipo-btn" data-tipo="reels">Reels</button></div></div>
+      <div class="content-cards" id="content-cards"><div style="text-align:center;color:var(--gray-text);padding:32px;font-size:11px;border:1px solid var(--gray-line);">Carregando conteúdos...</div></div>
     </div>
-
-    <!-- MATERIAIS -->
     <div class="tab-panel" id="tab-materiais">
-
-      <!-- NÍVEL 1: Cards de categoria -->
       <div id="mat-nivel-1">
-        <div class="section-header" style="margin-bottom:20px;">
-          <div class="section-title">Materiais e briefings</div>
-          <div class="section-meta" id="materiais-meta">—</div>
-        </div>
+        <div class="section-header" style="margin-bottom:20px;"><div class="section-title">Materiais e briefings</div><div class="section-meta" id="materiais-meta">—</div></div>
         <div class="materials-grid" id="cat-grid"></div>
       </div>
-
-      <!-- NÍVEL 2: Conteúdo da categoria ou lançamentos de fotos -->
       <div id="mat-nivel-2" style="display:none;">
-        <div class="section-header" style="margin-bottom:20px;">
-          <button class="mat-back-btn" id="back-to-cats">← Voltar</button>
-          <div class="section-title" id="nivel2-title">—</div>
-          <div class="section-meta" id="nivel2-meta">—</div>
-        </div>
+        <div class="section-header" style="margin-bottom:20px;"><button class="mat-back-btn" id="back-to-cats">← Voltar</button><div class="section-title" id="nivel2-title">—</div><div class="section-meta" id="nivel2-meta">—</div></div>
         <div class="materials-grid" id="nivel2-grid"></div>
       </div>
-
-      <!-- NÍVEL 3: Galeria de fotos de um lançamento -->
       <div id="mat-nivel-3" style="display:none;">
-        <div class="section-header" style="margin-bottom:20px;">
-          <button class="mat-back-btn" id="back-to-launches">← Voltar</button>
-          <div class="section-title" id="nivel3-title">—</div>
-          <div class="section-meta" id="nivel3-meta">—</div>
-        </div>
+        <div class="section-header" style="margin-bottom:20px;"><button class="mat-back-btn" id="back-to-launches">← Voltar</button><div class="section-title" id="nivel3-title">—</div><div class="section-meta" id="nivel3-meta">—</div></div>
         <div class="gallery-grid" id="nivel3-grid"></div>
       </div>
-
     </div>
-
-    <!-- LIGHTBOX GALERIA -->
     <div id="lightbox">
-      <div class="lightbox-header">
-        <div class="lightbox-title" id="lightbox-title">—</div>
-        <button class="lightbox-close" id="lightbox-close">Fechar ✕</button>
-      </div>
+      <div class="lightbox-header"><div class="lightbox-title" id="lightbox-title">—</div><button class="lightbox-close" id="lightbox-close">Fechar ✕</button></div>
       <button class="lightbox-nav lightbox-prev" id="lb-prev">‹</button>
       <img class="lightbox-img" id="lightbox-img" src="" alt="">
       <button class="lightbox-nav lightbox-next" id="lb-next">›</button>
       <div class="lightbox-counter" id="lightbox-counter">1 / 1</div>
     </div>
-
-    <!-- MODAL VISUALIZADOR -->
     <div id="material-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:1000;flex-direction:column;align-items:stretch;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid var(--gray-line);background:var(--gray-dark);">
         <div id="modal-title" style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--white);letter-spacing:0.05em;">—</div>
         <button id="modal-close" style="background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;padding:8px 16px;cursor:pointer;">Fechar ✕</button>
       </div>
-      <div style="flex:1;overflow:hidden;padding:0;">
-        <iframe id="modal-iframe" src="" style="width:100%;height:100%;border:none;background:var(--black);" allowfullscreen></iframe>
-      </div>
+      <div style="flex:1;overflow:hidden;"><iframe id="modal-iframe" src="" style="width:100%;height:100%;border:none;background:var(--black);" allowfullscreen></iframe></div>
     </div>
-
-    <!-- CALENDÁRIO -->
     <div class="tab-panel" id="tab-calendario">
-
       <div class="section-header" style="margin-bottom:16px;">
-        <div style="display:flex;align-items:center;gap:16px;">
-          <button class="cal-nav-btn" id="cal-prev">‹</button>
-          <div class="cal-month" id="cal-month-title">—</div>
-          <button class="cal-nav-btn" id="cal-next">›</button>
-        </div>
+        <div style="display:flex;align-items:center;gap:16px;"><button class="cal-nav-btn" id="cal-prev">‹</button><div class="cal-month" style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;letter-spacing:0.1em;color:var(--white);" id="cal-month-title">—</div><button class="cal-nav-btn" id="cal-next">›</button></div>
         <button class="login-btn" id="add-event-btn" style="width:auto;padding:8px 20px;margin:0;font-size:8px;">+ Planejar postagem</button>
       </div>
-
       <div class="cal-grid" id="cal-grid"></div>
-
-      <div class="section-header" style="margin-bottom:14px;margin-top:8px;">
-        <div class="section-title">Agenda do mês</div>
-        <div class="section-meta" id="agenda-meta">—</div>
-      </div>
+      <div class="section-header" style="margin-bottom:14px;margin-top:8px;"><div class="section-title">Agenda do mês</div><div class="section-meta" id="agenda-meta">—</div></div>
       <div class="upcoming-list" id="upcoming-list"></div>
-
     </div>
-
-    <!-- MODAL NOVO EVENTO -->
     <div id="event-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:1000;align-items:center;justify-content:center;">
       <div style="background:var(--gray-dark);border:1px solid var(--gray-line);width:100%;max-width:420px;margin:24px;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--gray-line);">
@@ -1219,34 +331,15 @@
           <button id="event-modal-close" style="background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;padding:6px 12px;cursor:pointer;">✕</button>
         </div>
         <div style="padding:24px;display:flex;flex-direction:column;gap:16px;">
-          <div>
-            <label class="input-label">Data prevista</label>
-            <input class="input-field" type="date" id="ev-data">
-          </div>
-          <div>
-            <label class="input-label">Tipo de conteúdo</label>
-            <select class="input-field" id="ev-tipo" style="cursor:pointer;">
-              <option value="feed">Feed</option>
-              <option value="carrossel">Carrossel</option>
-              <option value="stories">Stories</option>
-              <option value="reels">Reels</option>
-            </select>
-          </div>
-          <div>
-            <label class="input-label">Ideia / Descrição</label>
-            <input class="input-field" type="text" id="ev-titulo" placeholder="Ex: Look inverno com cupom">
-          </div>
-          <div>
-            <label class="input-label">Produto a divulgar</label>
-            <input class="input-field" type="text" id="ev-produto" placeholder="Ex: Blazer Sapphir Sand">
-          </div>
+          <div><label class="input-label">Data prevista</label><input class="input-field" type="date" id="ev-data"></div>
+          <div><label class="input-label">Tipo de conteúdo</label><select class="input-field" id="ev-tipo" style="cursor:pointer;"><option value="feed">Feed</option><option value="carrossel">Carrossel</option><option value="stories">Stories</option><option value="reels">Reels</option></select></div>
+          <div><label class="input-label">Ideia / Descrição</label><input class="input-field" type="text" id="ev-titulo" placeholder="Ex: Look inverno com cupom"></div>
+          <div><label class="input-label">Produto a divulgar</label><input class="input-field" type="text" id="ev-produto" placeholder="Ex: Blazer Sapphir Sand"></div>
           <div id="ev-error" style="font-size:10px;color:var(--pink);min-height:14px;"></div>
           <button class="login-btn" id="ev-save-btn" style="margin:0;">Salvar</button>
         </div>
       </div>
     </div>
-
-    <!-- MODAL DETALHES EVENTO -->
     <div id="event-detail-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:1000;align-items:center;justify-content:center;">
       <div style="background:var(--gray-dark);border:1px solid var(--gray-line);width:100%;max-width:380px;margin:24px;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--gray-line);">
@@ -1258,7 +351,6 @@
       </div>
     </div>
   </main>
-
   <footer class="portal-footer">
     <div class="footer-text">VM Fashion Store</div>
     <div class="footer-text">Dados via VNDA · Atualizados diariamente</div>
@@ -1266,1467 +358,474 @@
   </footer>
 </div>
 
-<!-- Supabase carregado via CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const SUPABASE_URL = 'https://ckqqfppssynlicsejrqc.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrcXFmcHBzc3lubGljc2VqcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTk5NDcsImV4cCI6MjA5MzAzNTk0N30.sC-F9JEweQun-Pteg0uLEV72dP7GV2hGVrYtB5fONH8';
+const SUPABASE_URL='https://ckqqfppssynlicsejrqc.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrcXFmcHBzc3lubGljc2VqcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTk5NDcsImV4cCI6MjA5MzAzNTk0N30.sC-F9JEweQun-Pteg0uLEV72dP7GV2hGVrYtB5fONH8';
+const VNDA_BASE='/api/orders';
+const SHEETS_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=0&single=true&output=csv';
+const MATERIALS_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=1147990017&single=true&output=csv';
+const GALLERY_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=1960193422&single=true&output=csv';
+const PRODUTOS_ENVIADOS_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=1154247856&single=true&output=csv';
+const MONTHS=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MONTHS_SHORT=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const fmt=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
+const fmtPct=v=>(v>=0?'+':'')+((v||0)*100).toFixed(1)+'%';
+const CAT_CONFIG={briefing:{icon:'📋',label:'Briefing'},contrato:{icon:'📄',label:'Contrato'},fotos:{icon:'📸',label:'Fotos'},identidade:{icon:'🎨',label:'Identidade Visual'},produtos_enviados:{icon:'📦',label:'Produtos Enviados'},outro:{icon:'📁',label:'Outro'}};
 
-// API via proxy Vercel (evita bloqueio CORS do navegador)
-const VNDA_BASE = '/api/orders';
-const VNDA_HEADERS = {};
+let sb,currentUser,currentInfluencer,allOrders=[],selectedMonth,selectedYear;
+let allContents=[],tipoFiltro='todos';
+let allMaterials=[],allGallery=[],allProdutosEnviados=[];
+let lightboxIdx=0,lightboxItems=[];
+let calYear,calMonth,calEventos=[];
 
-// Google Sheets — Conteúdos
-const SHEETS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=0&single=true&output=csv';
+function parseCSV(text){
+  return text.split('\n').slice(1).filter(r=>r.trim()).map(r=>{
+    const cols=[];let cur='',inQ=false;
+    for(let i=0;i<r.length;i++){if(r[i]==='"'){inQ=!inQ;continue}if(r[i]===','&&!inQ){cols.push(cur.trim());cur='';continue}cur+=r[i]}
+    cols.push(cur.trim());return cols;
+  });
+}
 
-// Google Sheets — Materiais
-const MATERIALS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=1147990017&single=true&output=csv';
+function toISO(d){if(!d)return '';if(d.includes('/')){const p=d.split('/');return p[2]+'-'+p[1]+'-'+p[0]}return d}
 
-// Google Sheets — Galeria de fotos
-const GALLERY_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=1960193422&single=true&output=csv';
-
-// Google Sheets — Produtos Enviados
-const PRODUTOS_ENVIADOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=1154247856&single=true&output=csv';
-
-const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const MONTHS_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-const fmt = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
-const fmtPct = v => (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
-
-let sb, currentUser, currentInfluencer, allOrders = [], selectedMonth, selectedYear;
-
-document.addEventListener('DOMContentLoaded', function () {
-  // Inicializa Supabase
-  sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  // Eventos de login
-  document.getElementById('login-btn').addEventListener('click', handleLogin);
-  document.getElementById('password').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
-  document.getElementById('logout-btn').addEventListener('click', handleLogout);
-  document.getElementById('admin-logout-btn').addEventListener('click', handleLogout);
-
-  // Fix logout for dynamically shown elements
-  document.addEventListener('click', function(e) {
-    if (e.target.id === 'logout-btn' || e.target.id === 'admin-logout-btn') {
-      handleLogout();
+document.addEventListener('DOMContentLoaded',function(){
+  sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  document.getElementById('login-btn').addEventListener('click',handleLogin);
+  document.getElementById('password').addEventListener('keypress',e=>{if(e.key==='Enter')handleLogin()});
+  document.getElementById('logout-btn').addEventListener('click',handleLogout);
+  document.addEventListener('click',function(e){
+    if(e.target.classList.contains('tipo-btn')){
+      document.querySelectorAll('#tab-conteudos .tipo-btn').forEach(b=>b.classList.remove('active'));
+      e.target.classList.add('active');tipoFiltro=e.target.dataset.tipo;renderContents();
     }
   });
-
-  // Admin table click
-  document.addEventListener('click', function(e) {
-    const btn = e.target.closest('.view-portal-btn');
-    if (btn && btn.dataset.cupom) viewInfluencerPortal(btn.dataset.cupom);
+  document.getElementById('cat-grid').addEventListener('click',function(e){const c=e.target.closest('[data-cat]');if(c)openCategory(c.dataset.cat)});
+  document.getElementById('nivel2-grid').addEventListener('click',function(e){
+    const l=e.target.closest('[data-launch]');if(l){openLaunch(l.dataset.launch);return}
+    const m=e.target.closest('[data-n2idx]');
+    if(m){const item=window._nivel2Items[parseInt(m.dataset.n2idx)];if(!item||!item.link)return;
+      let url=item.link;const id=item.link.match(/\/d\/([^/]+)/);if(id)url='https://drive.google.com/file/d/'+id[1]+'/preview';
+      document.getElementById('modal-title').textContent=item.titulo;document.getElementById('modal-iframe').src=url;
+      document.getElementById('material-modal').style.display='flex';document.body.style.overflow='hidden';}
   });
-
-  // Admin detail - no inline detail panel needed
-
-  // Filtros de tipo de conteúdo
-  document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('tipo-btn')) {
-      document.querySelectorAll('#tab-conteudos .tipo-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      tipoFiltro = e.target.dataset.tipo;
-      renderContents();
-    }
+  document.getElementById('nivel3-grid').addEventListener('click',function(e){const i=e.target.closest('[data-gidx]');if(i)openLightbox(parseInt(i.dataset.gidx))});
+  document.getElementById('back-to-cats').addEventListener('click',()=>showNivel(1));
+  document.getElementById('back-to-launches').addEventListener('click',()=>showNivel(2));
+  document.getElementById('cal-prev').addEventListener('click',()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--}renderCalendar()});
+  document.getElementById('cal-next').addEventListener('click',()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++}renderCalendar()});
+  document.getElementById('cal-grid').addEventListener('click',function(e){const d=e.target.closest('.has-events');if(d)openDayEvents(d.dataset.date)});
+  document.getElementById('upcoming-list').addEventListener('click',function(e){
+    const i=e.target.closest('.upcoming-item');if(!i)return;
+    const ev=calEventos.find(x=>x.id===i.dataset.evid);if(ev)openDayEvents(ev.data);
   });
-
-  // Navegação materiais — nível 1: categorias
-  document.getElementById('cat-grid').addEventListener('click', function(e) {
-    const card = e.target.closest('[data-cat]');
-    if (card) openCategory(card.dataset.cat);
+  document.getElementById('add-event-btn').addEventListener('click',function(){
+    document.getElementById('event-modal').style.display='flex';document.body.style.overflow='hidden';
+    document.getElementById('ev-data').value=new Date().toISOString().split('T')[0];
   });
-
-  // Navegação materiais — nível 2: lançamentos de fotos ou materiais
-  document.getElementById('nivel2-grid').addEventListener('click', function(e) {
-    const launch = e.target.closest('[data-launch]');
-    if (launch) { openLaunch(launch.dataset.launch); return; }
-    const matCard = e.target.closest('[data-n2idx]');
-    if (matCard) {
-      const idx = parseInt(matCard.dataset.n2idx);
-      const m   = window._nivel2Items[idx];
-      if (!m || !m.link) return;
-      let previewUrl = m.link;
-      const idMatch  = m.link.match(/\/d\/([^/]+)/);
-      if (idMatch) previewUrl = 'https://drive.google.com/file/d/' + idMatch[1] + '/preview';
-      document.getElementById('modal-title').textContent = m.titulo;
-      document.getElementById('modal-iframe').src = previewUrl;
-      document.getElementById('material-modal').style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-    }
+  document.getElementById('event-modal-close').addEventListener('click',()=>{document.getElementById('event-modal').style.display='none';document.body.style.overflow=''});
+  document.getElementById('ev-save-btn').addEventListener('click',saveEvent);
+  document.getElementById('detail-close').addEventListener('click',()=>{document.getElementById('event-detail-modal').style.display='none';document.body.style.overflow=''});
+  document.getElementById('lightbox-close').addEventListener('click',closeLightbox);
+  document.getElementById('lb-prev').addEventListener('click',()=>{lightboxIdx=(lightboxIdx-1+lightboxItems.length)%lightboxItems.length;updateLightbox()});
+  document.getElementById('lb-next').addEventListener('click',()=>{lightboxIdx=(lightboxIdx+1)%lightboxItems.length;updateLightbox()});
+  document.getElementById('lightbox').addEventListener('click',function(e){if(e.target===this)closeLightbox()});
+  document.addEventListener('keydown',function(e){
+    if(!document.getElementById('lightbox').classList.contains('open'))return;
+    if(e.key==='ArrowLeft'){lightboxIdx=(lightboxIdx-1+lightboxItems.length)%lightboxItems.length;updateLightbox()}
+    if(e.key==='ArrowRight'){lightboxIdx=(lightboxIdx+1)%lightboxItems.length;updateLightbox()}
+    if(e.key==='Escape')closeLightbox();
   });
-
-  // Navegação materiais — nível 3: galeria
-  document.getElementById('nivel3-grid').addEventListener('click', function(e) {
-    const item = e.target.closest('[data-gidx]');
-    if (!item) return;
-    openLightbox(parseInt(item.dataset.gidx));
-  });
-
-  // Voltar botões
-  document.getElementById('back-to-cats').addEventListener('click', function() {
-    showNivel(1);
-  });
-  document.getElementById('back-to-launches').addEventListener('click', function() {
-    showNivel(2);
-  });
-
-  // Calendário — navegação meses
-  document.getElementById('cal-prev').addEventListener('click', async function() {
-    calMonth--;
-    if (calMonth < 0) { calMonth = 11; calYear--; }
-    renderCalendar();
-  });
-  document.getElementById('cal-next').addEventListener('click', async function() {
-    calMonth++;
-    if (calMonth > 11) { calMonth = 0; calYear++; }
-    renderCalendar();
-  });
-
-  // Calendário — clique no dia
-  document.getElementById('cal-grid').addEventListener('click', function(e) {
-    const day = e.target.closest('.has-events');
-    if (day) openDayEvents(day.dataset.date);
-  });
-
-  // Calendário — agenda clique
-  document.getElementById('upcoming-list').addEventListener('click', function(e) {
-    const item = e.target.closest('.upcoming-item');
-    if (!item) return;
-    const evId = item.dataset.evid;
-    const ev   = calEventos.find(e => e.id === evId);
-    if (ev) openDayEvents(ev.data);
-  });
-
-  // Modal novo evento
-  document.getElementById('add-event-btn').addEventListener('click', function() {
-    document.getElementById('event-modal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    // Set default date to today
-    const now = new Date();
-    document.getElementById('ev-data').value = now.toISOString().split('T')[0];
-  });
-  document.getElementById('event-modal-close').addEventListener('click', function() {
-    document.getElementById('event-modal').style.display = 'none';
-    document.body.style.overflow = '';
-  });
-  document.getElementById('ev-save-btn').addEventListener('click', saveEvent);
-
-  // Modal detalhes
-  document.getElementById('detail-close').addEventListener('click', function() {
-    document.getElementById('event-detail-modal').style.display = 'none';
-    document.body.style.overflow = '';
-  });
-
-  // Galeria — abrir lightbox (handled by nivel3-grid)
-
-  // Lightbox — navegação
-  document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
-  document.getElementById('lb-prev').addEventListener('click', function() {
-    lightboxIdx = (lightboxIdx - 1 + lightboxItems.length) % lightboxItems.length;
-    updateLightbox();
-  });
-  document.getElementById('lb-next').addEventListener('click', function() {
-    lightboxIdx = (lightboxIdx + 1) % lightboxItems.length;
-    updateLightbox();
-  });
-  document.getElementById('lightbox').addEventListener('click', function(e) {
-    if (e.target === this) closeLightbox();
-  });
-  document.addEventListener('keydown', function(e) {
-    if (!document.getElementById('lightbox').classList.contains('open')) return;
-    if (e.key === 'ArrowLeft') { lightboxIdx = (lightboxIdx - 1 + lightboxItems.length) % lightboxItems.length; updateLightbox(); }
-    if (e.key === 'ArrowRight') { lightboxIdx = (lightboxIdx + 1) % lightboxItems.length; updateLightbox(); }
-    if (e.key === 'Escape') closeLightbox();
-  });
-
-  // Fechar modal
-  document.getElementById('modal-close').addEventListener('click', closeMaterial);
-  document.getElementById('material-modal').addEventListener('click', function(e) {
-    if (e.target === this) closeMaterial();
-  });
-
-// material grid event now handled by nivel2-grid
-
-  // Eventos das abas
-  document.querySelectorAll('.nav-tab').forEach(btn => {
-    btn.addEventListener('click', function () {
-      document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      this.classList.add('active');
-      document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+  document.getElementById('modal-close').addEventListener('click',()=>{document.getElementById('material-modal').style.display='none';document.getElementById('modal-iframe').src='';document.body.style.overflow=''});
+  document.getElementById('material-modal').addEventListener('click',function(e){if(e.target===this){this.style.display='none';document.getElementById('modal-iframe').src='';document.body.style.overflow=''}});
+  document.querySelectorAll('.nav-tab').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+      this.classList.add('active');document.getElementById('tab-'+this.dataset.tab).classList.add('active');
     });
   });
-
-  // Verifica sessão existente
   init();
 });
 
-async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) await loadPortal(session.user);
-
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN') await loadPortal(session.user);
-    if (event === 'SIGNED_OUT') showLogin();
+async function init(){
+  // Primeiro registra o listener, depois verifica sessão existente
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_OUT')showLogin();
   });
+  // Verifica sessão existente manualmente (mais confiável)
+  const{data:{session}}=await sb.auth.getSession();
+  if(session)await loadPortal(session.user);
 }
 
-async function handleLogin() {
-  const email    = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  const btn      = document.getElementById('login-btn');
-  const err      = document.getElementById('login-error');
-
-  if (!email || !password) { err.textContent = 'Preencha email e senha.'; return; }
-
-  btn.textContent = 'Entrando...';
-  btn.disabled = true;
-  err.textContent = '';
-
-  try {
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) {
-      err.textContent = 'Email ou senha incorretos.';
-    }
-  } catch (e) {
-    err.textContent = 'Erro inesperado: ' + e.message;
-  } finally {
-    btn.textContent = 'Entrar';
-    btn.disabled = false;
+async function handleLogin(){
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const btn=document.getElementById('login-btn');
+  const err=document.getElementById('login-error');
+  if(!email||!password){err.textContent='Preencha email e senha.';return}
+  btn.textContent='Entrando...';btn.disabled=true;err.textContent='';
+  try{
+    const{data,error}=await sb.auth.signInWithPassword({email,password});
+    if(error){err.textContent='Email ou senha incorretos.';}
+    else if(data&&data.user){await loadPortal(data.user);}
   }
+  catch(e){err.textContent='Erro inesperado: '+e.message}
+  finally{btn.textContent='Entrar';btn.disabled=false}
 }
 
-async function handleLogout() {
-  await sb.auth.signOut();
-}
+async function handleLogout(){await sb.auth.signOut()}
 
-function showLogin() {
+function showLogin(){
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('portal-screen').classList.add('hidden');
 }
 
-async function loadPortal(user) {
-  currentUser = user;
-
-  const { data: influencer } = await sb
-    .from('influencers')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
-
-  if (!influencer) {
+async function loadPortal(user){
+  currentUser=user;
+  const{data:influencer}=await sb.from('influencers').select('*').eq('user_id',user.id).single();
+  if(!influencer){
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('portal-screen').classList.remove('hidden');
-    document.getElementById('loading-state').innerHTML = `
-      <div class="loading-logo">VM</div>
-      <div class="loading-text">Perfil não encontrado. Contate a equipe VM.</div>`;
-    document.getElementById('loading-state').style.display = 'flex';
-    return;
+    document.getElementById('loading-state').innerHTML='<div class="loading-logo">VM</div><div class="loading-text">Perfil não encontrado. Contate a equipe VM.</div>';
+    document.getElementById('loading-state').style.display='flex';return;
   }
-
-  // Check if admin
-  if (influencer.is_admin) {
-    await loadAdminPortal();
-    return;
-  }
-
-  currentInfluencer = influencer;
-  document.getElementById('user-name').textContent = influencer.nome;
-  document.getElementById('user-coupon').textContent = 'Cupom ' + influencer.cupom;
-
-  const now = new Date();
-  selectedMonth = now.getMonth();
-  selectedYear  = now.getFullYear();
-
-  buildMonthBar();
-  fetchContents();
-  fetchMaterials();
-  fetchGallery();
-  fetchProdutosEnviados();
-  initCalendar();
-
-  // Mostra layout imediatamente
-  document.getElementById('loading-state').style.display = 'none';
+  currentInfluencer=influencer;
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('portal-screen').classList.remove('hidden');
+  document.getElementById('user-name').textContent=influencer.nome;
+  document.getElementById('user-coupon').textContent='Cupom '+influencer.cupom;
+  const now=new Date();selectedMonth=now.getMonth();selectedYear=now.getFullYear();
+  buildMonthBar();fetchContents();fetchMaterials();fetchGallery();fetchProdutosEnviados();initCalendar();
+  document.getElementById('loading-state').style.display='none';
   document.getElementById('tab-performance').classList.add('active');
-
-  // Carrega mês atual primeiro (1-2 páginas apenas)
   await fetchCurrentMonth();
-
-  // Carrega histórico completo em segundo plano
   fetchAllOrdersBackground();
 }
 
-function buildMonthBar() {
-  const bar = document.getElementById('month-bar');
-  bar.innerHTML = '';
-
-  // Opção "Todos"
-  const btnTodos = document.createElement('button');
-  btnTodos.className = 'month-btn';
-  btnTodos.textContent = 'Todos';
-  btnTodos.dataset.special = 'todos';
-  btnTodos.addEventListener('click', () => {
-    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-    btnTodos.classList.add('active');
-    selectedMonth = 'todos';
-    updateDashboard();
-    renderContents();
-  });
-  bar.appendChild(btnTodos);
-
-  // Opção "2026"
-  const btn2026 = document.createElement('button');
-  btn2026.className = 'month-btn';
-  btn2026.textContent = '2026';
-  btn2026.dataset.special = '2026';
-  btn2026.addEventListener('click', () => {
-    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-    btn2026.classList.add('active');
-    selectedMonth = 'ano';
-    updateDashboard();
-    renderContents();
-  });
-  bar.appendChild(btn2026);
-
-  // Meses normais
-  MONTHS.forEach((m, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'month-btn' + (i === selectedMonth ? ' active' : '');
-    btn.textContent = m;
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedMonth = i;
-      updateDashboard();
-      renderContents();
-    });
+function buildMonthBar(){
+  const bar=document.getElementById('month-bar');bar.innerHTML='';
+  const add=(label,val)=>{
+    const btn=document.createElement('button');
+    btn.className='month-btn'+(val===selectedMonth?' active':'');
+    btn.textContent=label;
+    btn.addEventListener('click',()=>{document.querySelectorAll('.month-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');selectedMonth=val;updateDashboard();renderContents()});
     bar.appendChild(btn);
-  });
+  };
+  add('Todos','todos');add('2026','ano');MONTHS.forEach((m,i)=>add(m,i));
 }
 
-function setSyncStatus(label, pct, state) {
-  const bar   = document.getElementById('sync-bar');
-  const dot   = document.getElementById('sync-dot');
-  const fill  = document.getElementById('sync-fill');
-  const lbl   = document.getElementById('sync-label');
+function setSyncStatus(label,pct,state){
+  const bar=document.getElementById('sync-bar');
   bar.classList.remove('hidden');
-  lbl.textContent  = label;
-  fill.style.width = pct + '%';
-  dot.className    = 'sync-dot' + (state ? ' ' + state : '');
-  if (state === 'done' || state === 'error') {
-    setTimeout(() => bar.classList.add('hidden'), 4000);
-  }
+  document.getElementById('sync-label').textContent=label;
+  document.getElementById('sync-fill').style.width=pct+'%';
+  document.getElementById('sync-dot').className='sync-dot'+(state?' '+state:'');
+  if(state==='done'||state==='error')setTimeout(()=>bar.classList.add('hidden'),4000);
 }
 
-async function fetchCurrentMonth() {
-  allOrders = [];
-  setSyncStatus('Buscando pedidos recentes...', 10, '');
-
-  for (let page = 1; page <= 5; page++) {
-    try {
-      const res  = await fetch(`${VNDA_BASE}?page=${page}`);
-      if (!res.ok) {
-        setSyncStatus('Erro ao conectar com a VNDA (' + res.status + ')', 100, 'error');
-        return;
-      }
-      const data = await res.json();
-      if (!Array.isArray(data) || data.length === 0) break;
-      allOrders = allOrders.concat(data);
-      if (data.length < 100) break;
-    } catch(e) {
-      setSyncStatus('Erro de conexão: ' + e.message, 100, 'error');
-      return;
-    }
+async function fetchCurrentMonth(){
+  allOrders=[];setSyncStatus('Buscando pedidos recentes...',10,'');
+  for(let page=1;page<=5;page++){
+    try{
+      const res=await fetch(VNDA_BASE+'?page='+page);
+      if(!res.ok){setSyncStatus('Erro ('+res.status+')',100,'error');return}
+      const data=await res.json();
+      if(!Array.isArray(data)||data.length===0)break;
+      allOrders=allOrders.concat(data);if(data.length<100)break;
+    }catch(e){setSyncStatus('Erro de conexão',100,'error');return}
   }
-
-  setSyncStatus('Dados do mês carregados · ' + allOrders.length + ' pedidos', 20, '');
-  updateDashboard();
+  setSyncStatus('Carregados · '+allOrders.length+' pedidos',20,'');updateDashboard();
 }
 
-async function fetchAllOrdersBackground() {
-  const BATCH = 10;
-  let page = 6;
-  let hasMore = true;
-  let totalLoaded = allOrders.length;
-  let batchNum = 0;
-
-  while (hasMore) {
-    batchNum++;
-    const pages = Array.from({length: BATCH}, (_, i) => page + i);
-
-    let batchResults;
-    try {
-      batchResults = await Promise.all(
-        pages.map(p =>
-          fetch(`${VNDA_BASE}?page=${p}`)
-            .then(r => r.ok ? r.json() : [])
-            .catch(() => [])
-        )
-      );
-    } catch(e) {
-      setSyncStatus('Erro no histórico: ' + e.message, 100, 'error');
-      break;
+async function fetchAllOrdersBackground(){
+  const BATCH=10;let page=6,hasMore=true;
+  while(hasMore){
+    let results;
+    try{results=await Promise.all(Array.from({length:BATCH},(_,i)=>fetch(VNDA_BASE+'?page='+(page+i)).then(r=>r.ok?r.json():[]).catch(()=>[]));}
+    catch(e){break}
+    let anyData=false;
+    for(const data of results){
+      if(!Array.isArray(data)||data.length===0){hasMore=false;break}
+      allOrders=allOrders.concat(data);anyData=true;if(data.length<100){hasMore=false;break}
     }
-
-    let anyData = false;
-    for (const data of batchResults) {
-      if (!Array.isArray(data) || data.length === 0) { hasMore = false; break; }
-      allOrders = allOrders.concat(data);
-      totalLoaded += data.length;
-      anyData = true;
-      if (data.length < 100) { hasMore = false; break; }
-    }
-
-    if (!anyData) hasMore = false;
-    page += BATCH;
-
-    // Progresso estimado (assumindo ~200 páginas no total)
-    const pct = Math.min(20 + Math.round((page / 250) * 75), 95);
-    setSyncStatus('Carregando histórico · ' + totalLoaded + ' pedidos encontrados...', pct, '');
+    if(!anyData)hasMore=false;page+=BATCH;
+    setSyncStatus('Carregando · '+allOrders.length+' pedidos...',Math.min(20+Math.round((page/250)*75),95),'');
     updateDashboard();
   }
-
-  setSyncStatus('✓ Sincronizado · ' + allOrders.length + ' pedidos no total', 100, 'done');
-  updateDashboard();
+  setSyncStatus('✓ Sincronizado · '+allOrders.length+' pedidos',100,'done');updateDashboard();
 }
 
-function getOrdersForPeriod(month, year) {
-  const cupom = currentInfluencer.cupom.toUpperCase();
-  return allOrders.filter(o => {
-    if (!o.coupon_code) return false;
-    if (o.coupon_code.toUpperCase() !== cupom) return false;
-    const dateStr = o.confirmed_at || o.received_at;
-    if (!dateStr) return false;
-    const parts = dateStr.substring(0, 10).split('-');
-    const d_year  = parseInt(parts[0]);
-    const d_month = parseInt(parts[1]) - 1;
-    if (month === 'todos') return true;
-    if (month === 'ano') return d_year === year;
-    return d_month === month && d_year === year;
+function getOrdersForPeriod(month,year){
+  const cupom=currentInfluencer.cupom.toUpperCase();
+  return allOrders.filter(o=>{
+    if(!o.coupon_code||o.coupon_code.toUpperCase()!==cupom)return false;
+    const ds=o.confirmed_at||o.received_at;if(!ds)return false;
+    const p=ds.substring(0,10).split('-'),dy=parseInt(p[0]),dm=parseInt(p[1])-1;
+    if(month==='todos')return true;if(month==='ano')return dy===year;
+    return dm===month&&dy===year;
   });
 }
 
-function updateDashboard() {
-  const orders = getOrdersForPeriod(selectedMonth, selectedYear);
-
-  let prevMonth = selectedMonth - 1, prevYear = selectedYear;
-  if (prevMonth < 0) { prevMonth = 11; prevYear--; }
-  const prevOrders = getOrdersForPeriod(prevMonth, prevYear);
-
-  const totalVendido  = orders.reduce((s, o) => s + parseFloat(o.total || 0), 0);
-  const prevVendido   = prevOrders.reduce((s, o) => s + parseFloat(o.total || 0), 0);
-  const percComissao  = currentInfluencer.perc_comissao || 0;
-  const valorFixo     = currentInfluencer.valor_fixo || 0;
-  const comissaoVar   = totalVendido * percComissao;
-  const totalReceber  = comissaoVar + valorFixo;
-  const qtdPedidos    = new Set(orders.map(o => o.id)).size;
-  const ticketMedio   = qtdPedidos > 0 ? totalVendido / qtdPedidos : 0;
-  const variacao      = prevVendido > 0 ? (totalVendido - prevVendido) / prevVendido : 0;
-  const mesLabel      = MONTHS[selectedMonth] + ' ' + selectedYear;
-  const prevLabel     = MONTHS[prevMonth] + ' ' + prevYear;
-
-  document.getElementById('kpi-total-receber').textContent = fmt(totalReceber);
-  document.getElementById('kpi-total-vendido').textContent = fmt(totalVendido);
-  document.getElementById('kpi-pedidos').textContent       = qtdPedidos;
-  document.getElementById('kpi-ticket').textContent        = fmt(ticketMedio);
-  document.getElementById('kpi-mes-label').textContent     = mesLabel;
-
-  document.getElementById('comp-atual').textContent        = fmt(totalVendido);
-  document.getElementById('comp-anterior').textContent     = fmt(prevVendido);
-  document.getElementById('comp-mes-atual').textContent    = mesLabel;
-  document.getElementById('comp-mes-anterior').textContent = prevLabel;
-
-  const varEl = document.getElementById('comp-variacao');
-  varEl.textContent  = fmtPct(variacao);
-  varEl.style.color  = variacao >= 0 ? '#8BC4A0' : 'var(--pink)';
-  document.getElementById('comp-badge').textContent = 'vs ' + prevLabel;
-
-  document.getElementById('comm-vendido').textContent  = fmt(totalVendido);
-  document.getElementById('comm-perc').textContent     = (percComissao * 100).toFixed(0) + '%';
-  document.getElementById('comm-variavel').textContent = fmt(comissaoVar);
-  document.getElementById('comm-fixo').textContent     = fmt(valorFixo);
-  document.getElementById('comm-total').textContent    = fmt(totalReceber);
-  document.getElementById('footer-period').textContent = mesLabel;
-
-  const uniqueOrders = [...new Map(orders.map(o => [o.id, o])).values()];
-  document.getElementById('pedidos-count').textContent = uniqueOrders.length + ' pedidos · ' + mesLabel;
-
-  const tbody = document.getElementById('orders-table');
-  tbody.innerHTML = uniqueOrders.length === 0
-    ? `<tr><td colspan="5" style="text-align:center;color:var(--gray-text);padding:24px;font-size:11px;">Nenhum pedido neste período</td></tr>`
-    : uniqueOrders.map(o => {
-        const date      = o.received_at ? o.received_at.substring(0,10).split('-').reverse().join('/') : '—';
-        const total     = parseFloat(o.total || 0);
-        const comm      = total * percComissao;
-        const firstItem = Array.isArray(o.items) && o.items.length > 0 ? o.items[0].product_name || '—' : '—';
-        const qty       = Array.isArray(o.items) ? o.items.reduce((s,i) => s + (i.quantity||0), 0) : '—';
-        const extra     = o.items && o.items.length > 1 ? ` <span style="color:var(--gray-text);font-size:9px;">+${o.items.length-1}</span>` : '';
-        return `<tr>
-          <td class="td-date">${date}</td>
-          <td>${firstItem}${extra}</td>
-          <td>${qty}</td>
-          <td class="td-num">${fmt(total)}</td>
-          <td class="td-pink">+ ${fmt(comm)}</td>
-        </tr>`;
+function updateDashboard(){
+  if(!currentInfluencer)return;
+  const orders=getOrdersForPeriod(selectedMonth,selectedYear);
+  let pm=selectedMonth-1,py=selectedYear;
+  if(typeof pm==='number'&&pm<0){pm=11;py--}
+  const prev=typeof selectedMonth==='number'?getOrdersForPeriod(pm,py):[];
+  const tv=orders.reduce((s,o)=>s+parseFloat(o.total||0),0);
+  const pv=prev.reduce((s,o)=>s+parseFloat(o.total||0),0);
+  const pc=currentInfluencer.perc_comissao||0,vf=currentInfluencer.valor_fixo||0;
+  const cv=tv*pc,tr=cv+vf,qp=new Set(orders.map(o=>o.id)).size,tm=qp>0?tv/qp:0;
+  const var_=pv>0?(tv-pv)/pv:0;
+  const ml=selectedMonth==='todos'?'Todos':selectedMonth==='ano'?'2026':MONTHS[selectedMonth]+' '+selectedYear;
+  const pl=typeof pm==='number'?MONTHS[pm]+' '+py:'—';
+  document.getElementById('kpi-total-receber').textContent=fmt(tr);
+  document.getElementById('kpi-total-vendido').textContent=fmt(tv);
+  document.getElementById('kpi-pedidos').textContent=qp;
+  document.getElementById('kpi-ticket').textContent=fmt(tm);
+  document.getElementById('kpi-mes-label').textContent=ml;
+  document.getElementById('comp-atual').textContent=fmt(tv);
+  document.getElementById('comp-anterior').textContent=fmt(pv);
+  document.getElementById('comp-mes-atual').textContent=ml;
+  document.getElementById('comp-mes-anterior').textContent=pl;
+  const ve=document.getElementById('comp-variacao');ve.textContent=fmtPct(var_);ve.style.color=var_>=0?'#8BC4A0':'var(--pink)';
+  document.getElementById('comp-badge').textContent='vs '+pl;
+  document.getElementById('comm-vendido').textContent=fmt(tv);
+  document.getElementById('comm-perc').textContent=(pc*100).toFixed(0)+'%';
+  document.getElementById('comm-variavel').textContent=fmt(cv);
+  document.getElementById('comm-fixo').textContent=fmt(vf);
+  document.getElementById('comm-total').textContent=fmt(tr);
+  document.getElementById('footer-period').textContent=ml;
+  const uo=[...new Map(orders.map(o=>[o.id,o])).values()];
+  document.getElementById('pedidos-count').textContent=uo.length+' pedidos · '+ml;
+  document.getElementById('orders-table').innerHTML=uo.length===0
+    ?'<tr><td colspan="5" style="text-align:center;color:var(--gray-text);padding:24px;font-size:11px;">Nenhum pedido neste período</td></tr>'
+    :uo.map(o=>{
+        const ds=o.confirmed_at||o.received_at,date=ds?ds.substring(0,10).split('-').reverse().join('/'):'—';
+        const tot=parseFloat(o.total||0),comm=tot*pc;
+        const fi=Array.isArray(o.items)&&o.items.length>0?o.items[0].product_name||'—':'—';
+        const qty=Array.isArray(o.items)?o.items.reduce((s,i)=>s+(i.quantity||0),0):'—';
+        const ex=o.items&&o.items.length>1?' <span style="color:var(--gray-text);font-size:9px;">+'+(o.items.length-1)+'</span>':'';
+        return '<tr><td class="td-date">'+date+'</td><td>'+fi+ex+'</td><td>'+qty+'</td><td class="td-num">'+fmt(tot)+'</td><td class="td-pink">+ '+fmt(comm)+'</td></tr>';
       }).join('');
-
-  updateProducts(orders, mesLabel);
-  renderContents();
+  updateProducts(orders,ml);renderContents();
 }
 
-function updateProducts(orders, mesLabel) {
-  document.getElementById('produtos-periodo').textContent = mesLabel;
-  const map = {};
-  orders.forEach(o => {
-    if (!Array.isArray(o.items)) return;
-    o.items.forEach(item => {
-      const name = item.product_name || 'Produto';
-      if (!map[name]) map[name] = { qty: 0, val: 0 };
-      map[name].qty += item.quantity || 0;
-      map[name].val += parseFloat(item.total || item.price || 0);
-    });
-  });
-
-  const sorted = Object.entries(map).sort((a,b) => b[1].qty - a[1].qty);
-  const maxVal = sorted.length > 0 ? sorted[0][1].val : 1;
-
-  const grid = document.getElementById('products-grid');
-  grid.innerHTML = sorted.length === 0
-    ? `<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Nenhum produto neste período</div>`
-    : sorted.slice(0,6).map(([name, data], i) => `
-        <div class="product-card">
-          <div class="product-rank ${i===0?'top':''}">${String(i+1).padStart(2,'0')}</div>
-          <div class="product-name">${name}</div>
-          <div class="product-stats">
-            <div class="product-qty">${data.qty} venda${data.qty!==1?'s':''}</div>
-            <div class="product-val">${fmt(data.val)}</div>
-          </div>
-        </div>`).join('');
-
-  const maxQty = sorted.length > 0 ? sorted[0][1].qty : 1;
-  document.getElementById('products-bar-list').innerHTML = sorted.slice(0,8).map(([name, data]) => `
-    <div class="bar-item">
-      <div class="bar-top">
-        <div class="bar-name">${name}</div>
-        <div class="bar-amount">${data.qty} venda${data.qty !== 1 ? 's' : ''}</div>
-      </div>
-      <div class="bar-track"><div class="bar-fill" style="width:${Math.round((data.qty/maxQty)*100)}%"></div></div>
-    </div>`).join('');
+function updateProducts(orders,ml){
+  document.getElementById('produtos-periodo').textContent=ml;
+  const map={};
+  orders.forEach(o=>{if(!Array.isArray(o.items))return;o.items.forEach(item=>{const n=item.product_name||'Produto';if(!map[n])map[n]={qty:0,val:0};map[n].qty+=item.quantity||0;map[n].val+=parseFloat(item.total||item.price||0)})});
+  const sorted=Object.entries(map).sort((a,b)=>b[1].qty-a[1].qty);
+  const mq=sorted.length>0?sorted[0][1].qty:1;
+  document.getElementById('products-grid').innerHTML=sorted.length===0
+    ?'<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Nenhum produto neste período</div>'
+    :sorted.slice(0,6).map(([n,d],i)=>'<div class="product-card"><div class="product-rank '+(i===0?'top':'')+'">'+String(i+1).padStart(2,'0')+'</div><div class="product-name">'+n+'</div><div class="product-stats"><div class="product-qty">'+d.qty+' venda'+(d.qty!==1?'s':'')+'</div><div class="product-val">'+fmt(d.val)+'</div></div></div>').join('');
+  document.getElementById('products-bar-list').innerHTML=sorted.slice(0,8).map(([n,d])=>'<div class="bar-item"><div class="bar-top"><div class="bar-name">'+n+'</div><div class="bar-amount">'+d.qty+' venda'+(d.qty!==1?'s':'')+'</div></div><div class="bar-track"><div class="bar-fill" style="width:'+Math.round((d.qty/mq)*100)+'%"></div></div></div>').join('');
 }
 
-// ─── CONTENTS ───
-let allContents = [];
-let tipoFiltro = 'todos';
-
-async function fetchContents() {
-  try {
-    const res  = await fetch(SHEETS_CSV);
-    const text = await res.text();
-    const rows = text.split('\n').slice(1); // pula cabeçalho
-
-    allContents = rows
-      .filter(r => r.trim())
-      .map(r => {
-        // Parse CSV respeitando aspas
-        const cols = [];
-        let cur = '', inQ = false;
-        for (let i = 0; i < r.length; i++) {
-          if (r[i] === '"') { inQ = !inQ; continue; }
-          if (r[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
-          cur += r[i];
-        }
-        cols.push(cur.trim());
-
-        return {
-          cupom:     (cols[0] || '').toUpperCase(),
-          data:      cols[1] || '',
-          tipo:      (cols[2] || '').toLowerCase(),
-          link:      cols[3] || '',
-          imagem_id: cols[4] || '',
-          descricao: cols[5] || '',
-          curtidas:  cols[6] || '',
-          alcance:   cols[7] || '',
-          imagem_url:cols[8] || '',
-          produto:   cols[9] || ''
-        };
-      });
-
+async function fetchContents(){
+  try{
+    const rows=parseCSV(await(await fetch(SHEETS_CSV)).text());
+    allContents=rows.map(c=>({cupom:(c[0]||'').toUpperCase(),data:c[1]||'',tipo:(c[2]||'').toLowerCase(),link:c[3]||'',imagem_id:c[4]||'',descricao:c[5]||'',curtidas:c[6]||'',alcance:c[7]||'',imagem_url:c[8]||'',produto:c[9]||''}));
     renderContents();
-  } catch(e) {
-    document.getElementById('content-cards').innerHTML =
-      `<div style="text-align:center;color:var(--pink);padding:32px;font-size:11px;border:1px solid var(--gray-line);">Erro ao carregar conteúdos: ${e.message}</div>`;
-  }
+  }catch(e){document.getElementById('content-cards').innerHTML='<div style="text-align:center;color:var(--pink);padding:32px;font-size:11px;border:1px solid var(--gray-line);">Erro ao carregar conteúdos</div>'}
 }
 
-function renderContents() {
-  const cupom = currentInfluencer.cupom.toUpperCase();
-  let filtered = allContents.filter(c => c.cupom === cupom);
-
-  // Normaliza data para comparação (aceita DD/MM/YYYY e YYYY-MM-DD)
-  const toISO = d => {
-    if (!d) return '';
-    if (d.includes('/')) { const p = d.split('/'); return p[2]+'-'+p[1]+'-'+p[0]; }
-    return d;
-  };
-
-  // Filtro por mês
-  if (selectedMonth !== 'todos') {
-    filtered = filtered.filter(c => {
-      const iso = toISO(c.data);
-      if (!iso) return false;
-      const parts = iso.split('-');
-      const c_year  = parseInt(parts[0]);
-      const c_month = parseInt(parts[1]) - 1;
-      if (selectedMonth === 'ano') return c_year === selectedYear;
-      return c_month === selectedMonth && c_year === selectedYear;
-    });
-  }
-
-  // Filtro por tipo
-  if (tipoFiltro !== 'todos') {
-    if (tipoFiltro === 'feed') {
-      // Feed agrupa: feed, carrossel e reels
-      filtered = filtered.filter(c => ['feed','carrossel','reels'].includes(c.tipo.trim().toLowerCase()));
-    } else {
-      filtered = filtered.filter(c => c.tipo.trim().toLowerCase() === tipoFiltro.toLowerCase());
-    }
-  }
-
-  // Ordena por data mais recente
-  filtered.sort((a, b) => toISO(b.data).localeCompare(toISO(a.data)));
-
-  const meta = document.getElementById('conteudos-meta');
-  meta.textContent = filtered.length + ' conteúdo' + (filtered.length !== 1 ? 's' : '') + ' registrado' + (filtered.length !== 1 ? 's' : '');
-
-  const container = document.getElementById('content-cards');
-
-  if (filtered.length === 0) {
-    container.innerHTML = `
-      <div style="text-align:center;color:var(--gray-text);padding:32px;font-size:11px;border:1px solid var(--gray-line);">
-        Nenhum conteúdo registrado ainda.<br>
-        <span style="font-size:9px;letter-spacing:0.1em;color:var(--gray-muted);">Os dados são preenchidos pela equipe VM.</span>
-      </div>`;
-    return;
-  }
-
-  const tipoIcon = { feed: '📷', carrossel: '🎠', stories: '⭕', reels: '🎬', tiktok: '🎵' };
-
-  container.innerHTML = filtered.map(c => {
-    const dateFmt = (() => {
-      if (!c.data) return '—';
-      if (c.data.includes('/')) return c.data; // já está em DD/MM/YYYY
-      return c.data.split('-').reverse().join('/');
-    })();
-    const icon    = tipoIcon[c.tipo] || '📱';
-    // Converte link Drive para thumbnail que funciona em img tag
-    const getDriveThumb = (url) => {
-      if (!url) return '';
-      const match = url.match(/id=([^&]+)/);
-      if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
-      return url;
-    };
-    const imgSrc  = c.imagem_url ? getDriveThumb(c.imagem_url) : '';
-    const hasImg  = !!imgSrc;
-    const hasLink = c.link && c.link.startsWith('http');
-
-    return `
-      <div class="content-card">
-        ${hasImg
-          ? `<img src="${imgSrc}" style="width:72px;height:72px;object-fit:cover;flex-shrink:0;border:1px solid var(--gray-line);" onerror="this.parentElement.querySelector('.content-thumb-fallback').style.display='flex';this.style.display='none'"><div class="content-thumb content-thumb-fallback" style="display:none">📷</div>`
-          : `<div class="content-thumb">${icon}</div>`
-        }
-        <div class="content-info">
-          <div class="content-date">${dateFmt} · ${c.tipo ? c.tipo.charAt(0).toUpperCase() + c.tipo.slice(1) : '—'}</div>
-          ${c.descricao ? `<div class="content-desc">${c.descricao}</div>` : ''}
-          <div class="content-tags">
-            ${c.produto ? `<span class="content-tag pink">🛍️ ${c.produto}</span>` : ''}
-            ${c.curtidas ? `<span class="content-tag">❤️ ${Number(c.curtidas).toLocaleString('pt-BR')} curtidas</span>` : ''}
-            ${c.alcance ? `<span class="content-tag">👁️ ${Number(c.alcance).toLocaleString('pt-BR')} alcance</span>` : ''}
-            ${hasLink ? `<a href="${c.link}" target="_blank" class="content-tag" style="text-decoration:none;cursor:pointer;">Ver post →</a>` : ''}
-          </div>
-        </div>
-      </div>`;
+function renderContents(){
+  if(!currentInfluencer)return;
+  const cupom=currentInfluencer.cupom.toUpperCase();
+  let f=allContents.filter(c=>c.cupom===cupom);
+  if(selectedMonth!=='todos'){f=f.filter(c=>{const iso=toISO(c.data);if(!iso)return false;const p=iso.split('-'),cy=parseInt(p[0]),cm=parseInt(p[1])-1;if(selectedMonth==='ano')return cy===selectedYear;return cm===selectedMonth&&cy===selectedYear})}
+  if(tipoFiltro!=='todos'){if(tipoFiltro==='feed')f=f.filter(c=>['feed','carrossel','reels'].includes(c.tipo.trim().toLowerCase()));else f=f.filter(c=>c.tipo.trim().toLowerCase()===tipoFiltro)}
+  f.sort((a,b)=>toISO(b.data).localeCompare(toISO(a.data)));
+  document.getElementById('conteudos-meta').textContent=f.length+' conteúdo'+(f.length!==1?'s':'')+' registrado'+(f.length!==1?'s':'');
+  const cont=document.getElementById('content-cards');
+  if(f.length===0){cont.innerHTML='<div style="text-align:center;color:var(--gray-text);padding:32px;font-size:11px;border:1px solid var(--gray-line);">Nenhum conteúdo registrado.<br><span style="font-size:9px;color:var(--gray-muted);">Os dados são preenchidos pela equipe VM.</span></div>';return}
+  const ti={feed:'📷',carrossel:'🎠',stories:'⭕',reels:'🎬',tiktok:'🎵'};
+  cont.innerHTML=f.map(c=>{
+    const df=c.data?(c.data.includes('/')?c.data:c.data.split('-').reverse().join('/')):'—';
+    const icon=ti[c.tipo]||'📱';
+    let img='<div class="content-thumb">'+icon+'</div>';
+    if(c.imagem_url&&c.imagem_url.includes('drive.google.com')){const m=c.imagem_url.match(/id=([^&]+)/);if(m)img='<img src="https://drive.google.com/thumbnail?id='+m[1]+'&sz=w400" style="width:72px;height:72px;object-fit:cover;flex-shrink:0;border:1px solid var(--gray-line);" onerror="this.style.display=\'none\'">'}
+    const hl=c.link&&c.link.startsWith('http');
+    return '<div class="content-card">'+img+'<div class="content-info"><div class="content-date">'+df+' · '+(c.tipo?c.tipo.charAt(0).toUpperCase()+c.tipo.slice(1):'—')+'</div>'+(c.descricao?'<div class="content-desc">'+c.descricao+'</div>':'')+'<div class="content-tags">'+(c.produto?'<span class="content-tag pink">🛍️ '+c.produto+'</span>':'')+(c.curtidas?'<span class="content-tag">❤️ '+Number(c.curtidas).toLocaleString('pt-BR')+' curtidas</span>':'')+(c.alcance?'<span class="content-tag">👁️ '+Number(c.alcance).toLocaleString('pt-BR')+' alcance</span>':'')+(hl?'<a href="'+c.link+'" target="_blank" class="content-tag" style="text-decoration:none;">Ver post →</a>':'')+'</div></div></div>';
   }).join('');
 }
 
-// ─── MATERIALS ───
-let allMaterials = [];
-let allProdutosEnviados = [];
-
-const CAT_CONFIG = {
-  briefing:          { icon: '📋', label: 'Briefing' },
-  contrato:          { icon: '📄', label: 'Contrato' },
-  fotos:             { icon: '📸', label: 'Fotos' },
-  identidade:        { icon: '🎨', label: 'Identidade Visual' },
-  produtos_enviados: { icon: '📦', label: 'Produtos Enviados' },
-  outro:             { icon: '📁', label: 'Outro' }
-};
-let materialTipoFiltro = 'todos';
-
-async function fetchMaterials() {
-  try {
-    const res  = await fetch(MATERIALS_CSV);
-    const text = await res.text();
-    const rows = text.split('\n').slice(1);
-
-    allMaterials = rows
-      .filter(r => r.trim())
-      .map(r => {
-        const cols = [];
-        let cur = '', inQ = false;
-        for (let i = 0; i < r.length; i++) {
-          if (r[i] === '"') { inQ = !inQ; continue; }
-          if (r[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
-          cur += r[i];
-        }
-        cols.push(cur.trim());
-        return {
-          cupom:      (cols[0] || '').toUpperCase(),
-          lancamento: cols[1] || '',
-          titulo:     cols[2] || '',
-          tipo:       (cols[3] || '').toLowerCase(),
-          link:       cols[4] || '',
-          data:       cols[5] || ''
-        };
-      });
-
+async function fetchMaterials(){
+  try{
+    const rows=parseCSV(await(await fetch(MATERIALS_CSV)).text());
+    allMaterials=rows.map(c=>({cupom:(c[0]||'').toUpperCase(),lancamento:c[1]||'',titulo:c[2]||'',tipo:(c[3]||'').toLowerCase(),link:c[4]||'',data:c[5]||''}));
     renderCategoryCards();
-  } catch(e) {
-    document.getElementById('cat-grid').innerHTML =
-      `<div style="grid-column:span 2;text-align:center;color:var(--pink);padding:32px;font-size:11px;">Erro: ${e.message}</div>`;
-  }
+  }catch(e){console.error('Materials:',e)}
 }
 
-function getMaterialsForUser() {
-  const cupom = currentInfluencer.cupom.toUpperCase();
-  return allMaterials.filter(m => m.cupom === cupom || m.cupom === 'TODAS');
+async function fetchGallery(){
+  try{
+    const rows=parseCSV(await(await fetch(GALLERY_CSV)).text());
+    allGallery=rows.map(c=>({cupom:(c[0]||'').toUpperCase(),galeria:c[1]||'Fotos',titulo:c[2]||'',imagem_id:c[3]||''}));
+  }catch(e){console.error('Gallery:',e)}
 }
 
-function renderCategoryCards() {
-  const items = getMaterialsForUser();
-  const byTipo = {};
-  items.forEach(m => {
-    if (!byTipo[m.tipo]) byTipo[m.tipo] = 0;
-    byTipo[m.tipo]++;
-  });
+async function fetchProdutosEnviados(){
+  try{
+    const rows=parseCSV(await(await fetch(PRODUTOS_ENVIADOS_CSV)).text());
+    allProdutosEnviados=rows.map(c=>({cupom:(c[0]||'').toUpperCase(),produto:c[1]||'',tamanho:c[2]||'',data_envio:c[3]||''}));
+  }catch(e){console.error('ProdEnv:',e)}
+}
 
-  const galCupom = currentInfluencer.cupom.toUpperCase();
-  const galItems = allGallery.filter(g => g.cupom === galCupom || g.cupom === 'TODAS');
-  if (galItems.length > 0) byTipo['fotos'] = (byTipo['fotos'] || 0) + galItems.length;
+function getMaterialsForUser(){const cupom=currentInfluencer.cupom.toUpperCase();return allMaterials.filter(m=>m.cupom===cupom||m.cupom==='TODAS')}
 
-  const prodEnviados = allProdutosEnviados.filter(p => p.cupom === galCupom);
-  if (prodEnviados.length > 0) byTipo['produtos_enviados'] = prodEnviados.length;
-
-  const cats = Object.keys(CAT_CONFIG).filter(c => byTipo[c] > 0);
-  document.getElementById('materiais-meta').textContent =
-    cats.length + ' categoria' + (cats.length !== 1 ? 's' : '');
-
-  const grid = document.getElementById('cat-grid');
-  if (cats.length === 0) {
-    grid.innerHTML = `<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Nenhum material disponível.</div>`;
-    return;
-  }
-
-  grid.innerHTML = cats.map(tipo => {
-    const cfg = CAT_CONFIG[tipo];
-    return `<div class="cat-card" data-cat="${tipo}">
-      <div class="cat-card-icon">${cfg.icon}</div>
-      <div class="cat-card-label">Categoria</div>
-      <div class="cat-card-name">${cfg.label}</div>
-      <div class="cat-card-count">${byTipo[tipo]} item${byTipo[tipo] !== 1 ? 's' : ''}</div>
-    </div>`;
-  }).join('');
-
+function renderCategoryCards(){
+  if(!currentInfluencer)return;
+  const byTipo={};getMaterialsForUser().forEach(m=>{if(!byTipo[m.tipo])byTipo[m.tipo]=0;byTipo[m.tipo]++});
+  const cupom=currentInfluencer.cupom.toUpperCase();
+  const gal=allGallery.filter(g=>g.cupom===cupom||g.cupom==='TODAS');if(gal.length>0)byTipo['fotos']=(byTipo['fotos']||0)+gal.length;
+  const pe=allProdutosEnviados.filter(p=>p.cupom===cupom);if(pe.length>0)byTipo['produtos_enviados']=pe.length;
+  const cats=Object.keys(CAT_CONFIG).filter(c=>byTipo[c]>0);
+  document.getElementById('materiais-meta').textContent=cats.length+' categoria'+(cats.length!==1?'s':'');
+  document.getElementById('cat-grid').innerHTML=cats.length===0
+    ?'<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Nenhum material disponível.</div>'
+    :cats.map(tipo=>{const cfg=CAT_CONFIG[tipo];return '<div class="cat-card" data-cat="'+tipo+'"><div class="cat-card-icon">'+cfg.icon+'</div><div class="cat-card-label">Categoria</div><div class="cat-card-name">'+cfg.label+'</div><div class="cat-card-count">'+byTipo[tipo]+' item'+(byTipo[tipo]!==1?'s':'')+'</div></div>'}).join('');
   showNivel(1);
 }
 
-function showNivel(n) {
-  document.getElementById('mat-nivel-1').style.display = n === 1 ? 'block' : 'none';
-  document.getElementById('mat-nivel-2').style.display = n === 2 ? 'block' : 'none';
-  document.getElementById('mat-nivel-3').style.display = n === 3 ? 'block' : 'none';
+function showNivel(n){
+  document.getElementById('mat-nivel-1').style.display=n===1?'block':'none';
+  document.getElementById('mat-nivel-2').style.display=n===2?'block':'none';
+  document.getElementById('mat-nivel-3').style.display=n===3?'block':'none';
 }
 
-function openCategory(tipo) {
-  if (tipo === 'fotos') { openFotosCategory(); return; }
-  if (tipo === 'produtos_enviados') { openProdutosEnviados(); return; }
-  const items = getMaterialsForUser().filter(m => m.tipo === tipo);
-  const cfg   = CAT_CONFIG[tipo] || { label: tipo, icon: '📁' };
-
-  document.getElementById('nivel2-title').textContent = cfg.label;
-  document.getElementById('nivel2-meta').textContent  = items.length + ' material' + (items.length !== 1 ? 'is' : '');
-  window._nivel2Items = items;
-
-  document.getElementById('nivel2-grid').innerHTML = items.map((m, i) => `
-    <div class="material-card" data-n2idx="${i}" style="cursor:pointer;">
-      <span class="material-icon">${cfg.icon}</span>
-      <div class="material-type">${m.lancamento || cfg.label}</div>
-      <div class="material-name">${m.titulo}</div>
-      <div class="material-date">${m.data}</div>
-      <div class="material-btn">Visualizar →</div>
-    </div>`).join('');
-
+function openCategory(tipo){
+  if(tipo==='fotos'){openFotosCategory();return}
+  if(tipo==='produtos_enviados'){openProdutosEnviados();return}
+  const items=getMaterialsForUser().filter(m=>m.tipo===tipo);
+  const cfg=CAT_CONFIG[tipo]||{label:tipo,icon:'📁'};
+  document.getElementById('nivel2-title').textContent=cfg.label;
+  document.getElementById('nivel2-meta').textContent=items.length+' material'+(items.length!==1?'is':'');
+  window._nivel2Items=items;
+  document.getElementById('nivel2-grid').innerHTML=items.map((m,i)=>'<div class="material-card" data-n2idx="'+i+'"><span class="material-icon">'+cfg.icon+'</span><div class="material-type">'+(m.lancamento||cfg.label)+'</div><div class="material-name">'+m.titulo+'</div><div class="material-date">'+m.data+'</div><div class="material-btn">Visualizar →</div></div>').join('');
   showNivel(2);
 }
 
-function openProdutosEnviados() {
-  const cupom   = currentInfluencer.cupom.toUpperCase();
-  const items   = allProdutosEnviados.filter(p => p.cupom === cupom);
-
-  document.getElementById('nivel2-title').textContent = 'Produtos Enviados';
-  document.getElementById('nivel2-meta').textContent  = items.length + ' produto' + (items.length !== 1 ? 's' : '');
-
-  window._nivel2Items = items;
-
-  // Sort by date desc
-  const sorted = [...items].sort((a, b) => {
-    const toISO = d => d && d.includes('/') ? d.split('/').reverse().join('-') : d;
-    return toISO(b.data_envio).localeCompare(toISO(a.data_envio));
-  });
-
-  document.getElementById('nivel2-grid').innerHTML = sorted.length === 0
-    ? `<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Nenhum produto enviado ainda.</div>`
-    : `<div style="grid-column:span 3;border:1px solid var(--gray-line);overflow:hidden;">
-        <table style="width:100%;border-collapse:collapse;">
-          <thead>
-            <tr style="border-bottom:1px solid var(--gray-line);background:var(--gray-dark);">
-              <th style="font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-text);padding:12px 16px;text-align:left;font-weight:400;">Produto</th>
-              <th style="font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-text);padding:12px 16px;text-align:left;font-weight:400;">Tamanho</th>
-              <th style="font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-text);padding:12px 16px;text-align:left;font-weight:400;">Data Envio</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${sorted.map((p, i) => `
-              <tr style="border-bottom:1px solid ${i % 2 === 0 ? '#161616' : 'transparent'};background:${i % 2 === 0 ? 'var(--gray-card)' : 'var(--gray-dark)'};">
-                <td style="padding:14px 16px;font-size:12px;color:var(--white);">${p.produto}</td>
-                <td style="padding:14px 16px;font-size:12px;color:var(--gray-text);">${p.tamanho || '—'}</td>
-                <td style="padding:14px 16px;font-size:11px;color:var(--gray-text);">${p.data_envio || '—'}</td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`;
-
+function openProdutosEnviados(){
+  const cupom=currentInfluencer.cupom.toUpperCase();
+  const sorted=[...allProdutosEnviados.filter(p=>p.cupom===cupom)].sort((a,b)=>toISO(b.data_envio).localeCompare(toISO(a.data_envio)));
+  document.getElementById('nivel2-title').textContent='Produtos Enviados';
+  document.getElementById('nivel2-meta').textContent=sorted.length+' produto'+(sorted.length!==1?'s':'');
+  window._nivel2Items=sorted;
+  document.getElementById('nivel2-grid').innerHTML=sorted.length===0
+    ?'<div style="grid-column:span 2;text-align:center;color:var(--gray-text);padding:32px;font-size:11px;">Nenhum produto enviado ainda.</div>'
+    :'<div style="grid-column:span 3;border:1px solid var(--gray-line);overflow:hidden;"><table style="width:100%;border-collapse:collapse;"><thead><tr style="border-bottom:1px solid var(--gray-line);background:var(--gray-dark);"><th style="font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-text);padding:12px 16px;text-align:left;font-weight:400;">Produto</th><th style="font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-text);padding:12px 16px;text-align:left;font-weight:400;">Tamanho</th><th style="font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-text);padding:12px 16px;text-align:left;font-weight:400;">Data Envio</th></tr></thead><tbody>'+sorted.map((p,i)=>'<tr style="background:'+(i%2===0?'var(--gray-card)':'var(--gray-dark)')+'"><td style="padding:14px 16px;font-size:12px;color:var(--white);">'+p.produto+'</td><td style="padding:14px 16px;font-size:12px;color:var(--gray-text);">'+(p.tamanho||'—')+'</td><td style="padding:14px 16px;font-size:11px;color:var(--gray-text);">'+(p.data_envio||'—')+'</td></tr>').join('')+'</tbody></table></div>';
   showNivel(2);
 }
 
-function openFotosCategory() {
-  const cupom    = currentInfluencer.cupom.toUpperCase();
-  const galItems = allGallery.filter(g => g.cupom === cupom || g.cupom === 'TODAS');
-  const grupos   = {};
-  galItems.forEach(g => {
-    if (!grupos[g.galeria]) grupos[g.galeria] = [];
-    grupos[g.galeria].push(g);
-  });
-
-  const nomes = Object.keys(grupos);
-  document.getElementById('nivel2-title').textContent = 'Fotos';
-  document.getElementById('nivel2-meta').textContent  = nomes.length + ' lançamento' + (nomes.length !== 1 ? 's' : '');
-
-  document.getElementById('nivel2-grid').innerHTML = nomes.map(nome => {
-    const fotos   = grupos[nome];
-    const preview = fotos.slice(0, 3).map(f =>
-      `<img src="https://drive.google.com/thumbnail?id=${f.imagem_id}&sz=w200" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
-    ).join('');
-    return `<div class="launch-card" data-launch="${nome}">
-      <div class="launch-card-preview">${preview}</div>
-      <div class="launch-card-name">${nome}</div>
-      <div class="launch-card-count">${fotos.length} foto${fotos.length !== 1 ? 's' : ''}</div>
-      <div class="launch-card-arrow">→</div>
-    </div>`;
+function openFotosCategory(){
+  const cupom=currentInfluencer.cupom.toUpperCase();
+  const grupos={};
+  allGallery.filter(g=>g.cupom===cupom||g.cupom==='TODAS').forEach(g=>{if(!grupos[g.galeria])grupos[g.galeria]=[];grupos[g.galeria].push(g)});
+  const nomes=Object.keys(grupos);
+  document.getElementById('nivel2-title').textContent='Fotos';
+  document.getElementById('nivel2-meta').textContent=nomes.length+' lançamento'+(nomes.length!==1?'s':'');
+  document.getElementById('nivel2-grid').innerHTML=nomes.map(nome=>{
+    const fotos=grupos[nome];
+    const prev=fotos.slice(0,3).map(f=>'<img src="https://drive.google.com/thumbnail?id='+f.imagem_id+'&sz=w200" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=\'none\'">').join('');
+    return '<div class="launch-card" data-launch="'+nome+'"><div class="launch-card-preview">'+prev+'</div><div class="launch-card-name">'+nome+'</div><div class="launch-card-count">'+fotos.length+' foto'+(fotos.length!==1?'s':'')+'</div><div class="launch-card-arrow">→</div></div>';
   }).join('');
-
   showNivel(2);
 }
 
-function openLaunch(nome) {
-  const cupom = currentInfluencer.cupom.toUpperCase();
-  const fotos  = allGallery.filter(g =>
-    (g.cupom === cupom || g.cupom === 'TODAS') && g.galeria === nome
-  );
-
-  lightboxItems = fotos;
-  document.getElementById('nivel3-title').textContent = nome;
-  document.getElementById('nivel3-meta').textContent  = fotos.length + ' foto' + (fotos.length !== 1 ? 's' : '');
-
-  document.getElementById('nivel3-grid').innerHTML = fotos.map((g, i) => `
-    <div class="gallery-item" data-gidx="${i}">
-      <img src="https://drive.google.com/thumbnail?id=${g.imagem_id}&sz=w400"
-        alt="${g.titulo}" onerror="this.parentElement.style.display='none'">
-      <div class="gallery-item-title">${g.titulo}</div>
-    </div>`).join('');
-
+function openLaunch(nome){
+  const cupom=currentInfluencer.cupom.toUpperCase();
+  const fotos=allGallery.filter(g=>(g.cupom===cupom||g.cupom==='TODAS')&&g.galeria===nome);
+  lightboxItems=fotos;
+  document.getElementById('nivel3-title').textContent=nome;
+  document.getElementById('nivel3-meta').textContent=fotos.length+' foto'+(fotos.length!==1?'s':'');
+  document.getElementById('nivel3-grid').innerHTML=fotos.map((g,i)=>'<div class="gallery-item" data-gidx="'+i+'"><img src="https://drive.google.com/thumbnail?id='+g.imagem_id+'&sz=w400" alt="'+g.titulo+'" onerror="this.parentElement.style.display=\'none\'"><div class="gallery-item-title">'+g.titulo+'</div></div>').join('');
   showNivel(3);
 }
 
+function openLightbox(idx){lightboxIdx=idx;updateLightbox();document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden'}
+function updateLightbox(){const g=lightboxItems[lightboxIdx];if(!g)return;document.getElementById('lightbox-img').src='https://drive.google.com/thumbnail?id='+g.imagem_id+'&sz=w1200';document.getElementById('lightbox-title').textContent=g.titulo;document.getElementById('lightbox-counter').textContent=(lightboxIdx+1)+' / '+lightboxItems.length}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.getElementById('lightbox-img').src='';document.body.style.overflow=''}
 
-
-function openMaterial(idx) {
-  const m = window._filteredMaterials[idx];
-  if (!m || !m.link) return;
-
-  // Convert Drive link to preview
-  let previewUrl = m.link;
-  const idMatch  = m.link.match(/\/d\/([^\/]+)/);
-  if (idMatch) {
-    previewUrl = `https://drive.google.com/file/d/${idMatch[1]}/preview`;
-  } else if (m.link.includes('docs.google.com')) {
-    previewUrl = m.link.includes('?')
-      ? m.link + '&embedded=true'
-      : m.link + '?embedded=true';
-  }
-
-  document.getElementById('modal-title').textContent = m.titulo;
-  document.getElementById('modal-iframe').src = previewUrl;
-  const modal = document.getElementById('material-modal');
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
+async function initCalendar(){
+  const now=new Date();calYear=now.getFullYear();calMonth=now.getMonth();
+  await loadCalendarEvents();renderCalendar();
 }
 
-function closeMaterial() {
-  document.getElementById('material-modal').style.display = 'none';
-  document.getElementById('modal-iframe').src = '';
-  document.body.style.overflow = '';
-}
-
-// ─── PRODUTOS ENVIADOS ───
-async function fetchProdutosEnviados() {
-  try {
-    const res  = await fetch(PRODUTOS_ENVIADOS_CSV);
-    const text = await res.text();
-    const rows = text.split('\n').slice(1);
-
-    allProdutosEnviados = rows
-      .filter(r => r.trim())
-      .map(r => {
-        const cols = [];
-        let cur = '', inQ = false;
-        for (let i = 0; i < r.length; i++) {
-          if (r[i] === '"') { inQ = !inQ; continue; }
-          if (r[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
-          cur += r[i];
-        }
-        cols.push(cur.trim());
-        return {
-          cupom:      (cols[0] || '').toUpperCase(),
-          produto:    cols[1] || '',
-          tamanho:    cols[2] || '',
-          data_envio: cols[3] || ''
-        };
-      });
-  } catch(e) {
-    console.error('Erro produtos enviados:', e);
-  }
-}
-
-// ─── GALLERY ───
-let allGallery = [];
-let lightboxIdx = 0;
-let lightboxItems = [];
-
-async function fetchGallery() {
-  try {
-    const res  = await fetch(GALLERY_CSV);
-    const text = await res.text();
-    const rows = text.split('\n').slice(1);
-
-    allGallery = rows
-      .filter(r => r.trim())
-      .map(r => {
-        const cols = [];
-        let cur = '', inQ = false;
-        for (let i = 0; i < r.length; i++) {
-          if (r[i] === '"') { inQ = !inQ; continue; }
-          if (r[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; continue; }
-          cur += r[i];
-        }
-        cols.push(cur.trim());
-        return {
-          cupom:      (cols[0] || '').toUpperCase(),
-          galeria:    cols[1] || 'Fotos',
-          titulo:     cols[2] || '',
-          imagem_id:  cols[3] || ''
-        };
-      });
-
-    // gallery rendered on demand via openFotosCategory
-  } catch(e) {
-    console.error('Erro galeria:', e);
-  }
-}
-
-// renderGallery replaced by openFotosCategory and openLaunch
-
-function openLightbox(idx) {
-  lightboxIdx = idx;
-  updateLightbox();
-  document.getElementById('lightbox').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-
-function updateLightbox() {
-  const g = lightboxItems[lightboxIdx];
-  if (!g) return;
-  document.getElementById('lightbox-img').src     = `https://drive.google.com/thumbnail?id=${g.imagem_id}&sz=w1200`;
-  document.getElementById('lightbox-title').textContent = g.titulo;
-  document.getElementById('lightbox-counter').textContent = (lightboxIdx + 1) + ' / ' + lightboxItems.length;
-}
-
-function closeLightbox() {
-  document.getElementById('lightbox').classList.remove('open');
-  document.getElementById('lightbox-img').src = '';
-  document.body.style.overflow = '';
-}
-
-// ─── ADMIN ───
-let allInfluencers = [];
-let adminMonth, adminYear;
-let adminOrders = [];
-
-async function loadAdminPortal() {
-  document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('portal-screen').classList.remove('hidden');
-  document.getElementById('admin-screen').classList.remove('hidden');
-
-  const now = new Date();
-  adminMonth = now.getMonth();
-  adminYear  = now.getFullYear();
-
-  buildAdminMonthBar();
-
-  // Load all influencers (excluding admin)
-  const { data: influencers, error: infError } = await sb
-    .from('influencers')
-    .select('*')
-    .neq('cupom', 'ADMIN');
-
-  console.log('Influencers loaded:', influencers, infError);
-  allInfluencers = (influencers || []).filter(i => !i.is_admin);
-  console.log('Filtered influencers:', allInfluencers.length);
-
-  // Fetch all orders
-  await fetchAdminOrders();
-}
-
-function buildAdminMonthBar() {
-  const bar = document.getElementById('admin-month-bar');
-  bar.innerHTML = '';
-
-  const btnTodos = document.createElement('button');
-  btnTodos.className = 'month-btn';
-  btnTodos.textContent = 'Todos';
-  btnTodos.addEventListener('click', () => {
-    document.querySelectorAll('#admin-month-bar .month-btn').forEach(b => b.classList.remove('active'));
-    btnTodos.classList.add('active');
-    adminMonth = 'todos';
-    renderAdminDashboard();
-  });
-  bar.appendChild(btnTodos);
-
-  MONTHS.forEach((m, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'month-btn' + (i === adminMonth ? ' active' : '');
-    btn.textContent = m;
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#admin-month-bar .month-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      adminMonth = i;
-      renderAdminDashboard();
-    });
-    bar.appendChild(btn);
+async function loadCalendarEvents(){
+  calEventos=[];
+  try{
+    const{data:planned}=await sb.from('calendario').select('*').eq('user_id',currentUser.id);
+    if(planned)planned.forEach(e=>calEventos.push({...e,fonte:'planejado',status:'planejado'}));
+  }catch(e){console.error('Cal error:',e)}
+  if(allContents.length===0){try{const rows=parseCSV(await(await fetch(SHEETS_CSV)).text());allContents=rows.map(c=>({cupom:(c[0]||'').toUpperCase(),data:c[1]||'',tipo:(c[2]||'').toLowerCase(),link:c[3]||'',imagem_id:c[4]||'',descricao:c[5]||'',curtidas:c[6]||'',alcance:c[7]||'',imagem_url:c[8]||'',produto:c[9]||''}))}catch(e){}}
+  const cupom=currentInfluencer.cupom.toUpperCase();
+  allContents.forEach(c=>{
+    if(c.cupom!==cupom||!c.data)return;
+    const iso=toISO(c.data);if(!iso)return;
+    calEventos.push({id:'sheet_'+iso+'_'+Math.random(),data:iso,tipo:c.tipo,titulo:c.descricao||c.produto||'Conteúdo postado',produto:c.produto,fonte:'planilha',status:'postado'});
   });
 }
 
-async function fetchAdminOrders() {
-  adminOrders = [];
-  setAdminSync('Carregando pedidos...', 5, '');
-
-  let page = 1;
-  let hasMore = true;
-  const BATCH = 10;
-
-  while (hasMore) {
-    const pages = Array.from({length: BATCH}, (_, i) => page + i);
-    const results = await Promise.all(
-      pages.map(p =>
-        fetch(`/api/orders?page=${p}`)
-          .then(r => r.json())
-          .catch(() => [])
-      )
-    );
-
-    let anyData = false;
-    for (const data of results) {
-      if (!Array.isArray(data) || data.length === 0) { hasMore = false; break; }
-      adminOrders = adminOrders.concat(data);
-      anyData = true;
-      if (data.length < 100) { hasMore = false; break; }
-    }
-
-    if (!anyData) hasMore = false;
-    page += BATCH;
-
-    const pct = Math.min(Math.round((page / 250) * 90), 90);
-    setAdminSync('Carregando... ' + adminOrders.length + ' pedidos', pct, '');
+function renderCalendar(){
+  const today=new Date();
+  const isToday=d=>today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
+  document.getElementById('cal-month-title').textContent=MONTHS[calMonth]+' '+calYear;
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const dim=new Date(calYear,calMonth+1,0).getDate();
+  const ebd={};
+  calEventos.forEach(e=>{if(!e.data)return;const p=e.data.split('-');if(parseInt(p[0])!==calYear||parseInt(p[1])-1!==calMonth)return;const d=parseInt(p[2]);if(!ebd[d])ebd[d]=[];ebd[d].push(e)});
+  let html=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d=>'<div class="cal-day-header">'+d+'</div>').join('');
+  for(let i=0;i<firstDay;i++)html+='<div class="cal-day empty"></div>';
+  for(let d=1;d<=dim;d++){
+    const evts=ebd[d]||[];const ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const dots=evts.map(e=>'<span class="cal-event-dot '+e.status+'"></span>').join('');
+    html+='<div class="cal-day '+(isToday(d)?'today ':'')+( evts.length>0?'has-events':'')+'" data-date="'+ds+'"><div class="cal-num" style="'+(isToday(d)?'color:var(--pink)':'')+'">'+d+'</div>'+(dots?'<div class="cal-day-events">'+dots+'</div>':'')+'</div>';
   }
-
-  setAdminSync('✓ Sincronizado · ' + adminOrders.length + ' pedidos', 100, 'done');
-  renderAdminDashboard();
+  document.getElementById('cal-grid').innerHTML=html;renderAgenda();
 }
 
-function setAdminSync(label, pct, state) {
-  const bar  = document.getElementById('admin-sync-bar');
-  const dot  = document.getElementById('admin-sync-dot');
-  const fill = document.getElementById('admin-sync-fill');
-  const lbl  = document.getElementById('admin-sync-label');
-  bar.classList.remove('hidden');
-  lbl.textContent  = label;
-  fill.style.width = pct + '%';
-  dot.className    = 'sync-dot' + (state ? ' ' + state : '');
-  if (state === 'done' || state === 'error') {
-    setTimeout(() => bar.classList.add('hidden'), 4000);
-  }
+function renderAgenda(){
+  const me=calEventos.filter(e=>{if(!e.data)return false;const p=e.data.split('-');return parseInt(p[0])===calYear&&parseInt(p[1])-1===calMonth}).sort((a,b)=>a.data.localeCompare(b.data));
+  document.getElementById('agenda-meta').textContent=me.length+' postagem'+(me.length!==1?'ns':'');
+  const ti={feed:'📷',carrossel:'🖼️',stories:'⭕',reels:'🎬'};
+  document.getElementById('upcoming-list').innerHTML=me.length===0
+    ?'<div style="text-align:center;color:var(--gray-text);padding:24px;font-size:11px;border:1px solid var(--gray-line);">Nenhuma postagem neste mês.</div>'
+    :me.map(e=>{const p=e.data.split('-');return '<div class="upcoming-item '+e.status+'" data-evid="'+e.id+'"><div class="upcoming-date"><div class="upcoming-day">'+p[2]+'</div><div class="upcoming-month">'+MONTHS_SHORT[parseInt(p[1])-1]+'</div></div><div class="upcoming-divider"></div><div class="upcoming-info"><div class="upcoming-title">'+(ti[e.tipo]||'📱')+' '+(e.titulo||'—')+'</div><div class="upcoming-type">'+(e.tipo||'—')+(e.produto?' · '+e.produto:'')+'</div></div><span class="upcoming-status '+e.status+'">'+(e.status==='postado'?'✓ Postado':'Planejado')+'</span></div>'}).join('');
 }
 
-function getOrdersForInfluencer(cupom, month, year) {
-  return adminOrders.filter(o => {
-    if (!o.coupon_code) return false;
-    if (o.coupon_code.toUpperCase() !== cupom.toUpperCase()) return false;
-    const dateStr = o.confirmed_at || o.received_at;
-    if (!dateStr) return false;
-    const parts = dateStr.substring(0, 10).split('-');
-    const d_year  = parseInt(parts[0]);
-    const d_month = parseInt(parts[1]) - 1;
-    if (month === 'todos') return true;
-    return d_month === month && d_year === year;
-  });
+function openDayEvents(ds){
+  const evts=calEventos.filter(e=>e.data===ds);if(evts.length===0)return;
+  const p=ds.split('-');document.getElementById('detail-title').textContent=p[2]+' de '+MONTHS[parseInt(p[1])-1];
+  const ti={feed:'📷',carrossel:'🖼️',stories:'⭕',reels:'🎬'};
+  document.getElementById('detail-body').innerHTML=evts.map(e=>'<div style="border:1px solid var(--gray-line);padding:14px;background:var(--gray-card);"><div style="font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text);margin-bottom:6px;">'+(ti[e.tipo]||'📱')+' '+(e.tipo||'—')+' · <span style="color:'+(e.status==='postado'?'#8BC4A0':'var(--pink)')+';">'+(e.status==='postado'?'✓ Postado':'Planejado')+'</span></div><div style="font-size:13px;color:var(--white);margin-bottom:4px;">'+(e.titulo||'—')+'</div>'+(e.produto?'<div style="font-size:10px;color:var(--gray-text);">🛍️ '+e.produto+'</div>':'')+'</div>').join('');
+  document.getElementById('detail-actions').innerHTML=evts.filter(e=>e.fonte==='planejado').map(e=>'<button onclick="deleteEvent(\''+e.id+'\')" style="background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:\'Montserrat\',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;padding:8px 14px;cursor:pointer;">Excluir planejamento</button>').join('');
+  document.getElementById('event-detail-modal').style.display='flex';document.body.style.overflow='hidden';
 }
 
-function renderAdminDashboard() {
-  const mesLabel = adminMonth === 'todos' ? 'Todos os períodos' : MONTHS[adminMonth] + ' ' + adminYear;
-  document.getElementById('admin-period-label').textContent = mesLabel;
-  document.getElementById('admin-kpi-period').textContent   = mesLabel;
-
-  // Calculate metrics per influencer
-  const metrics = allInfluencers.map(inf => {
-    const orders     = getOrdersForInfluencer(inf.cupom, adminMonth, adminYear);
-    const uniqueOrds = [...new Map(orders.map(o => [o.id, o])).values()];
-    const totalVend  = uniqueOrds.reduce((s, o) => s + parseFloat(o.total || 0), 0);
-    const comissao   = totalVend * (inf.perc_comissao || 0);
-    const fixo       = inf.valor_fixo || 0;
-    const total      = comissao + fixo;
-    const qtd        = uniqueOrds.length;
-    const ticket     = qtd > 0 ? totalVend / qtd : 0;
-    return { inf, totalVend, comissao, fixo, total, qtd, ticket };
-  }).sort((a, b) => b.totalVend - a.totalVend);
-
-  // Global KPIs
-  const globalVend     = metrics.reduce((s, m) => s + m.totalVend, 0);
-  const globalComissao = metrics.reduce((s, m) => s + m.total, 0);
-  const globalPedidos  = metrics.reduce((s, m) => s + m.qtd, 0);
-  const globalTicket   = globalPedidos > 0 ? globalVend / globalPedidos : 0;
-
-  document.getElementById('admin-total-comissao').textContent = fmt(globalComissao);
-  document.getElementById('admin-total-vendido').textContent  = fmt(globalVend);
-  document.getElementById('admin-total-pedidos').textContent  = globalPedidos;
-  document.getElementById('admin-ticket-medio').textContent   = fmt(globalTicket);
-
-  // Comparative table
-  document.getElementById('admin-table').innerHTML = metrics.map((m, i) => `
-    <tr style="border-bottom:1px solid #161616;${i%2===0?'background:var(--gray-card)':''}">
-      <td class="td-num" style="padding:12px 14px;color:var(--gray-text);">${i+1}</td>
-      <td style="padding:12px 14px;font-size:12px;color:var(--white);">${m.inf.nome}</td>
-      <td style="padding:12px 14px;font-size:10px;color:var(--gray-text);">${m.inf.cupom}</td>
-      <td class="td-num" style="padding:12px 14px;">${m.qtd}</td>
-      <td class="td-num" style="padding:12px 14px;">${fmt(m.totalVend)}</td>
-      <td class="td-num" style="padding:12px 14px;">${fmt(m.comissao)}</td>
-      <td class="td-num" style="padding:12px 14px;">${fmt(m.fixo)}</td>
-      <td class="td-num td-pink" style="padding:12px 14px;">${fmt(m.total)}</td>
-      <td class="td-num" style="padding:12px 14px;">${fmt(m.ticket)}</td>
-      <td style="padding:12px 14px;">
-        <button style="background:none;border:none;color:var(--pink);font-family:'Cormorant Garamond',serif;font-size:16px;cursor:pointer;letter-spacing:0.05em;" data-cupom="${m.inf.cupom}" class="view-portal-btn">→</button>
-      </td>
-    </tr>`).join('');
+async function saveEvent(){
+  const data=document.getElementById('ev-data').value,tipo=document.getElementById('ev-tipo').value;
+  const titulo=document.getElementById('ev-titulo').value.trim(),produto=document.getElementById('ev-produto').value.trim();
+  const errEl=document.getElementById('ev-error'),btn=document.getElementById('ev-save-btn');
+  if(!data){errEl.textContent='Selecione uma data.';return}
+  if(!titulo){errEl.textContent='Descreva a ideia do conteúdo.';return}
+  btn.textContent='Salvando...';btn.disabled=true;errEl.textContent='';
+  const{error}=await sb.from('calendario').insert({user_id:currentUser.id,cupom:currentInfluencer.cupom,data,tipo,titulo,produto,status:'planejado'});
+  if(error){errEl.textContent='Erro: '+error.message;btn.textContent='Salvar';btn.disabled=false;return}
+  document.getElementById('ev-data').value='';document.getElementById('ev-titulo').value='';document.getElementById('ev-produto').value='';
+  btn.textContent='Salvar';btn.disabled=false;
+  document.getElementById('event-modal').style.display='none';document.body.style.overflow='';
+  await loadCalendarEvents();renderCalendar();
 }
 
-function viewInfluencerPortal(cupom) {
-  const inf = allInfluencers.find(i => i.cupom === cupom);
-  if (!inf) return;
-
-  // Set header info
-  document.getElementById('detail-inf-name').textContent  = inf.nome;
-  document.getElementById('detail-inf-cupom').textContent = 'Cupom ' + inf.cupom;
-
-  // Get orders for this influencer in current admin period
-  const orders = getOrdersForInfluencer(inf.cupom, adminMonth, adminYear);
-  const uniqueOrders = [...new Map(orders.map(o => [o.id, o])).values()];
-
-  const totalVend   = uniqueOrders.reduce((s, o) => s + parseFloat(o.total || 0), 0);
-  const percComissao = inf.perc_comissao || 0;
-  const valorFixo   = inf.valor_fixo || 0;
-  const comissaoVar = totalVend * percComissao;
-  const totalReceber = comissaoVar + valorFixo;
-  const qtdPedidos  = uniqueOrders.length;
-  const ticketMedio = qtdPedidos > 0 ? totalVend / qtdPedidos : 0;
-  const mesLabel    = adminMonth === 'todos' ? 'Todos os períodos' : MONTHS[adminMonth] + ' ' + adminYear;
-
-  // KPIs
-  document.getElementById('detail-total-receber').textContent = fmt(totalReceber);
-  document.getElementById('detail-total-vendido').textContent = fmt(totalVend);
-  document.getElementById('detail-pedidos').textContent       = qtdPedidos;
-  document.getElementById('detail-ticket').textContent        = fmt(ticketMedio);
-  document.getElementById('detail-period').textContent        = mesLabel;
-
-  // Commission
-  document.getElementById('detail-comm-vendido').textContent  = fmt(totalVend);
-  document.getElementById('detail-comm-perc').textContent     = (percComissao * 100).toFixed(0) + '%';
-  document.getElementById('detail-comm-variavel').textContent = fmt(comissaoVar);
-  document.getElementById('detail-comm-fixo').textContent     = fmt(valorFixo);
-  document.getElementById('detail-comm-total').textContent    = fmt(totalReceber);
-
-  // Orders table
-  document.getElementById('detail-pedidos-count').textContent = qtdPedidos + ' pedidos · ' + mesLabel;
-
-  const tbody = document.getElementById('detail-orders-table');
-  tbody.innerHTML = uniqueOrders.length === 0
-    ? `<tr><td colspan="5" style="text-align:center;color:var(--gray-text);padding:24px;">Nenhum pedido neste período</td></tr>`
-    : uniqueOrders.map(o => {
-        const dateStr   = o.confirmed_at || o.received_at;
-        const date      = dateStr ? dateStr.substring(0,10).split('-').reverse().join('/') : '—';
-        const total     = parseFloat(o.total || 0);
-        const comm      = total * percComissao;
-        const firstItem = Array.isArray(o.items) && o.items.length > 0 ? o.items[0].product_name || '—' : '—';
-        const qty       = Array.isArray(o.items) ? o.items.reduce((s,i) => s + (i.quantity||0), 0) : '—';
-        return `<tr>
-          <td class="td-date">${date}</td>
-          <td>${firstItem}</td>
-          <td>${qty}</td>
-          <td class="td-num">${fmt(total)}</td>
-          <td class="td-pink">+ ${fmt(comm)}</td>
-        </tr>`;
-      }).join('');
-
-  // Products bar
-  const productMap = {};
-  orders.forEach(o => {
-    if (!Array.isArray(o.items)) return;
-    o.items.forEach(item => {
-      const name = item.product_name || 'Produto';
-      if (!productMap[name]) productMap[name] = { qty: 0, val: 0 };
-      productMap[name].qty += item.quantity || 0;
-      productMap[name].val += parseFloat(item.total || item.price || 0);
-    });
-  });
-
-  const sorted = Object.entries(productMap).sort((a,b) => b[1].qty - a[1].qty);
-  const maxQty = sorted.length > 0 ? sorted[0][1].qty : 1;
-
-  document.getElementById('detail-products-bar').innerHTML = sorted.slice(0,8).map(([name, data]) => `
-    <div class="bar-item" style="margin-bottom:14px;">
-      <div class="bar-top">
-        <div class="bar-name">${name}</div>
-        <div class="bar-amount">${data.qty} venda${data.qty !== 1 ? 's' : ''}</div>
-      </div>
-      <div class="bar-track"><div class="bar-fill" style="width:${Math.round((data.qty/maxQty)*100)}%"></div></div>
-    </div>`).join('');
-
-  // Highlight selected row in table
-  document.querySelectorAll('#admin-table tr').forEach(tr => {
-    tr.style.outline = 'none';
-  });
-  const rows = document.querySelectorAll('#admin-table tr');
-  rows.forEach(tr => {
-    const btn = tr.querySelector('.view-portal-btn');
-    if (btn && btn.dataset.cupom === cupom) {
-      tr.style.outline = '1px solid var(--pink)';
-      tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  });
-}
-
-// ─── ADMIN DETAIL TABS ───
-
-
-
-
-function toISO(d) {
-  if (!d) return '';
-  if (d.includes('/')) { const p = d.split('/'); return p[2]+'-'+p[1]+'-'+p[0]; }
-  return d;
-}
-
-function renderCalendar() {
-  const today    = new Date();
-  const isToday  = (d) => today.getFullYear() === calYear && today.getMonth() === calMonth && today.getDate() === d;
-
-  document.getElementById('cal-month-title').textContent = MONTHS[calMonth] + ' ' + calYear;
-
-  const firstDay    = new Date(calYear, calMonth, 1).getDay();
-  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
-  const days        = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-
-  // Map events by day
-  const eventsByDay = {};
-  calEventos.forEach(e => {
-    if (!e.data) return;
-    const parts = e.data.split('-');
-    if (parseInt(parts[0]) !== calYear || parseInt(parts[1])-1 !== calMonth) return;
-    const d = parseInt(parts[2]);
-    if (!eventsByDay[d]) eventsByDay[d] = [];
-    eventsByDay[d].push(e);
-  });
-
-  let html = days.map(d => `<div class="cal-day-header">${d}</div>`).join('');
-  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const events  = eventsByDay[d] || [];
-    const hasEvts = events.length > 0;
-    const todayCls = isToday(d) ? 'today' : '';
-    const evtCls   = hasEvts ? 'has-events' : '';
-    const dateStr  = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-
-    const dots = events.map(e =>
-      `<span class="cal-event-dot ${e.status}"></span>`
-    ).join('');
-
-    html += `<div class="cal-day ${todayCls} ${evtCls}" data-date="${dateStr}" data-day="${d}">
-      <div class="cal-num" style="${isToday(d)?'color:var(--pink)':''}">${d}</div>
-      ${dots ? `<div class="cal-day-events">${dots}</div>` : ''}
-    </div>`;
-  }
-
-  document.getElementById('cal-grid').innerHTML = html;
-  renderAgenda();
-}
-
-function renderAgenda() {
-  // Show all events for current month sorted by date
-  const monthEvents = calEventos.filter(e => {
-    if (!e.data) return false;
-    const parts = e.data.split('-');
-    return parseInt(parts[0]) === calYear && parseInt(parts[1])-1 === calMonth;
-  }).sort((a,b) => a.data.localeCompare(b.data));
-
-  document.getElementById('agenda-meta').textContent =
-    monthEvents.length + ' postagem' + (monthEvents.length !== 1 ? 'ns' : '');
-
-  const list = document.getElementById('upcoming-list');
-
-  if (monthEvents.length === 0) {
-    list.innerHTML = `<div style="text-align:center;color:var(--gray-text);padding:24px;font-size:11px;border:1px solid var(--gray-line);">Nenhuma postagem neste mês.</div>`;
-    return;
-  }
-
-  const tipoIcon = { feed:'📷', carrossel:'🖼️', stories:'⭕', reels:'🎬' };
-
-  list.innerHTML = monthEvents.map(e => {
-    const parts = e.data.split('-');
-    const day   = parts[2];
-    const mon   = MONTHS_SHORT[parseInt(parts[1])-1];
-    const icon  = tipoIcon[e.tipo] || '📱';
-    const isPost = e.status === 'postado';
-
-    return `<div class="upcoming-item ${e.status}" data-evid="${e.id}">
-      <div class="upcoming-date">
-        <div class="upcoming-day">${day}</div>
-        <div class="upcoming-month">${mon}</div>
-      </div>
-      <div class="upcoming-divider"></div>
-      <div class="upcoming-info">
-        <div class="upcoming-title">${icon} ${e.titulo || '—'}</div>
-        <div class="upcoming-type">${e.tipo || '—'}${e.produto ? ' · ' + e.produto : ''}</div>
-      </div>
-      <span class="upcoming-status ${e.status}">${isPost ? '✓ Postado' : 'Planejado'}</span>
-    </div>`;
-  }).join('');
-}
-
-function openDayEvents(dateStr) {
-  const events = calEventos.filter(e => e.data === dateStr);
-  if (events.length === 0) return;
-
-  const parts = dateStr.split('-');
-  const day   = parts[2];
-  const mon   = MONTHS[parseInt(parts[1])-1];
-
-  document.getElementById('detail-title').textContent = day + ' de ' + mon;
-
-  const tipoIcon = { feed:'📷', carrossel:'🖼️', stories:'⭕', reels:'🎬' };
-
-  document.getElementById('detail-body').innerHTML = events.map(e => `
-    <div style="border:1px solid var(--gray-line);padding:14px;background:var(--gray-card);">
-      <div style="font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text);margin-bottom:6px;">
-        ${tipoIcon[e.tipo]||'📱'} ${e.tipo||'—'} · <span style="color:${e.status==='postado'?'#8BC4A0':'var(--pink)'};">${e.status==='postado'?'✓ Postado':'Planejado'}</span>
-      </div>
-      <div style="font-size:13px;color:var(--white);margin-bottom:4px;">${e.titulo||'—'}</div>
-      ${e.produto ? `<div style="font-size:10px;color:var(--gray-text);">🛍️ ${e.produto}</div>` : ''}
-    </div>`).join('');
-
-  // Show delete only for planned events from supabase
-  const planned = events.filter(e => e.fonte === 'planejado');
-  document.getElementById('detail-actions').innerHTML = planned.map(e => `
-    <button onclick="deleteEvent('${e.id}')" style="background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;padding:8px 14px;cursor:pointer;">
-      Excluir planejamento
-    </button>`).join('');
-
-  document.getElementById('event-detail-modal').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-
-async function saveEvent() {
-  const data    = document.getElementById('ev-data').value;
-  const tipo    = document.getElementById('ev-tipo').value;
-  const titulo  = document.getElementById('ev-titulo').value.trim();
-  const produto = document.getElementById('ev-produto').value.trim();
-  const errEl   = document.getElementById('ev-error');
-  const btn     = document.getElementById('ev-save-btn');
-
-  if (!data) { errEl.textContent = 'Selecione uma data.'; return; }
-  if (!titulo) { errEl.textContent = 'Descreva a ideia do conteúdo.'; return; }
-
-  btn.textContent = 'Salvando...';
-  btn.disabled = true;
-  errEl.textContent = '';
-
-  const { error } = await sb.from('calendario').insert({
-    user_id: currentUser.id,
-    cupom:   currentInfluencer.cupom,
-    data, tipo, titulo, produto,
-    status: 'planejado'
-  });
-
-  if (error) {
-    errEl.textContent = 'Erro ao salvar: ' + error.message;
-    btn.textContent = 'Salvar';
-    btn.disabled = false;
-    return;
-  }
-
-  // Reset form
-  document.getElementById('ev-data').value    = '';
-  document.getElementById('ev-titulo').value  = '';
-  document.getElementById('ev-produto').value = '';
-  btn.textContent = 'Salvar';
-  btn.disabled = false;
-
-  document.getElementById('event-modal').style.display = 'none';
-  document.body.style.overflow = '';
-
-  await loadCalendarEvents();
-  renderCalendar();
-}
-
-async function deleteEvent(id) {
-  const { error } = await sb.from('calendario').delete().eq('id', id);
-  if (error) { alert('Erro ao excluir: ' + error.message); return; }
-
-  document.getElementById('event-detail-modal').style.display = 'none';
-  document.body.style.overflow = '';
-  await loadCalendarEvents();
-  renderCalendar();
-}
-
-function buildCalendar() {
-  // kept for compatibility - now handled by initCalendar
+async function deleteEvent(id){
+  const{error}=await sb.from('calendario').delete().eq('id',id);
+  if(error){alert('Erro: '+error.message);return}
+  document.getElementById('event-detail-modal').style.display='none';document.body.style.overflow='';
+  await loadCalendarEvents();renderCalendar();
 }
 </script>
 </body>
