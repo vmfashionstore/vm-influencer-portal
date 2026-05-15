@@ -540,7 +540,7 @@ async function fetchAllOrdersBackground(){
   const BATCH=10;let page=6,hasMore=true;
   while(hasMore){
     let results;
-    try{results=await Promise.all(Array.from({length:BATCH},(_,i)=>fetch(VNDA_BASE+'?page='+(page+i)).then(r=>r.ok?r.json():[]).catch(()=>[]));}
+    try{results=await Promise.all(Array.from({length:BATCH},(_,i)=>fetch(VNDA_BASE+'?page='+(page+i)).then(r=>r.ok?r.json():[]).catch(()=>[])));}
     catch(e){break}
     let anyData=false;
     for(const data of results){
