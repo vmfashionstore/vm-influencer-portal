@@ -449,11 +449,10 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 async function init(){
-  // Primeiro registra o listener, depois verifica sessão existente
   sb.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_IN'&&session)await loadPortal(session.user);
     if(event==='SIGNED_OUT')showLogin();
   });
-  // Verifica sessão existente manualmente (mais confiável)
   const{data:{session}}=await sb.auth.getSession();
   if(session)await loadPortal(session.user);
 }
@@ -466,9 +465,8 @@ async function handleLogin(){
   if(!email||!password){err.textContent='Preencha email e senha.';return}
   btn.textContent='Entrando...';btn.disabled=true;err.textContent='';
   try{
-    const{data,error}=await sb.auth.signInWithPassword({email,password});
-    if(error){err.textContent='Email ou senha incorretos.';}
-    else if(data&&data.user){await loadPortal(data.user);}
+    const{error}=await sb.auth.signInWithPassword({email,password});
+    if(error)err.textContent='Email ou senha incorretos.';
   }
   catch(e){err.textContent='Erro inesperado: '+e.message}
   finally{btn.textContent='Entrar';btn.disabled=false}
