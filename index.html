@@ -270,7 +270,7 @@
         <div class="c-row"><div class="c-label">Total vendido</div><div class="c-val" id="comm-vendido">—</div></div>
         <div class="c-row"><div class="c-label">% Comissão</div><div class="c-val" id="comm-perc">—</div></div>
         <div class="c-row"><div class="c-label">Comissão variável</div><div class="c-val" id="comm-variavel">—</div></div>
-        <div class="c-row"><div class="c-label">Cachê fixo</div><div class="c-val" id="comm-fixo">—</div></div>
+        <div class="c-row" id="comm-fixo-row"><div class="c-label">Cachê fixo</div><div class="c-val" id="comm-fixo">—</div></div>
         <div class="c-row total"><div class="c-label">Total a receber</div><div class="c-val pink" id="comm-total">—</div></div>
       </div>
       <div class="section-header"><div class="section-title">Pedidos do período</div><div class="section-meta" id="pedidos-count">—</div></div>
@@ -593,6 +593,7 @@ function updateDashboard(){
   document.getElementById('comm-perc').textContent=(pc*100).toFixed(0)+'%';
   document.getElementById('comm-variavel').textContent=fmt(cv);
   document.getElementById('comm-fixo').textContent=fmt(vf);
+  document.getElementById('comm-fixo-row').style.display=vf>0?'flex':'none';
   document.getElementById('comm-total').textContent=fmt(tr);
   document.getElementById('footer-period').textContent=ml;
   const uo=[...new Map(orders.map(o=>[o.id,o])).values()];
