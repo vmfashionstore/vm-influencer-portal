@@ -380,9 +380,15 @@ let lightboxIdx=0,lightboxItems=[];
 let calYear,calMonth,calEventos=[];
 
 function parseCSV(text){
-  return text.split('\n').slice(1).filter(r=>r.trim()).map(r=>{
+  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').slice(1).filter(r=>r.trim());
+  return lines.map(r=>{
     const cols=[];let cur='',inQ=false;
-    for(let i=0;i<r.length;i++){if(r[i]==='"'){inQ=!inQ;continue}if(r[i]===','&&!inQ){cols.push(cur.trim());cur='';continue}cur+=r[i]}
+    for(let i=0;i<r.length;i++){
+      const ch=r[i];
+      if(ch==='"'){if(inQ&&r[i+1]==='"'){cur+='"';i++;continue}inQ=!inQ;continue;}
+      if(ch===','&&!inQ){cols.push(cur.trim());cur='';continue;}
+      cur+=ch;
+    }
     cols.push(cur.trim());return cols;
   });
 }
