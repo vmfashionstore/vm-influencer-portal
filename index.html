@@ -389,6 +389,14 @@ function parseCSV(text){
 
 function toISO(d){if(!d)return '';if(d.includes('/')){const p=d.split('/');return p[2]+'-'+p[1]+'-'+p[0]}return d}
 
+// Extrai o ID de qualquer formato de link do Google Drive
+function driveId(url){
+  if(!url||!url.includes('drive.google.com'))return null;
+  const m1=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  const m2=url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  return (m1&&m1[1])||(m2&&m2[1])||null;
+}
+
 document.addEventListener('DOMContentLoaded',function(){
   sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   document.getElementById('login-btn').addEventListener('click',handleLogin);
@@ -625,8 +633,21 @@ function updateProducts(orders,ml){
 
 async function fetchContents(){
   try{
-    const rows=parseCSV(await(await fetch(SHEETS_CSV)).text());
-    allContents=rows.map(c=>({cupom:(c[0]||'').toUpperCase(),data:c[1]||'',tipo:(c[2]||'').toLowerCase(),link:c[3]||'',imagem_id:c[4]||'',descricao:c[5]||'',curtidas:c[6]||'',alcance:c[7]||'',imagem_url:c[8]||'',produto:c[9]||''}));
+    // Cache-busting: força busca de dados frescos do Google Sheets
+    const res=await fetch(SHEETS_CSV+'&t='+Date.now());
+    const rows=parseCSV(await res.text());
+    allContents=rows.map(c=>({
+      cupom:(c[0]||'').toUpperCase(),
+      data:c[1]||'',
+      tipo:(c[2]||'').toLowerCase(),
+      link:c[3]||'',
+      imagem_url:c[4]||'',
+      descricao:c[5]||'',
+      curtidas:c[6]||'',
+      alcance:c[7]||'',
+      link_url:c[8]||'',
+      produto:c[9]||''
+    }));
     renderContents();
   }catch(e){document.getElementById('content-cards').innerHTML='<div style="text-align:center;color:var(--pink);padding:32px;font-size:11px;border:1px solid var(--gray-line);">Erro ao carregar conteúdos</div>'}
 }
@@ -645,10 +666,13 @@ function renderContents(){
   cont.innerHTML=f.map(c=>{
     const df=c.data?(c.data.includes('/')?c.data:c.data.split('-').reverse().join('/')):'—';
     const icon=ti[c.tipo]||'📱';
+    // Tenta exibir imagem do Drive — aceita qualquer formato de link
     let img='<div class="content-thumb">'+icon+'</div>';
-    if(c.imagem_url&&c.imagem_url.includes('drive.google.com')){const m=c.imagem_url.match(/id=([^&]+)/);if(m)img='<img src="https://drive.google.com/thumbnail?id='+m[1]+'&sz=w400" style="width:72px;height:72px;object-fit:cover;flex-shrink:0;border:1px solid var(--gray-line);" onerror="this.style.display=\'none\'">'}
-    const hl=c.link&&c.link.startsWith('http');
-    return '<div class="content-card">'+img+'<div class="content-info"><div class="content-date">'+df+' · '+(c.tipo?c.tipo.charAt(0).toUpperCase()+c.tipo.slice(1):'—')+'</div>'+(c.descricao?'<div class="content-desc">'+c.descricao+'</div>':'')+'<div class="content-tags">'+(c.produto?'<span class="content-tag pink">🛍️ '+c.produto+'</span>':'')+(c.curtidas?'<span class="content-tag">❤️ '+Number(c.curtidas).toLocaleString('pt-BR')+' curtidas</span>':'')+(c.alcance?'<span class="content-tag">👁️ '+Number(c.alcance).toLocaleString('pt-BR')+' alcance</span>':'')+(hl?'<a href="'+c.link+'" target="_blank" class="content-tag" style="text-decoration:none;">Ver post →</a>':'')+'</div></div></div>';
+    const fid=driveId(c.imagem_url);
+    if(fid)img='<img src="https://drive.google.com/thumbnail?id='+fid+'&sz=w400" style="width:72px;height:72px;object-fit:cover;flex-shrink:0;border:1px solid var(--gray-line);" onerror="this.style.display=\'none\'">';
+    // Usa link_url se disponível, senão link
+    const postLink=c.link_url&&c.link_url.startsWith('http')?c.link_url:(c.link&&c.link.startsWith('http')?c.link:null);
+    return '<div class="content-card">'+img+'<div class="content-info"><div class="content-date">'+df+' · '+(c.tipo?c.tipo.charAt(0).toUpperCase()+c.tipo.slice(1):'—')+'</div>'+(c.descricao?'<div class="content-desc">'+c.descricao+'</div>':'')+'<div class="content-tags">'+(c.produto?'<span class="content-tag pink">🛍️ '+c.produto+'</span>':'')+(c.curtidas?'<span class="content-tag">❤️ '+Number(c.curtidas).toLocaleString('pt-BR')+' curtidas</span>':'')+(c.alcance?'<span class="content-tag">👁️ '+Number(c.alcance).toLocaleString('pt-BR')+' alcance</span>':'')+(postLink?'<a href="'+postLink+'" target="_blank" class="content-tag" style="text-decoration:none;">Ver post →</a>':'')+'</div></div></div>';
   }).join('');
 }
 
@@ -760,7 +784,24 @@ async function loadCalendarEvents(){
     const{data:planned}=await sb.from('calendario').select('*').eq('user_id',currentUser.id);
     if(planned)planned.forEach(e=>calEventos.push({...e,fonte:'planejado',status:'planejado'}));
   }catch(e){console.error('Cal error:',e)}
-  if(allContents.length===0){try{const rows=parseCSV(await(await fetch(SHEETS_CSV)).text());allContents=rows.map(c=>({cupom:(c[0]||'').toUpperCase(),data:c[1]||'',tipo:(c[2]||'').toLowerCase(),link:c[3]||'',imagem_id:c[4]||'',descricao:c[5]||'',curtidas:c[6]||'',alcance:c[7]||'',imagem_url:c[8]||'',produto:c[9]||''}))}catch(e){}}
+  if(allContents.length===0){
+    try{
+      const res=await fetch(SHEETS_CSV+'&t='+Date.now());
+      const rows=parseCSV(await res.text());
+      allContents=rows.map(c=>({
+        cupom:(c[0]||'').toUpperCase(),
+        data:c[1]||'',
+        tipo:(c[2]||'').toLowerCase(),
+        link:c[3]||'',
+        imagem_url:c[4]||'',
+        descricao:c[5]||'',
+        curtidas:c[6]||'',
+        alcance:c[7]||'',
+        link_url:c[8]||'',
+        produto:c[9]||''
+      }));
+    }catch(e){}
+  }
   const cupom=currentInfluencer.cupom.toUpperCase();
   allContents.forEach(c=>{
     if(c.cupom!==cupom||!c.data)return;
