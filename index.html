@@ -410,7 +410,11 @@ async function notifyCalendar(action, event) {
   try {
     await fetch(EDGE_NOTIFY, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'apikey': SUPABASE_KEY,
+      },
       body: JSON.stringify({ action, event }),
     });
   } catch (e) {
