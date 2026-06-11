@@ -335,6 +335,8 @@
           <div><label class="input-label">Tipo de conteúdo</label><select class="input-field" id="ev-tipo" style="cursor:pointer;"><option value="feed">Feed</option><option value="carrossel">Carrossel</option><option value="stories">Stories</option><option value="reels">Reels</option></select></div>
           <div><label class="input-label">Ideia / Descrição</label><input class="input-field" type="text" id="ev-titulo" placeholder="Ex: Look inverno com cupom"></div>
           <div><label class="input-label">Produto a divulgar</label><input class="input-field" type="text" id="ev-produto" placeholder="Ex: Blazer Sapphir Sand"></div>
+          <div><label class="input-label">Conteúdo planejado</label><textarea class="input-field" id="ev-conteudo" placeholder="Descreva o conteúdo planejado, legenda, referências..." style="resize:vertical;min-height:80px;"></textarea></div>
+          <div><label class="input-label">URL da imagem (opcional)</label><input class="input-field" type="url" id="ev-imagem" placeholder="https://..."></div>
           <div id="ev-error" style="font-size:10px;color:var(--pink);min-height:14px;"></div>
           <button class="login-btn" id="ev-save-btn" style="margin:0;">Salvar</button>
         </div>
@@ -362,6 +364,7 @@
 <script>
 const SUPABASE_URL='https://ckqqfppssynlicsejrqc.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrcXFmcHBzc3lubGljc2VqcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTk5NDcsImV4cCI6MjA5MzAzNTk0N30.sC-F9JEweQun-Pteg0uLEV72dP7GV2hGVrYtB5fONH8';
+const EDGE_NOTIFY='https://ckqqfppssynlicsejrqc.supabase.co/functions/v1/notify-calendar';
 const VNDA_BASE='/api/orders';
 const SHEETS_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=0&single=true&output=csv';
 const MATERIALS_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vQR7WYWI9-LmKZruqFbeTOtcbHTEJ6lO7PsZ3brPJIsqnOVDllgMeLa-l6rbA211zojMDdUlR9rgL8i/pub?gid=1147990017&single=true&output=csv';
@@ -395,12 +398,24 @@ function parseCSV(text){
 
 function toISO(d){if(!d)return '';if(d.includes('/')){const p=d.split('/');return p[2]+'-'+p[1]+'-'+p[0]}return d}
 
-// Extrai o ID de qualquer formato de link do Google Drive
 function driveId(url){
   if(!url||!url.includes('drive.google.com'))return null;
   const m1=url.match(/\/d\/([a-zA-Z0-9_-]+)/);
   const m2=url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   return (m1&&m1[1])||(m2&&m2[1])||null;
+}
+
+// ─── Notificação por email ───
+async function notifyCalendar(action, event) {
+  try {
+    await fetch(EDGE_NOTIFY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, event }),
+    });
+  } catch (e) {
+    console.warn('Notificação de email falhou (não bloqueante):', e);
+  }
 }
 
 document.addEventListener('DOMContentLoaded',function(){
@@ -639,7 +654,6 @@ function updateProducts(orders,ml){
 
 async function fetchContents(){
   try{
-    // Cache-busting: força busca de dados frescos do Google Sheets
     const res=await fetch(SHEETS_CSV+'&t='+Date.now());
     const rows=parseCSV(await res.text());
     allContents=rows.map(c=>({
@@ -672,11 +686,9 @@ function renderContents(){
   cont.innerHTML=f.map(c=>{
     const df=c.data?(c.data.includes('/')?c.data:c.data.split('-').reverse().join('/')):'—';
     const icon=ti[c.tipo]||'📱';
-    // Coluna E tem o ID puro do Drive; coluna I tem link completo como fallback
     let img='<div class="content-thumb">'+icon+'</div>';
     const fid=c.imagem_url||driveId(c.link_url)||null;
     if(fid)img='<img src="https://drive.google.com/thumbnail?id='+fid+'&sz=w400" style="width:72px;height:72px;object-fit:cover;flex-shrink:0;border:1px solid var(--gray-line);" onerror="this.style.display=\'none\'">';
-    // Usa link_url se disponível, senão link
     const postLink=c.link_url&&c.link_url.startsWith('http')?c.link_url:(c.link&&c.link.startsWith('http')?c.link:null);
     return '<div class="content-card">'+img+'<div class="content-info"><div class="content-date">'+df+' · '+(c.tipo?c.tipo.charAt(0).toUpperCase()+c.tipo.slice(1):'—')+'</div>'+(c.descricao?'<div class="content-desc">'+c.descricao+'</div>':'')+'<div class="content-tags">'+(c.produto?'<span class="content-tag pink">🛍️ '+c.produto+'</span>':'')+(c.curtidas?'<span class="content-tag">❤️ '+Number(c.curtidas).toLocaleString('pt-BR')+' curtidas</span>':'')+(c.alcance?'<span class="content-tag">👁️ '+Number(c.alcance).toLocaleString('pt-BR')+' alcance</span>':'')+(postLink?'<a href="'+postLink+'" target="_blank" class="content-tag" style="text-decoration:none;">Ver post →</a>':'')+'</div></div></div>';
   }).join('');
@@ -847,31 +859,88 @@ function openDayEvents(ds){
   const evts=calEventos.filter(e=>e.data===ds);if(evts.length===0)return;
   const p=ds.split('-');document.getElementById('detail-title').textContent=p[2]+' de '+MONTHS[parseInt(p[1])-1];
   const ti={feed:'📷',carrossel:'🖼️',stories:'⭕',reels:'🎬'};
-  document.getElementById('detail-body').innerHTML=evts.map(e=>'<div style="border:1px solid var(--gray-line);padding:14px;background:var(--gray-card);"><div style="font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text);margin-bottom:6px;">'+(ti[e.tipo]||'📱')+' '+(e.tipo||'—')+' · <span style="color:'+(e.status==='postado'?'#8BC4A0':'var(--pink)')+';">'+(e.status==='postado'?'✓ Postado':'Planejado')+'</span></div><div style="font-size:13px;color:var(--white);margin-bottom:4px;">'+(e.titulo||'—')+'</div>'+(e.produto?'<div style="font-size:10px;color:var(--gray-text);">🛍️ '+e.produto+'</div>':'')+'</div>').join('');
+  document.getElementById('detail-body').innerHTML=evts.map(e=>'<div style="border:1px solid var(--gray-line);padding:14px;background:var(--gray-card);"><div style="font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text);margin-bottom:6px;">'+(ti[e.tipo]||'📱')+' '+(e.tipo||'—')+' · <span style="color:'+(e.status==='postado'?'#8BC4A0':'var(--pink)')+';">'+(e.status==='postado'?'✓ Postado':'Planejado')+'</span></div><div style="font-size:13px;color:var(--white);margin-bottom:4px;">'+(e.titulo||'—')+'</div>'+(e.produto?'<div style="font-size:10px;color:var(--gray-text);">🛍️ '+e.produto+'</div>':'')+(e.conteudo?'<div style="font-size:10px;color:var(--gray-text);margin-top:6px;">'+e.conteudo+'</div>':'')+'</div>').join('');
   document.getElementById('detail-actions').innerHTML=evts.filter(e=>e.fonte==='planejado').map(e=>'<button onclick="deleteEvent(\''+e.id+'\')" style="background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:\'Montserrat\',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;padding:8px 14px;cursor:pointer;">Excluir planejamento</button>').join('');
   document.getElementById('event-detail-modal').style.display='flex';document.body.style.overflow='hidden';
 }
 
+// ─── saveEvent ATUALIZADO com notificação por email ───
 async function saveEvent(){
-  const data=document.getElementById('ev-data').value,tipo=document.getElementById('ev-tipo').value;
-  const titulo=document.getElementById('ev-titulo').value.trim(),produto=document.getElementById('ev-produto').value.trim();
-  const errEl=document.getElementById('ev-error'),btn=document.getElementById('ev-save-btn');
-  if(!data){errEl.textContent='Selecione uma data.';return}
-  if(!titulo){errEl.textContent='Descreva a ideia do conteúdo.';return}
-  btn.textContent='Salvando...';btn.disabled=true;errEl.textContent='';
-  const{error}=await sb.from('calendario').insert({user_id:currentUser.id,cupom:currentInfluencer.cupom,data,tipo,titulo,produto,status:'planejado'});
-  if(error){errEl.textContent='Erro: '+error.message;btn.textContent='Salvar';btn.disabled=false;return}
-  document.getElementById('ev-data').value='';document.getElementById('ev-titulo').value='';document.getElementById('ev-produto').value='';
-  btn.textContent='Salvar';btn.disabled=false;
-  document.getElementById('event-modal').style.display='none';document.body.style.overflow='';
-  await loadCalendarEvents();renderCalendar();
+  const data     = document.getElementById('ev-data').value;
+  const tipo     = document.getElementById('ev-tipo').value;
+  const titulo   = document.getElementById('ev-titulo').value.trim();
+  const produto  = document.getElementById('ev-produto').value.trim();
+  const conteudo = document.getElementById('ev-conteudo').value.trim();
+  const imagem   = document.getElementById('ev-imagem').value.trim();
+  const errEl    = document.getElementById('ev-error');
+  const btn      = document.getElementById('ev-save-btn');
+
+  if(!data)  { errEl.textContent='Selecione uma data.'; return; }
+  if(!titulo){ errEl.textContent='Descreva a ideia do conteúdo.'; return; }
+
+  btn.textContent='Salvando...'; btn.disabled=true; errEl.textContent='';
+
+  const{error}=await sb.from('calendario').insert({
+    user_id: currentUser.id,
+    cupom:   currentInfluencer.cupom,
+    data, tipo, titulo, produto, conteudo,
+    status: 'planejado',
+  });
+
+  if(error){
+    errEl.textContent='Erro: '+error.message;
+    btn.textContent='Salvar'; btn.disabled=false;
+    return;
+  }
+
+  // Dispara email (não bloqueante)
+  await notifyCalendar('created', {
+    influencer: currentInfluencer.nome,
+    cupom:      currentInfluencer.cupom,
+    data, tipo, titulo, produto, conteudo,
+    imagem_url: imagem || '',
+  });
+
+  // Reset modal
+  document.getElementById('ev-data').value     = '';
+  document.getElementById('ev-titulo').value   = '';
+  document.getElementById('ev-produto').value  = '';
+  document.getElementById('ev-conteudo').value = '';
+  document.getElementById('ev-imagem').value   = '';
+  btn.textContent='Salvar'; btn.disabled=false;
+  document.getElementById('event-modal').style.display='none';
+  document.body.style.overflow='';
+
+  await loadCalendarEvents();
+  renderCalendar();
 }
 
+// ─── deleteEvent ATUALIZADO com notificação por email ───
 async function deleteEvent(id){
+  const evento = calEventos.find(e=>e.id===id);
+
   const{error}=await sb.from('calendario').delete().eq('id',id);
-  if(error){alert('Erro: '+error.message);return}
-  document.getElementById('event-detail-modal').style.display='none';document.body.style.overflow='';
-  await loadCalendarEvents();renderCalendar();
+  if(error){ alert('Erro: '+error.message); return; }
+
+  // Dispara email de cancelamento (não bloqueante)
+  if(evento){
+    await notifyCalendar('deleted', {
+      influencer: currentInfluencer.nome,
+      cupom:      currentInfluencer.cupom,
+      data:       evento.data,
+      tipo:       evento.tipo,
+      titulo:     evento.titulo,
+      produto:    evento.produto || '',
+      conteudo:   evento.conteudo || evento.titulo,
+      imagem_url: '',
+    });
+  }
+
+  document.getElementById('event-detail-modal').style.display='none';
+  document.body.style.overflow='';
+
+  await loadCalendarEvents();
+  renderCalendar();
 }
 </script>
 </body>
