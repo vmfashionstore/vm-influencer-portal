@@ -68,6 +68,33 @@
 
   .roi-status{font-size:9px;letter-spacing:0.05em;color:var(--gray-text);margin:4px 0 20px;line-height:1.6}
 
+  .lista-filters{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .filter-chip{background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;padding:8px 14px;cursor:pointer;transition:all 0.2s;border-radius:0}
+  .filter-chip:hover{color:var(--white)}
+  .filter-chip.active{background:var(--pink);color:var(--black);border-color:var(--pink)}
+
+  .lista-table-wrap{overflow-x:auto;border:1px solid var(--gray-line);margin-bottom:8px}
+  .lista-table{width:100%;border-collapse:collapse;min-width:680px}
+  .lista-table th{text-align:left;font-size:7px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray-text);padding:12px 14px;border-bottom:1px solid var(--gray-line);background:var(--gray-mid);cursor:pointer;white-space:nowrap;user-select:none}
+  .lista-table th:hover{color:var(--pink)}
+  .lista-table th.sorted{color:var(--pink)}
+  .lista-table th .arrow{font-size:8px;margin-left:2px}
+  .lista-table td{padding:12px 14px;border-bottom:1px solid var(--gray-line);font-size:11px;color:var(--white);white-space:nowrap}
+  .lista-table tbody tr:last-child td{border-bottom:none}
+  .lista-table tbody tr:hover td{background:var(--gray-dark)}
+  .lista-tier-badge{font-size:7px;letter-spacing:0.1em;text-transform:uppercase;color:var(--pink);border:1px solid var(--pink-dark);padding:3px 8px;display:inline-block}
+  .lista-empty{padding:32px;text-align:center;color:var(--gray-text);font-size:11px;white-space:normal}
+  .pos{color:#8BC4A0}
+  .neg{color:var(--pink)}
+
+  .metric-grid{display:grid;grid-template-columns:1fr;gap:1px;background:var(--gray-line);border:1px solid var(--gray-line);margin-bottom:8px}
+  .metric-card{background:var(--gray-card);padding:20px 18px}
+  .metric-label{font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--pink);margin-bottom:8px}
+  .metric-value{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:300;color:var(--white);line-height:1;margin-bottom:8px}
+  .metric-explain{font-size:10px;line-height:1.6;color:var(--gray-text)}
+  .metric-explain b{color:var(--gray-muted);font-weight:400}
+  @media (min-width:640px){.metric-grid{grid-template-columns:1fr 1fr}}
+
   .loading-state{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
   .loading-logo{font-family:'Cormorant Garamond',serif;font-size:32px;letter-spacing:0.4em;color:var(--pink)}
   .loading-text{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text)}
@@ -135,15 +162,52 @@
       <div class="kpi-card hero"><div class="kpi-label">Retorno (R$)</div><div class="kpi-value pink" id="roi-retorno">—</div><div class="kpi-sub">Valor revertido − investido</div></div>
       <div class="kpi-card"><div class="kpi-label">Valor Revertido</div><div class="kpi-value" id="roi-revertido">—</div><div class="kpi-sub">Receita atribuída</div></div>
       <div class="kpi-card"><div class="kpi-label">Total Investido</div><div class="kpi-value" id="roi-investido">—</div><div class="kpi-sub">Comissão + look + frete + presskit</div></div>
-      <div class="kpi-card"><div class="kpi-label">ROI</div><div class="kpi-value pink" id="roi-pct">—</div><div class="kpi-sub">Retorno ÷ investido</div></div>
     </div>
 
-    <div class="section-title sub">ROI por tier</div>
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="metric-label">ROI · Retorno sobre o Investimento</div>
+        <div class="metric-value pink" id="roi-pct">—</div>
+        <div class="metric-explain">Pra cada R$ 1 investido nessa influencer (ou tier), quantos R$ voltaram de lucro — mede a <b>eficiência do dinheiro investido</b>.<br>Fórmula: (Receita − Custo) ÷ Custo</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Margem de Lucro</div>
+        <div class="metric-value pink" id="margem-pct">—</div>
+        <div class="metric-explain">De tudo que foi vendido através dela, qual % sobrou de lucro depois de pagar o custo — mede a <b>rentabilidade da operação</b>.<br>Fórmula: (Receita − Custo) ÷ Receita</div>
+      </div>
+    </div>
+
+    <div class="section-title sub">ROI e Margem por tier</div>
     <div class="tier-grid" id="roi-tier-grid">
       <div class="tier-card" data-tier="Iconic"><div class="tier-card-name">Iconic</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
       <div class="tier-card" data-tier="Signature"><div class="tier-card-name">Signature</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
       <div class="tier-card" data-tier="Ambassador"><div class="tier-card-name">Ambassador</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
       <div class="tier-card" data-tier="Gift"><div class="tier-card-name">Gift</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
+    </div>
+
+    <div class="section-title">Lista de Influencers</div>
+    <div class="lista-filters" id="lista-filters">
+      <button class="filter-chip active" data-tier="Todos">Todos</button>
+      <button class="filter-chip" data-tier="Iconic">Iconic</button>
+      <button class="filter-chip" data-tier="Signature">Signature</button>
+      <button class="filter-chip" data-tier="Ambassador">Ambassador</button>
+      <button class="filter-chip" data-tier="Gift">Gift</button>
+    </div>
+    <div class="lista-table-wrap">
+      <table class="lista-table" id="lista-table">
+        <thead>
+          <tr>
+            <th data-col="nome">Influencer<span class="arrow"></span></th>
+            <th data-col="tier">Tier<span class="arrow"></span></th>
+            <th data-col="vendido">Vendido<span class="arrow"></span></th>
+            <th data-col="pedidos">Pedidos<span class="arrow"></span></th>
+            <th data-col="retorno">Retorno R$<span class="arrow"></span></th>
+            <th data-col="roi">ROI %<span class="arrow"></span></th>
+            <th data-col="margem">Margem %<span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="lista-tbody"><tr><td colspan="7" class="lista-empty">Carregando…</td></tr></tbody>
+      </table>
     </div>
 
   </main>
@@ -164,6 +228,8 @@ let sb,currentAdmin;
 let allInfluencers=[],allOrders=[],cupomToInfluencer={},ordersInFlight=false;
 let selectedMonth,selectedYear;
 let investCache={};
+let currentSalesByCupom={},currentInvestByCupom={};
+let listaSortCol='vendido',listaSortDir='desc',listaTierFilter='Todos';
 
 document.addEventListener('DOMContentLoaded',function(){
   sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
@@ -240,6 +306,7 @@ async function loadDashboard(){
   allInfluencers.forEach(i=>{cupomToInfluencer[(i.cupom||'').toUpperCase()]=i});
   document.getElementById('kpi-influencers-ativas').textContent=allInfluencers.length;
   renderTierCounts();
+  setupListaControls();
   fetchOrders();
   loadROI();
 }
@@ -323,14 +390,20 @@ function renderPerformance(){
   document.getElementById('kpi-ticket').textContent=fmt(tm);
 
   const tierSales={};TIERS.forEach(t=>tierSales[t]=0);
+  currentSalesByCupom={};
   uniq.forEach(o=>{
-    const inf=cupomToInfluencer[o.coupon_code.toUpperCase()];
+    const cupom=o.coupon_code.toUpperCase();
+    const inf=cupomToInfluencer[cupom];
     if(inf&&inf.tier&&tierSales.hasOwnProperty(inf.tier))tierSales[inf.tier]+=parseFloat(o.total||0);
+    if(!currentSalesByCupom[cupom])currentSalesByCupom[cupom]={vendido:0,pedidos:0};
+    currentSalesByCupom[cupom].vendido+=parseFloat(o.total||0);
+    currentSalesByCupom[cupom].pedidos+=1;
   });
   TIERS.forEach(t=>{
     const card=document.querySelector('#tier-grid .tier-card[data-tier="'+t+'"]');
     if(card)card.querySelector('.tier-card-sub').textContent=fmt(tierSales[t])+' vendido';
   });
+  renderLista();
 }
 
 /* ---------- Planilha de investimentos (ROI) ---------- */
@@ -423,6 +496,7 @@ async function loadROI(){
 
   let totalRevertido=0,totalInvestido=0,totalRetorno=0;
   const tierRetorno={};const tierInvestido={};TIERS.forEach(t=>{tierRetorno[t]=0;tierInvestido[t]=0});
+  currentInvestByCupom={};
 
   ok.forEach(month=>{
     totalRevertido+=month.totalRevertido;
@@ -434,21 +508,29 @@ async function loadROI(){
         tierRetorno[inf.tier]+=d.retorno;
         tierInvestido[inf.tier]+=d.investido;
       }
+      if(!currentInvestByCupom[cupom])currentInvestByCupom[cupom]={revertido:0,investido:0,retorno:0};
+      currentInvestByCupom[cupom].revertido+=d.revertido;
+      currentInvestByCupom[cupom].investido+=d.investido;
+      currentInvestByCupom[cupom].retorno+=d.retorno;
     });
   });
 
   const roiPct=totalInvestido>0?totalRetorno/totalInvestido:null;
+  const margemPct=totalRevertido>0?totalRetorno/totalRevertido:null;
   document.getElementById('roi-revertido').textContent=fmt(totalRevertido);
   document.getElementById('roi-investido').textContent=fmt(totalInvestido);
   document.getElementById('roi-retorno').textContent=fmt(totalRetorno);
   document.getElementById('roi-pct').textContent=roiPct===null?'—':(roiPct*100).toFixed(0)+'%';
+  document.getElementById('margem-pct').textContent=margemPct===null?'—':(margemPct*100).toFixed(0)+'%';
 
   TIERS.forEach(t=>{
     const card=document.querySelector('#roi-tier-grid .tier-card[data-tier="'+t+'"]');
     if(!card)return;
     const pct=tierInvestido[t]>0?(tierRetorno[t]/tierInvestido[t])*100:null;
-    card.querySelector('.tier-card-count').textContent=pct===null?'—':pct.toFixed(0)+'%';
-    card.querySelector('.tier-card-sub').textContent=fmt(tierRetorno[t])+' retorno';
+    const tierRevertido=tierInvestido[t]+tierRetorno[t]; // revertido = investido + retorno
+    const mg=tierRevertido>0?(tierRetorno[t]/tierRevertido)*100:null;
+    card.querySelector('.tier-card-count').textContent=pct===null?'—':'ROI '+pct.toFixed(0)+'%';
+    card.querySelector('.tier-card-sub').textContent=(mg===null?'—':'Margem '+mg.toFixed(0)+'%')+' · '+fmt(tierRetorno[t]);
   });
 
   if(ok.length===0){
@@ -458,6 +540,81 @@ async function loadROI(){
   }else{
     statusEl.textContent='✓ Sincronizado · '+ok.map(o=>o.tabName).join(', ');
   }
+  renderLista();
+}
+
+/* ---------- Lista de Influencers ---------- */
+
+function setupListaControls(){
+  document.querySelectorAll('#lista-filters .filter-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      document.querySelectorAll('#lista-filters .filter-chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      listaTierFilter=chip.dataset.tier;
+      renderLista();
+    });
+  });
+  document.querySelectorAll('#lista-table th[data-col]').forEach(th=>{
+    th.addEventListener('click',()=>{
+      const col=th.dataset.col;
+      if(listaSortCol===col)listaSortDir=listaSortDir==='desc'?'asc':'desc';
+      else{listaSortCol=col;listaSortDir='desc';}
+      renderLista();
+    });
+  });
+}
+
+function renderLista(){
+  const tbody=document.getElementById('lista-tbody');
+  if(!tbody)return;
+  if(!allInfluencers.length){tbody.innerHTML='<tr><td colspan="7" class="lista-empty">Carregando…</td></tr>';return}
+
+  let rows=allInfluencers.map(inf=>{
+    const cupom=(inf.cupom||'').toUpperCase();
+    const sales=currentSalesByCupom[cupom]||{vendido:0,pedidos:0};
+    const inv=currentInvestByCupom[cupom]||{revertido:0,investido:0,retorno:0};
+    const roi=inv.investido>0?(inv.retorno/inv.investido)*100:null;
+    const margem=inv.revertido>0?(inv.retorno/inv.revertido)*100:null;
+    return{nome:inf.nome,tier:inf.tier||'—',cupom,vendido:sales.vendido,pedidos:sales.pedidos,retorno:inv.retorno,roi,margem};
+  });
+
+  if(listaTierFilter!=='Todos')rows=rows.filter(r=>r.tier===listaTierFilter);
+
+  rows.sort((a,b)=>{
+    let av=a[listaSortCol],bv=b[listaSortCol];
+    const isText=(listaSortCol==='nome'||listaSortCol==='tier');
+    if(av===null||av===undefined)av=isText?'':-Infinity;
+    if(bv===null||bv===undefined)bv=isText?'':-Infinity;
+    if(typeof av==='string'||typeof bv==='string'){
+      av=(av||'').toString();bv=(bv||'').toString();
+      return listaSortDir==='asc'?av.localeCompare(bv):bv.localeCompare(av);
+    }
+    return listaSortDir==='asc'?av-bv:bv-av;
+  });
+
+  document.querySelectorAll('#lista-table th[data-col]').forEach(th=>{
+    const active=th.dataset.col===listaSortCol;
+    th.classList.toggle('sorted',active);
+    const arrow=th.querySelector('.arrow');
+    if(arrow)arrow.textContent=active?(listaSortDir==='desc'?'↓':'↑'):'';
+  });
+
+  if(rows.length===0){
+    tbody.innerHTML='<tr><td colspan="7" class="lista-empty">Nenhuma influencer neste filtro.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML=rows.map(r=>
+    '<tr>'+
+      '<td>'+r.nome+'</td>'+
+      '<td><span class="lista-tier-badge">'+r.tier+'</span></td>'+
+      '<td>'+fmt(r.vendido)+'</td>'+
+      '<td>'+r.pedidos+'</td>'+
+      '<td class="'+(r.retorno>=0?'pos':'neg')+'">'+fmt(r.retorno)+'</td>'+
+      '<td>'+(r.roi===null?'—':r.roi.toFixed(0)+'%')+'</td>'+
+      '<td>'+(r.margem===null?'—':r.margem.toFixed(0)+'%')+'</td>'+
+    '</tr>'
+  ).join('');
 }
 </script>
 </body>
