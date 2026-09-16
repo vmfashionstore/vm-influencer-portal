@@ -39,15 +39,17 @@
   .logout-btn{background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:7px;letter-spacing:0.2em;text-transform:uppercase;padding:6px 12px;cursor:pointer;transition:all 0.2s;border-radius:0}
   .logout-btn:hover{border-color:var(--pink);color:var(--pink)}
 
-  .admin-content{padding:32px 20px 80px;max-width:960px;margin:0 auto;text-align:left}
+  .admin-content{padding:24px 20px 80px;max-width:960px;margin:0 auto;text-align:left}
 
   .section-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--white);margin:40px 0 16px;letter-spacing:0.02em}
   .section-title:first-child{margin-top:0}
+  .section-title.sub{font-size:14px;color:var(--gray-text);margin:28px 0 12px;text-transform:uppercase;letter-spacing:0.15em}
 
-  .period-toggle{display:inline-flex;border:1px solid var(--gray-line);margin-bottom:24px}
-  .period-btn{background:none;border:none;color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;padding:10px 18px;cursor:pointer;transition:all 0.2s}
-  .period-btn.active{background:var(--pink);color:var(--black)}
-  .period-btn:not(.active):hover{color:var(--white)}
+  .month-bar{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-bottom:8px;border-bottom:1px solid var(--gray-line);position:sticky;top:57px;background:var(--black);z-index:90}
+  .month-bar::-webkit-scrollbar{display:none}
+  .month-btn{font-family:'Montserrat',sans-serif;font-size:8px;font-weight:400;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-text);padding:10px 12px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap}
+  .month-btn:hover{color:var(--white)}
+  .month-btn.active{color:var(--pink);border-bottom:2px solid var(--pink)}
 
   .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--gray-line);border:1px solid var(--gray-line);margin-bottom:8px}
   .kpi-card{background:var(--gray-card);padding:20px 18px;position:relative}
@@ -64,9 +66,7 @@
   .tier-card-count{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;color:var(--white)}
   .tier-card-sub{font-size:8px;color:var(--gray-text);margin-top:6px;text-transform:uppercase;letter-spacing:0.08em}
 
-  .roi-card{background:var(--gray-card);border:1px solid var(--gray-line);padding:28px 24px;text-align:center}
-  .roi-card-title{font-size:11px;letter-spacing:0.1em;color:var(--pink);text-transform:uppercase;margin-bottom:10px}
-  .roi-card-text{font-size:11px;line-height:1.7;color:var(--gray-muted);max-width:520px;margin:0 auto}
+  .roi-status{font-size:9px;letter-spacing:0.05em;color:var(--gray-text);margin:4px 0 20px;line-height:1.6}
 
   .loading-state{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
   .loading-logo{font-family:'Cormorant Garamond',serif;font-size:32px;letter-spacing:0.4em;color:var(--pink)}
@@ -108,6 +108,9 @@
       <button class="logout-btn" id="logout-btn">Sair</button>
     </div>
   </header>
+
+  <div class="month-bar" id="month-bar"></div>
+
   <main class="admin-content">
 
     <div class="section-title">Influencers por tier</div>
@@ -119,10 +122,6 @@
     </div>
 
     <div class="section-title">Performance agregada</div>
-    <div class="period-toggle">
-      <button class="period-btn active" data-period="mes">Este mês</button>
-      <button class="period-btn" data-period="total">Total</button>
-    </div>
     <div class="kpi-grid">
       <div class="kpi-card hero"><div class="kpi-label">Total Vendido</div><div class="kpi-value pink" id="kpi-total-vendido">—</div><div class="kpi-sub" id="kpi-sync-status">Sincronizando…</div></div>
       <div class="kpi-card"><div class="kpi-label">Influencers Ativas</div><div class="kpi-value" id="kpi-influencers-ativas">—</div><div class="kpi-sub">Cadastradas no portal</div></div>
@@ -131,9 +130,20 @@
     </div>
 
     <div class="section-title">ROI agregado</div>
-    <div class="roi-card" id="roi-card">
-      <div class="roi-card-title">Aguardando planilha de investimentos</div>
-      <div class="roi-card-text">O cálculo de ROI — (receita atribuída − investimento) ÷ investimento — depende da integração com a planilha de investimentos por influencer, ainda não conectada. Assim que o link da planilha publicada (CSV) for definido, este card passa a mostrar o ROI agregado do período.</div>
+    <div class="roi-status" id="roi-status">Carregando…</div>
+    <div class="kpi-grid">
+      <div class="kpi-card hero"><div class="kpi-label">Retorno (R$)</div><div class="kpi-value pink" id="roi-retorno">—</div><div class="kpi-sub">Valor revertido − investido</div></div>
+      <div class="kpi-card"><div class="kpi-label">Valor Revertido</div><div class="kpi-value" id="roi-revertido">—</div><div class="kpi-sub">Receita atribuída</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total Investido</div><div class="kpi-value" id="roi-investido">—</div><div class="kpi-sub">Comissão + look + frete + presskit</div></div>
+      <div class="kpi-card"><div class="kpi-label">ROI</div><div class="kpi-value pink" id="roi-pct">—</div><div class="kpi-sub">Retorno ÷ investido</div></div>
+    </div>
+
+    <div class="section-title sub">ROI por tier</div>
+    <div class="tier-grid" id="roi-tier-grid">
+      <div class="tier-card" data-tier="Iconic"><div class="tier-card-name">Iconic</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
+      <div class="tier-card" data-tier="Signature"><div class="tier-card-name">Signature</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
+      <div class="tier-card" data-tier="Ambassador"><div class="tier-card-name">Ambassador</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
+      <div class="tier-card" data-tier="Gift"><div class="tier-card-name">Gift</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
     </div>
 
   </main>
@@ -145,24 +155,21 @@ const SUPABASE_URL='https://ckqqfppssynlicsejrqc.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrcXFmcHBzc3lubGljc2VqcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTk5NDcsImV4cCI6MjA5MzAzNTk0N30.sC-F9JEweQun-Pteg0uLEV72dP7GV2hGVrYtB5fONH8';
 const VNDA_BASE='/api/orders';
 const TIERS=['Iconic','Signature','Ambassador','Gift'];
+const MONTHS=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MONTH_TAB=['JAN','FEV','MAR','ABR','MAIO','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+const INVEST_SHEET_ID='1jupbC2UPIAbOrI9VN2FMESL2Kygj0T3OzpXNO8D4lHg';
 const fmt=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
 
 let sb,currentAdmin;
-let allInfluencers=[],allOrders=[],cupomToInfluencer={},selectedPeriod='mes',ordersInFlight=false;
+let allInfluencers=[],allOrders=[],cupomToInfluencer={},ordersInFlight=false;
+let selectedMonth,selectedYear;
+let investCache={};
 
 document.addEventListener('DOMContentLoaded',function(){
   sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   document.getElementById('login-btn').addEventListener('click',handleLogin);
   document.getElementById('password').addEventListener('keypress',e=>{if(e.key==='Enter')handleLogin()});
   document.getElementById('logout-btn').addEventListener('click',handleLogout);
-  document.querySelectorAll('.period-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedPeriod=btn.dataset.period;
-      renderPerformance();
-    });
-  });
   init();
 });
 
@@ -220,6 +227,9 @@ async function loadAdmin(user){
 }
 
 async function loadDashboard(){
+  const now=new Date();selectedMonth=now.getMonth();selectedYear=now.getFullYear();
+  buildMonthBar();
+
   const{data:influencers,error}=await sb.from('influencers').select('*');
   if(error){
     document.getElementById('kpi-sync-status').textContent='Erro ao carregar influencers';
@@ -229,15 +239,34 @@ async function loadDashboard(){
   cupomToInfluencer={};
   allInfluencers.forEach(i=>{cupomToInfluencer[(i.cupom||'').toUpperCase()]=i});
   document.getElementById('kpi-influencers-ativas').textContent=allInfluencers.length;
-  renderTierGrid();
+  renderTierCounts();
   fetchOrders();
+  loadROI();
 }
 
-function renderTierGrid(){
+function buildMonthBar(){
+  const bar=document.getElementById('month-bar');bar.innerHTML='';
+  const add=(label,val)=>{
+    const btn=document.createElement('button');
+    btn.className='month-btn'+(val===selectedMonth?' active':'');
+    btn.textContent=label;
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.month-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedMonth=val;
+      renderPerformance();
+      loadROI();
+    });
+    bar.appendChild(btn);
+  };
+  add('Todos','todos');add(String(selectedYear),'ano');MONTHS.forEach((m,i)=>add(m,i));
+}
+
+function renderTierCounts(){
   const counts={};TIERS.forEach(t=>counts[t]=0);
   allInfluencers.forEach(i=>{if(i.tier&&counts.hasOwnProperty(i.tier))counts[i.tier]++});
   TIERS.forEach(t=>{
-    const card=document.querySelector('.tier-card[data-tier="'+t+'"]');
+    const card=document.querySelector('#tier-grid .tier-card[data-tier="'+t+'"]');
     if(card)card.querySelector('.tier-card-count').textContent=counts[t];
   });
 }
@@ -271,13 +300,13 @@ async function fetchOrders(){
 }
 
 function ordersForSelectedPeriod(){
-  if(selectedPeriod==='total')return allOrders;
-  const now=new Date();const y=now.getFullYear(),m=now.getMonth();
   return allOrders.filter(o=>{
     const ds=o.confirmed_at||o.received_at;if(!ds)return false;
     const p=ds.substring(0,10).split('-');
     const dy=parseInt(p[0]),dm=parseInt(p[1])-1;
-    return dy===y&&dm===m;
+    if(selectedMonth==='todos')return true;
+    if(selectedMonth==='ano')return dy===selectedYear;
+    return dm===selectedMonth&&dy===selectedYear;
   });
 }
 
@@ -299,9 +328,136 @@ function renderPerformance(){
     if(inf&&inf.tier&&tierSales.hasOwnProperty(inf.tier))tierSales[inf.tier]+=parseFloat(o.total||0);
   });
   TIERS.forEach(t=>{
-    const card=document.querySelector('.tier-card[data-tier="'+t+'"]');
+    const card=document.querySelector('#tier-grid .tier-card[data-tier="'+t+'"]');
     if(card)card.querySelector('.tier-card-sub').textContent=fmt(tierSales[t])+' vendido';
   });
+}
+
+/* ---------- Planilha de investimentos (ROI) ---------- */
+
+function investCsvUrl(sheetName){
+  return 'https://docs.google.com/spreadsheets/d/'+INVEST_SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(sheetName);
+}
+
+function parseCSVAll(text){
+  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(r=>r.length>0);
+  return lines.map(r=>{
+    const cols=[];let cur='',inQ=false;
+    for(let i=0;i<r.length;i++){
+      const ch=r[i];
+      if(ch==='"'){if(inQ&&r[i+1]==='"'){cur+='"';i++;continue}inQ=!inQ;continue;}
+      if(ch===','&&!inQ){cols.push(cur.trim());cur='';continue;}
+      cur+=ch;
+    }
+    cols.push(cur.trim());return cols;
+  });
+}
+
+function normHeader(s){
+  return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+}
+
+function findHeaderMap(rows,requiredKeys){
+  for(let r=0;r<Math.min(rows.length,10);r++){
+    const norm=rows[r].map(normHeader);
+    const idx={};
+    requiredKeys.forEach(k=>{
+      const i=norm.findIndex(h=>h.includes(k));
+      if(i>-1)idx[k]=i;
+    });
+    if(Object.keys(idx).length>=Math.ceil(requiredKeys.length*0.6))return{headerRow:r,idx};
+  }
+  return null;
+}
+
+function parseMoney(v){
+  if(v===undefined||v===null||v==='')return 0;
+  let s=v.toString().trim().replace(/[R$\s]/g,'');
+  if(s.includes(',')&&s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
+  else if(s.includes(',')&&!s.includes('.')) s=s.replace(',','.');
+  const n=parseFloat(s);
+  return isNaN(n)?0:n;
+}
+
+async function fetchInvestMonth(monthIdx,year){
+  const tabName=MONTH_TAB[monthIdx]+'/'+year;
+  if(investCache[tabName])return investCache[tabName];
+  try{
+    const res=await fetch(investCsvUrl(tabName));
+    if(!res.ok)throw new Error('aba não encontrada');
+    const text=await res.text();
+    if(text.trim().startsWith('<'))throw new Error('planilha não pública ou aba inexistente');
+    const rows=parseCSVAll(text);
+    const hm=findHeaderMap(rows,['nome','cupom','valor revertido','total investido','retorno do investimento']);
+    if(!hm)throw new Error('cabeçalho não encontrado');
+    const byCupom={};let totalInvestido=0,totalRevertido=0,totalRetorno=0;
+    for(let r=hm.headerRow+1;r<rows.length;r++){
+      const row=rows[r];if(!row||row.every(c=>!c))continue;
+      const cupom=(hm.idx['cupom']!==undefined?row[hm.idx['cupom']]:'').toUpperCase().trim();
+      if(!cupom)continue;
+      const nome=hm.idx['nome']!==undefined?row[hm.idx['nome']]:'';
+      const revertido=parseMoney(row[hm.idx['valor revertido']]);
+      const investido=parseMoney(row[hm.idx['total investido']]);
+      const retorno=parseMoney(row[hm.idx['retorno do investimento']]);
+      byCupom[cupom]={nome,revertido,investido,retorno};
+      totalInvestido+=investido;totalRevertido+=revertido;totalRetorno+=retorno;
+    }
+    const result={tabName,byCupom,totalInvestido,totalRevertido,totalRetorno,ok:true};
+    investCache[tabName]=result;
+    return result;
+  }catch(e){
+    return{tabName,byCupom:{},totalInvestido:0,totalRevertido:0,totalRetorno:0,ok:false,error:e.message};
+  }
+}
+
+async function loadROI(){
+  const statusEl=document.getElementById('roi-status');
+  statusEl.textContent='Carregando dados de investimento…';
+  let monthIdxs;
+  if(selectedMonth==='todos'||selectedMonth==='ano') monthIdxs=MONTH_TAB.map((_,i)=>i);
+  else monthIdxs=[selectedMonth];
+
+  const results=await Promise.all(monthIdxs.map(m=>fetchInvestMonth(m,selectedYear)));
+  const ok=results.filter(r=>r.ok);
+  const missing=results.filter(r=>!r.ok);
+
+  let totalRevertido=0,totalInvestido=0,totalRetorno=0;
+  const tierRetorno={};const tierInvestido={};TIERS.forEach(t=>{tierRetorno[t]=0;tierInvestido[t]=0});
+
+  ok.forEach(month=>{
+    totalRevertido+=month.totalRevertido;
+    totalInvestido+=month.totalInvestido;
+    totalRetorno+=month.totalRetorno;
+    Object.entries(month.byCupom).forEach(([cupom,d])=>{
+      const inf=cupomToInfluencer[cupom];
+      if(inf&&inf.tier&&tierRetorno.hasOwnProperty(inf.tier)){
+        tierRetorno[inf.tier]+=d.retorno;
+        tierInvestido[inf.tier]+=d.investido;
+      }
+    });
+  });
+
+  const roiPct=totalInvestido>0?totalRetorno/totalInvestido:null;
+  document.getElementById('roi-revertido').textContent=fmt(totalRevertido);
+  document.getElementById('roi-investido').textContent=fmt(totalInvestido);
+  document.getElementById('roi-retorno').textContent=fmt(totalRetorno);
+  document.getElementById('roi-pct').textContent=roiPct===null?'—':(roiPct*100).toFixed(0)+'%';
+
+  TIERS.forEach(t=>{
+    const card=document.querySelector('#roi-tier-grid .tier-card[data-tier="'+t+'"]');
+    if(!card)return;
+    const pct=tierInvestido[t]>0?(tierRetorno[t]/tierInvestido[t])*100:null;
+    card.querySelector('.tier-card-count').textContent=pct===null?'—':pct.toFixed(0)+'%';
+    card.querySelector('.tier-card-sub').textContent=fmt(tierRetorno[t])+' retorno';
+  });
+
+  if(ok.length===0){
+    statusEl.textContent='Nenhuma aba de investimento encontrada para este período (verifique se a planilha está compartilhada como "Qualquer pessoa com o link").';
+  }else if(missing.length>0){
+    statusEl.textContent='Dados de '+ok.length+' mês'+(ok.length!==1?'es':'')+' · aba(s) ainda não criada(s): '+missing.map(m=>m.tabName).join(', ');
+  }else{
+    statusEl.textContent='✓ Sincronizado · '+ok.map(o=>o.tabName).join(', ');
+  }
 }
 </script>
 </body>
