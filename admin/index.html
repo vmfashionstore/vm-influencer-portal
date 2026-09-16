@@ -39,13 +39,45 @@
   .logout-btn{background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:7px;letter-spacing:0.2em;text-transform:uppercase;padding:6px 12px;cursor:pointer;transition:all 0.2s;border-radius:0}
   .logout-btn:hover{border-color:var(--pink);color:var(--pink)}
 
-  .admin-content{padding:64px 24px;max-width:640px;margin:0 auto;text-align:center}
-  .admin-placeholder-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;color:var(--white);margin-bottom:12px}
-  .admin-placeholder-text{font-size:12px;line-height:1.7;color:var(--gray-text)}
+  .admin-content{padding:32px 20px 80px;max-width:960px;margin:0 auto;text-align:left}
+
+  .section-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--white);margin:40px 0 16px;letter-spacing:0.02em}
+  .section-title:first-child{margin-top:0}
+
+  .period-toggle{display:inline-flex;border:1px solid var(--gray-line);margin-bottom:24px}
+  .period-btn{background:none;border:none;color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;padding:10px 18px;cursor:pointer;transition:all 0.2s}
+  .period-btn.active{background:var(--pink);color:var(--black)}
+  .period-btn:not(.active):hover{color:var(--white)}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--gray-line);border:1px solid var(--gray-line);margin-bottom:8px}
+  .kpi-card{background:var(--gray-card);padding:20px 18px;position:relative}
+  .kpi-card.hero{background:var(--gray-mid);grid-column:span 2}
+  .kpi-card.hero::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--pink-dark),var(--pink),var(--pink-light))}
+  .kpi-label{font-size:7px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gray-text);margin-bottom:8px}
+  .kpi-value{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:var(--white);line-height:1}
+  .kpi-value.pink{color:var(--pink);font-size:40px}
+  .kpi-sub{font-size:7px;letter-spacing:0.12em;color:var(--gray-muted);margin-top:6px;text-transform:uppercase}
+
+  .tier-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--gray-line);border:1px solid var(--gray-line);margin-bottom:8px}
+  .tier-card{background:var(--gray-card);padding:18px;text-align:center}
+  .tier-card-name{font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--pink);margin-bottom:10px}
+  .tier-card-count{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;color:var(--white)}
+  .tier-card-sub{font-size:8px;color:var(--gray-text);margin-top:6px;text-transform:uppercase;letter-spacing:0.08em}
+
+  .roi-card{background:var(--gray-card);border:1px solid var(--gray-line);padding:28px 24px;text-align:center}
+  .roi-card-title{font-size:11px;letter-spacing:0.1em;color:var(--pink);text-transform:uppercase;margin-bottom:10px}
+  .roi-card-text{font-size:11px;line-height:1.7;color:var(--gray-muted);max-width:520px;margin:0 auto}
 
   .loading-state{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
   .loading-logo{font-family:'Cormorant Garamond',serif;font-size:32px;letter-spacing:0.4em;color:var(--pink)}
   .loading-text{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text)}
+
+  @media (min-width:640px){
+    .kpi-grid{grid-template-columns:repeat(4,1fr)}
+    .kpi-card.hero{grid-column:span 1}
+    .kpi-value.pink{font-size:36px}
+    .tier-grid{grid-template-columns:repeat(4,1fr)}
+  }
 </style>
 </head>
 <body>
@@ -77,8 +109,33 @@
     </div>
   </header>
   <main class="admin-content">
-    <div class="admin-placeholder-title">Área administrativa</div>
-    <div class="admin-placeholder-text">Acesso confirmado. O dashboard geral, a lista de influencers e os demais módulos deste painel entram nas próximas etapas.</div>
+
+    <div class="section-title">Influencers por tier</div>
+    <div class="tier-grid" id="tier-grid">
+      <div class="tier-card" data-tier="Iconic"><div class="tier-card-name">Iconic</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
+      <div class="tier-card" data-tier="Signature"><div class="tier-card-name">Signature</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
+      <div class="tier-card" data-tier="Ambassador"><div class="tier-card-name">Ambassador</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
+      <div class="tier-card" data-tier="Gift"><div class="tier-card-name">Gift</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
+    </div>
+
+    <div class="section-title">Performance agregada</div>
+    <div class="period-toggle">
+      <button class="period-btn active" data-period="mes">Este mês</button>
+      <button class="period-btn" data-period="total">Total</button>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card hero"><div class="kpi-label">Total Vendido</div><div class="kpi-value pink" id="kpi-total-vendido">—</div><div class="kpi-sub" id="kpi-sync-status">Sincronizando…</div></div>
+      <div class="kpi-card"><div class="kpi-label">Influencers Ativas</div><div class="kpi-value" id="kpi-influencers-ativas">—</div><div class="kpi-sub">Cadastradas no portal</div></div>
+      <div class="kpi-card"><div class="kpi-label">Pedidos com Cupom</div><div class="kpi-value" id="kpi-pedidos">—</div><div class="kpi-sub">Via cupom de influencer</div></div>
+      <div class="kpi-card"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="kpi-ticket">—</div><div class="kpi-sub">Por pedido com cupom</div></div>
+    </div>
+
+    <div class="section-title">ROI agregado</div>
+    <div class="roi-card" id="roi-card">
+      <div class="roi-card-title">Aguardando planilha de investimentos</div>
+      <div class="roi-card-text">O cálculo de ROI — (receita atribuída − investimento) ÷ investimento — depende da integração com a planilha de investimentos por influencer, ainda não conectada. Assim que o link da planilha publicada (CSV) for definido, este card passa a mostrar o ROI agregado do período.</div>
+    </div>
+
   </main>
 </div>
 
@@ -86,14 +143,26 @@
 <script>
 const SUPABASE_URL='https://ckqqfppssynlicsejrqc.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrcXFmcHBzc3lubGljc2VqcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTk5NDcsImV4cCI6MjA5MzAzNTk0N30.sC-F9JEweQun-Pteg0uLEV72dP7GV2hGVrYtB5fONH8';
+const VNDA_BASE='/api/orders';
+const TIERS=['Iconic','Signature','Ambassador','Gift'];
+const fmt=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
 
 let sb,currentAdmin;
+let allInfluencers=[],allOrders=[],cupomToInfluencer={},selectedPeriod='mes',ordersInFlight=false;
 
 document.addEventListener('DOMContentLoaded',function(){
   sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   document.getElementById('login-btn').addEventListener('click',handleLogin);
   document.getElementById('password').addEventListener('keypress',e=>{if(e.key==='Enter')handleLogin()});
   document.getElementById('logout-btn').addEventListener('click',handleLogout);
+  document.querySelectorAll('.period-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedPeriod=btn.dataset.period;
+      renderPerformance();
+    });
+  });
   init();
 });
 
@@ -147,6 +216,92 @@ async function loadAdmin(user){
   document.getElementById('admin-name').textContent=admin.nome;
   document.getElementById('loading-state').classList.add('hidden');
   document.getElementById('admin-screen').classList.remove('hidden');
+  loadDashboard();
+}
+
+async function loadDashboard(){
+  const{data:influencers,error}=await sb.from('influencers').select('*');
+  if(error){
+    document.getElementById('kpi-sync-status').textContent='Erro ao carregar influencers';
+    return;
+  }
+  allInfluencers=(influencers||[]).filter(i=>i.cupom&&i.cupom.toUpperCase()!=='ADMIN'&&!i.is_admin);
+  cupomToInfluencer={};
+  allInfluencers.forEach(i=>{cupomToInfluencer[(i.cupom||'').toUpperCase()]=i});
+  document.getElementById('kpi-influencers-ativas').textContent=allInfluencers.length;
+  renderTierGrid();
+  fetchOrders();
+}
+
+function renderTierGrid(){
+  const counts={};TIERS.forEach(t=>counts[t]=0);
+  allInfluencers.forEach(i=>{if(i.tier&&counts.hasOwnProperty(i.tier))counts[i.tier]++});
+  TIERS.forEach(t=>{
+    const card=document.querySelector('.tier-card[data-tier="'+t+'"]');
+    if(card)card.querySelector('.tier-card-count').textContent=counts[t];
+  });
+}
+
+async function fetchOrders(){
+  if(ordersInFlight)return;
+  ordersInFlight=true;
+  allOrders=[];
+  const status=document.getElementById('kpi-sync-status');
+  status.textContent='Sincronizando…';
+  let page=1,hasMore=true;
+  const BATCH=8;
+  while(hasMore&&page<=400){
+    let results;
+    try{
+      results=await Promise.all(Array.from({length:BATCH},(_,i)=>fetch(VNDA_BASE+'?page='+(page+i)).then(r=>r.ok?r.json():[]).catch(()=>[])));
+    }catch(e){break}
+    let anyData=false;
+    for(const data of results){
+      if(!Array.isArray(data)||data.length===0){hasMore=false;break}
+      allOrders=allOrders.concat(data);anyData=true;
+      if(data.length<100){hasMore=false;break}
+    }
+    if(!anyData)hasMore=false;
+    page+=BATCH;
+    status.textContent='Sincronizando · '+allOrders.length+' pedidos...';
+    renderPerformance();
+  }
+  status.textContent='✓ Sincronizado · '+allOrders.length+' pedidos';
+  ordersInFlight=false;
+}
+
+function ordersForSelectedPeriod(){
+  if(selectedPeriod==='total')return allOrders;
+  const now=new Date();const y=now.getFullYear(),m=now.getMonth();
+  return allOrders.filter(o=>{
+    const ds=o.confirmed_at||o.received_at;if(!ds)return false;
+    const p=ds.substring(0,10).split('-');
+    const dy=parseInt(p[0]),dm=parseInt(p[1])-1;
+    return dy===y&&dm===m;
+  });
+}
+
+function renderPerformance(){
+  const period=ordersForSelectedPeriod();
+  const relevant=period.filter(o=>o.coupon_code&&cupomToInfluencer[o.coupon_code.toUpperCase()]);
+  const uniq=[...new Map(relevant.map(o=>[o.id,o])).values()];
+  const tv=uniq.reduce((s,o)=>s+parseFloat(o.total||0),0);
+  const qp=uniq.length;
+  const tm=qp>0?tv/qp:0;
+
+  document.getElementById('kpi-total-vendido').textContent=fmt(tv);
+  document.getElementById('kpi-pedidos').textContent=qp;
+  document.getElementById('kpi-ticket').textContent=fmt(tm);
+
+  const tierSales={};TIERS.forEach(t=>tierSales[t]=0);
+  uniq.forEach(o=>{
+    const inf=cupomToInfluencer[o.coupon_code.toUpperCase()];
+    if(inf&&inf.tier&&tierSales.hasOwnProperty(inf.tier))tierSales[inf.tier]+=parseFloat(o.total||0);
+  });
+  TIERS.forEach(t=>{
+    const card=document.querySelector('.tier-card[data-tier="'+t+'"]');
+    if(card)card.querySelector('.tier-card-sub').textContent=fmt(tierSales[t])+' vendido';
+  });
 }
 </script>
 </body>
