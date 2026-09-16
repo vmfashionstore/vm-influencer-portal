@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>VM Fashion Store — Painel Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --black:#080808;--white:#F4F0EB;--pink:#E8A0B0;--pink-light:#F2C4CE;--pink-dark:#C4607A;--gray-dark:#141414;--gray-mid:#1C1C1C;--gray-card:#181818;--gray-line:#282828;--gray-text:#6A6A6A;--gray-muted:#3A3A3A; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--black);color:var(--white);font-family:'Montserrat',sans-serif;font-weight:300;overflow-x:hidden}
+  .hidden{display:none!important}
+
+  #login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden}
+  #login-screen::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(232,160,176,0.06) 0%,transparent 65%);pointer-events:none}
+  .login-logo{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;letter-spacing:0.5em;color:var(--white);text-transform:uppercase;margin-bottom:8px}
+  .login-tagline{font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gray-text);margin-bottom:56px}
+  .login-box{width:100%;max-width:340px;position:relative}
+  .login-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:0.1em;color:var(--white);margin-bottom:32px;text-align:center}
+  .input-group{margin-bottom:18px}
+  .input-label{font-size:8px;letter-spacing:0.28em;text-transform:uppercase;color:var(--gray-text);display:block;margin-bottom:8px}
+  .input-field{width:100%;background:var(--gray-dark);border:1px solid var(--gray-line);color:var(--white);font-family:'Montserrat',sans-serif;font-size:13px;font-weight:300;padding:14px 16px;outline:none;transition:border-color 0.2s;-webkit-appearance:none;border-radius:0}
+  .input-field:focus{border-color:var(--pink)}
+  .input-field::placeholder{color:var(--gray-muted)}
+  .login-btn{width:100%;background:var(--pink);color:var(--black);border:none;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.3em;text-transform:uppercase;padding:16px;cursor:pointer;margin-top:8px;transition:background 0.2s;border-radius:0;display:block}
+  .login-btn:hover{background:var(--pink-light)}
+  .login-btn:disabled{opacity:0.5;cursor:default}
+  .login-error{font-size:10px;color:var(--pink);letter-spacing:0.1em;text-align:center;margin-top:12px;min-height:16px}
+  .login-back{display:block;text-align:center;margin-top:28px;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text);text-decoration:none}
+  .login-back:hover{color:var(--white)}
+
+  .admin-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--gray-line);position:sticky;top:0;background:var(--black);z-index:100}
+  .admin-logo{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;letter-spacing:0.4em;color:var(--white);text-transform:uppercase}
+  .admin-logo-tag{font-size:7px;letter-spacing:0.2em;text-transform:uppercase;color:var(--pink);margin-top:2px}
+  .admin-user{display:flex;align-items:center;gap:16px}
+  .user-name{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--pink);text-align:right}
+  .user-sub{font-size:8px;letter-spacing:0.12em;color:var(--gray-text);text-transform:uppercase;margin-top:2px;text-align:right}
+  .logout-btn{background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Montserrat',sans-serif;font-size:7px;letter-spacing:0.2em;text-transform:uppercase;padding:6px 12px;cursor:pointer;transition:all 0.2s;border-radius:0}
+  .logout-btn:hover{border-color:var(--pink);color:var(--pink)}
+
+  .admin-content{padding:64px 24px;max-width:640px;margin:0 auto;text-align:center}
+  .admin-placeholder-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;color:var(--white);margin-bottom:12px}
+  .admin-placeholder-text{font-size:12px;line-height:1.7;color:var(--gray-text)}
+
+  .loading-state{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+  .loading-logo{font-family:'Cormorant Garamond',serif;font-size:32px;letter-spacing:0.4em;color:var(--pink)}
+  .loading-text{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text)}
+</style>
+</head>
+<body>
+
+<div id="loading-state" class="loading-state">
+  <div class="loading-logo">VM</div>
+  <div class="loading-text">Carregando...</div>
+</div>
+
+<div id="login-screen" class="hidden">
+  <div class="login-logo">VM</div>
+  <div class="login-tagline">Painel Administrativo</div>
+  <div class="login-box">
+    <div class="login-title">Acesse sua conta</div>
+    <div class="input-group"><label class="input-label" for="email">E-mail</label><input class="input-field" type="email" id="email" placeholder="seu@email.com" autocomplete="email"></div>
+    <div class="input-group"><label class="input-label" for="password">Senha</label><input class="input-field" type="password" id="password" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="login-btn" id="login-btn">Entrar</button>
+    <div class="login-error" id="login-error"></div>
+    <a class="login-back" href="/">← Voltar ao portal de influencers</a>
+  </div>
+</div>
+
+<div id="admin-screen" class="hidden">
+  <header class="admin-header">
+    <div><div class="admin-logo">VM</div><div class="admin-logo-tag">Admin</div></div>
+    <div class="admin-user">
+      <div><div class="user-name" id="admin-name">—</div><div class="user-sub">Administradora</div></div>
+      <button class="logout-btn" id="logout-btn">Sair</button>
+    </div>
+  </header>
+  <main class="admin-content">
+    <div class="admin-placeholder-title">Área administrativa</div>
+    <div class="admin-placeholder-text">Acesso confirmado. O dashboard geral, a lista de influencers e os demais módulos deste painel entram nas próximas etapas.</div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL='https://ckqqfppssynlicsejrqc.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrcXFmcHBzc3lubGljc2VqcnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTk5NDcsImV4cCI6MjA5MzAzNTk0N30.sC-F9JEweQun-Pteg0uLEV72dP7GV2hGVrYtB5fONH8';
+
+let sb,currentAdmin;
+
+document.addEventListener('DOMContentLoaded',function(){
+  sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  document.getElementById('login-btn').addEventListener('click',handleLogin);
+  document.getElementById('password').addEventListener('keypress',e=>{if(e.key==='Enter')handleLogin()});
+  document.getElementById('logout-btn').addEventListener('click',handleLogout);
+  init();
+});
+
+async function init(){
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_IN'&&session)await loadAdmin(session.user);
+    if(event==='SIGNED_OUT')showLogin();
+  });
+  const{data:{session}}=await sb.auth.getSession();
+  if(session)await loadAdmin(session.user);
+  else showLogin();
+}
+
+async function handleLogin(){
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const btn=document.getElementById('login-btn');
+  const err=document.getElementById('login-error');
+  if(!email||!password){err.textContent='Preencha email e senha.';return}
+  btn.textContent='Entrando...';btn.disabled=true;err.textContent='';
+  try{
+    const{error}=await sb.auth.signInWithPassword({email,password});
+    if(error)err.textContent='Email ou senha incorretos.';
+  }
+  catch(e){err.textContent='Erro inesperado: '+e.message}
+  finally{btn.textContent='Entrar';btn.disabled=false}
+}
+
+async function handleLogout(){await sb.auth.signOut()}
+
+function showLogin(){
+  document.getElementById('loading-state').classList.add('hidden');
+  document.getElementById('admin-screen').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+async function loadAdmin(user){
+  document.getElementById('loading-state').classList.remove('hidden');
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('admin-screen').classList.add('hidden');
+
+  const{data:admin}=await sb.from('admin_users').select('*').eq('user_id',user.id).single();
+  if(!admin){
+    const err=document.getElementById('login-error');
+    err.textContent='Acesso restrito à equipe VM.';
+    await sb.auth.signOut();
+    showLogin();
+    return;
+  }
+  currentAdmin=admin;
+  document.getElementById('admin-name').textContent=admin.nome;
+  document.getElementById('loading-state').classList.add('hidden');
+  document.getElementById('admin-screen').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
