@@ -15,6 +15,12 @@
 //   CRON_SECRET           - string aleatória qualquer. Se definida, só aceita chamadas com
 //                           header "Authorization: Bearer <CRON_SECRET>" (a Vercel Cron manda
 //                           esse header automaticamente quando essa env var existe).
+//
+// Performance: busca as métricas de cada post/story em UMA chamada (metrics
+// separados por vírgula) em vez de uma por vez, e processa todos os posts e
+// stories EM PARALELO (Promise.all) — com muitas chamadas sequenciais isso
+// facilmente passa do tempo limite da função (erro 504 "Runtime Timeout").
+// Só cai pra buscar métrica por métrica se a chamada em lote falhar.
 
 const GRAPH_API_BASE = 'https://graph.facebook.com/v26.0';
 const LOOKBACK_DAYS = 45; // cobre mes atual + mes anterior com folga
@@ -43,31 +49,47 @@ async function graphGet(path, params) {
   return data;
 }
 
-// Busca métricas de insight uma por uma (uma métrica incompatível com o tipo
-// de mídia derruba a chamada inteira se pedida junto com as outras) e
-// devolve um objeto { metric: value }. Métricas que falharem viram null,
-// sem quebrar as demais.
+function extractMetricValue(entry) {
+  if (!entry) return null;
+  if (entry.values && entry.values.length) return entry.values[entry.values.length - 1].value;
+  if (entry.total_value) return entry.total_value.value;
+  return null;
+}
+
+// Busca métricas de insight uma por uma (mais lento, só usado como fallback
+// quando a chamada em lote falha porque alguma métrica não é aplicável).
 async function fetchInsightsSafely(objectId, metricSpecs) {
   const out = {};
   for (const spec of metricSpecs) {
     const { key, metric, extraParams } = typeof spec === 'string' ? { key: spec, metric: spec } : spec;
     try {
       const data = await graphGet(`/${objectId}/insights`, { metric, ...extraParams });
-      const entry = (data.data || [])[0];
-      if (!entry) { out[key] = null; continue; }
-      if (entry.values && entry.values.length) {
-        out[key] = entry.values[entry.values.length - 1].value;
-      } else if (entry.total_value) {
-        out[key] = entry.total_value.value;
-      } else {
-        out[key] = null;
-      }
+      out[key] = extractMetricValue((data.data || [])[0]);
     } catch (e) {
       out[key] = null;
-      out[`${key}_error`] = e.message;
     }
   }
   return out;
+}
+
+// Busca várias métricas juntas numa única chamada (metric=a,b,c). Todas as
+// specs precisam compartilhar os mesmos extraParams (period/metric_type/etc).
+// Se a chamada em lote falhar (ex: uma métrica não suportada pra esse tipo de
+// mídia), cai pro fallback de buscar uma por uma.
+async function fetchInsightsBatch(objectId, metricSpecs, sharedExtraParams) {
+  const names = metricSpecs.map((s) => (typeof s === 'string' ? s : s.metric));
+  try {
+    const data = await graphGet(`/${objectId}/insights`, { metric: names.join(','), ...sharedExtraParams });
+    const out = {};
+    metricSpecs.forEach((spec) => {
+      const key = typeof spec === 'string' ? spec : spec.key;
+      const metric = typeof spec === 'string' ? spec : spec.metric;
+      out[key] = extractMetricValue((data.data || []).find((d) => d.name === metric));
+    });
+    return out;
+  } catch (e) {
+    return fetchInsightsSafely(objectId, metricSpecs.map((s) => (typeof s === 'string' ? s : { ...s, extraParams: sharedExtraParams })));
+  }
 }
 
 async function supabaseUpsert(table, rows, onConflict) {
@@ -94,15 +116,19 @@ async function syncAccountDaily(date) {
   const errors = [];
 
   const profile = await graphGet(`/${process.env.IG_USER_ID}`, { fields: 'followers_count' }).catch((e) => {
-    errors.push(e.message);
+    errors.push('profile: ' + e.message);
     return {};
   });
 
-  const dayMetrics = await fetchInsightsSafely(process.env.IG_USER_ID, [
-    { key: 'reach', metric: 'reach', extraParams: { period: 'day', metric_type: 'total_value' } },
-    { key: 'profile_views', metric: 'profile_views', extraParams: { period: 'day', metric_type: 'total_value' } },
-    { key: 'impressions', metric: 'impressions', extraParams: { period: 'day', metric_type: 'total_value' } },
-  ]);
+  const dayMetrics = await fetchInsightsBatch(
+    process.env.IG_USER_ID,
+    [
+      { key: 'reach', metric: 'reach' },
+      { key: 'profile_views', metric: 'profile_views' },
+      { key: 'impressions', metric: 'impressions' },
+    ],
+    { period: 'day', metric_type: 'total_value' },
+  ).catch((e) => { errors.push('day metrics: ' + e.message); return {}; });
 
   const onlineFollowers = await fetchInsightsSafely(process.env.IG_USER_ID, [
     { key: 'online_followers', metric: 'online_followers', extraParams: { period: 'lifetime' } },
@@ -130,9 +156,7 @@ function metricsForMediaType(mediaType) {
     { key: 'views', metric: 'views' },
   ];
   if (mediaType === 'VIDEO' || mediaType === 'REEL') {
-    base.push(
-      { key: 'avg_watch_time', metric: 'ig_reels_avg_watch_time' },
-    );
+    base.push({ key: 'avg_watch_time', metric: 'ig_reels_avg_watch_time' });
   }
   return base;
 }
@@ -148,10 +172,12 @@ async function fetchAllRecentMedia() {
       after,
     });
     const items = data.data || [];
+    let hitCutoff = false;
     for (const item of items) {
-      if (new Date(item.timestamp).getTime() < cutoff) return media;
+      if (new Date(item.timestamp).getTime() < cutoff) { hitCutoff = true; break; }
       media.push(item);
     }
+    if (hitCutoff) break;
     after = data.paging && data.paging.cursors && data.paging.next ? data.paging.cursors.after : null;
     if (!after || items.length === 0) break;
   }
@@ -161,14 +187,14 @@ async function fetchAllRecentMedia() {
 async function syncMedia(date) {
   const errors = [];
   const mediaList = await fetchAllRecentMedia().catch((e) => {
-    errors.push(e.message);
+    errors.push('media list: ' + e.message);
     return [];
   });
 
-  const rows = [];
-  for (const item of mediaList) {
-    const insights = await fetchInsightsSafely(item.id, metricsForMediaType(item.media_type));
-    rows.push({
+  const rows = await Promise.all(mediaList.map(async (item) => {
+    const insights = await fetchInsightsBatch(item.id, metricsForMediaType(item.media_type), {})
+      .catch((e) => { errors.push(`media ${item.id}: ${e.message}`); return {}; });
+    return {
       media_id: item.id,
       snapshot_date: date,
       media_type: item.media_type,
@@ -185,8 +211,8 @@ async function syncMedia(date) {
       shares: insights.shares ?? null,
       total_interactions: insights.total_interactions ?? null,
       avg_watch_time: insights.avg_watch_time ?? null,
-    });
-  }
+    };
+  }));
 
   await supabaseUpsert('ig_media_snapshot', rows, 'media_id,snapshot_date');
   return { count: rows.length, errors };
@@ -197,26 +223,29 @@ async function syncStories() {
   const data = await graphGet(`/${process.env.IG_USER_ID}/stories`, {
     fields: 'id,media_type,media_url,timestamp,permalink',
   }).catch((e) => {
-    errors.push(e.message);
+    errors.push('stories list: ' + e.message);
     return { data: [] };
   });
 
   const stories = data.data || [];
-  const rows = [];
-  for (const story of stories) {
-    const insights = await fetchInsightsSafely(story.id, [
-      { key: 'reach', metric: 'reach' },
-      { key: 'replies', metric: 'replies' },
-      { key: 'shares', metric: 'shares' },
-      { key: 'profile_visits', metric: 'profile_visits' },
-      { key: 'profile_activity', metric: 'profile_activity' },
-      { key: 'follows', metric: 'follows' },
-      { key: 'navigation', metric: 'navigation', extraParams: { breakdown: 'story_navigation_action_type' } },
+  const rows = await Promise.all(stories.map(async (story) => {
+    const [base, nav] = await Promise.all([
+      fetchInsightsBatch(story.id, [
+        { key: 'reach', metric: 'reach' },
+        { key: 'replies', metric: 'replies' },
+        { key: 'shares', metric: 'shares' },
+        { key: 'profile_visits', metric: 'profile_visits' },
+        { key: 'profile_activity', metric: 'profile_activity' },
+        { key: 'follows', metric: 'follows' },
+      ], {}).catch((e) => { errors.push(`story ${story.id}: ${e.message}`); return {}; }),
+      fetchInsightsSafely(story.id, [
+        { key: 'navigation', metric: 'navigation', extraParams: { breakdown: 'story_navigation_action_type' } },
+      ]),
     ]);
 
     let taps_forward = null, taps_back = null, exits = null;
-    if (Array.isArray(insights.navigation)) {
-      for (const v of insights.navigation) {
+    if (Array.isArray(nav.navigation)) {
+      for (const v of nav.navigation) {
         const action = v.dimension_values && v.dimension_values[0];
         if (action === 'TAP_FORWARD') taps_forward = v.value;
         if (action === 'TAP_BACK') taps_back = v.value;
@@ -224,22 +253,22 @@ async function syncStories() {
       }
     }
 
-    rows.push({
+    return {
       story_id: story.id,
       posted_at: story.timestamp,
       media_type: story.media_type,
       media_url: story.media_url || null,
-      reach: insights.reach ?? null,
-      replies: insights.replies ?? null,
-      shares: insights.shares ?? null,
-      profile_visits: insights.profile_visits ?? null,
-      profile_activity: insights.profile_activity ?? null,
-      follows: insights.follows ?? null,
+      reach: base.reach ?? null,
+      replies: base.replies ?? null,
+      shares: base.shares ?? null,
+      profile_visits: base.profile_visits ?? null,
+      profile_activity: base.profile_activity ?? null,
+      follows: base.follows ?? null,
       taps_forward,
       taps_back,
       exits,
-    });
-  }
+    };
+  }));
 
   await supabaseUpsert('ig_story_snapshot', rows, 'story_id');
   return { count: rows.length, errors };
@@ -264,22 +293,33 @@ export default async function handler(req, res) {
   const date = todayInSaoPaulo();
   const result = { date, errors: [] };
 
+  // Cada etapa roda em seu próprio try/catch: se posts falharem, stories e
+  // conta continuam sendo salvos mesmo assim (antes, um erro em qualquer
+  // etapa derrubava o resto da execução).
   try {
     const account = await syncAccountDaily(date);
     result.account = account.row;
     result.errors.push(...account.errors);
+  } catch (e) {
+    result.errors.push('conta: ' + e.message);
+  }
 
+  try {
     const media = await syncMedia(date);
     result.mediaCount = media.count;
     result.errors.push(...media.errors);
+  } catch (e) {
+    result.errors.push('posts: ' + e.message);
+  }
 
+  try {
     const stories = await syncStories();
     result.storyCount = stories.count;
     result.errors.push(...stories.errors);
-
-    res.status(200).json({ ok: true, ...result });
   } catch (e) {
-    result.errors.push(e.message);
-    res.status(500).json({ ok: false, ...result });
+    result.errors.push('stories: ' + e.message);
   }
+
+  console.log('instagram-sync result:', JSON.stringify(result));
+  res.status(200).json({ ok: result.errors.length === 0, ...result });
 }
