@@ -112,13 +112,15 @@ async function supabaseUpsert(table, rows, onConflict) {
   return { count: rows.length };
 }
 
-// Preenche dias passados de reach/profile_views usando o modo "time_series"
-// da API (period=day, metric_type=time_series, since/until em unix time) —
-// isso traz até ~30 dias de histórico numa chamada só, em vez de esperar o
-// cron rodar dia após dia pra ir preenchendo o gráfico "Alcance por dia".
-// Só grava reach/profile_views (nunca followers_count nem online_followers,
-// que a Meta não expõe retroativamente) e nunca sobrescreve o dia de hoje,
-// que já foi gravado pelo syncAccountDaily acima com o valor "oficial".
+// Preenche dias passados de reach usando o modo "time_series" da API
+// (period=day, metric_type=time_series, since/until em unix time) — isso
+// traz até ~30 dias de histórico numa chamada só, em vez de esperar o cron
+// rodar dia após dia pra ir preenchendo o gráfico "Alcance por dia".
+// profile_views NÃO entra aqui: a Graph API não aceita esse metric junto
+// com metric_type=time_series (erro #100 "incompatible metric"), só reach.
+// Só grava reach (nunca followers_count nem online_followers, que a Meta
+// não expõe retroativamente) e nunca sobrescreve o dia de hoje, que já foi
+// gravado pelo syncAccountDaily acima com o valor "oficial".
 async function backfillAccountDaily(todayDate) {
   const errors = [];
   const nowSec = Math.floor(Date.now() / 1000);
@@ -127,7 +129,7 @@ async function backfillAccountDaily(todayDate) {
   let data;
   try {
     data = await graphGet(`/${process.env.IG_USER_ID}/insights`, {
-      metric: 'reach,profile_views',
+      metric: 'reach',
       period: 'day',
       metric_type: 'time_series',
       since: sinceSec,
