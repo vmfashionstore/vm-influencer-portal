@@ -112,6 +112,58 @@ async function supabaseUpsert(table, rows, onConflict) {
   return { count: rows.length };
 }
 
+// Preenche dias passados de reach/profile_views usando o modo "time_series"
+// da API (period=day, metric_type=time_series, since/until em unix time) —
+// isso traz até ~30 dias de histórico numa chamada só, em vez de esperar o
+// cron rodar dia após dia pra ir preenchendo o gráfico "Alcance por dia".
+// Só grava reach/profile_views (nunca followers_count nem online_followers,
+// que a Meta não expõe retroativamente) e nunca sobrescreve o dia de hoje,
+// que já foi gravado pelo syncAccountDaily acima com o valor "oficial".
+async function backfillAccountDaily(todayDate) {
+  const errors = [];
+  const nowSec = Math.floor(Date.now() / 1000);
+  const sinceSec = nowSec - 30 * 24 * 60 * 60;
+
+  let data;
+  try {
+    data = await graphGet(`/${process.env.IG_USER_ID}/insights`, {
+      metric: 'reach,profile_views',
+      period: 'day',
+      metric_type: 'time_series',
+      since: sinceSec,
+      until: nowSec,
+    });
+  } catch (e) {
+    errors.push('backfill: ' + e.message);
+    return { count: 0, errors };
+  }
+
+  const byDate = {};
+  (data.data || []).forEach((entry) => {
+    (entry.values || []).forEach((v) => {
+      if (!v.end_time || typeof v.value !== 'number') return;
+      // end_time vem como meia-noite UTC do dia SEGUINTE ao período somado
+      // (padrão da API pra period=day) — subtrai 1 dia pra bater com a data certa.
+      const d = new Date(v.end_time);
+      d.setUTCDate(d.getUTCDate() - 1);
+      const dateStr = d.toISOString().substring(0, 10);
+      if (!byDate[dateStr]) byDate[dateStr] = { date: dateStr };
+      byDate[dateStr][entry.name] = v.value;
+    });
+  });
+
+  const rows = Object.values(byDate).filter((r) => r.date < todayDate);
+  if (rows.length) {
+    try {
+      await supabaseUpsert('ig_account_daily', rows, 'date');
+    } catch (e) {
+      errors.push('backfill upsert: ' + e.message);
+      return { count: 0, errors };
+    }
+  }
+  return { count: rows.length, errors };
+}
+
 async function syncAccountDaily(date) {
   const errors = [];
 
@@ -258,6 +310,7 @@ async function syncStories() {
       posted_at: story.timestamp,
       media_type: story.media_type,
       media_url: story.media_url || null,
+      permalink: story.permalink || null,
       reach: base.reach ?? null,
       replies: base.replies ?? null,
       shares: base.shares ?? null,
@@ -302,6 +355,14 @@ export default async function handler(req, res) {
     result.errors.push(...account.errors);
   } catch (e) {
     result.errors.push('conta: ' + e.message);
+  }
+
+  try {
+    const backfill = await backfillAccountDaily(date);
+    result.backfillCount = backfill.count;
+    result.errors.push(...backfill.errors);
+  } catch (e) {
+    result.errors.push('backfill: ' + e.message);
   }
 
   try {
