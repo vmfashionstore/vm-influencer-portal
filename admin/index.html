@@ -458,12 +458,11 @@
     <div class="kpi-grid">
       <div class="kpi-card hero"><div class="kpi-label">Seguidores</div><div class="kpi-value pink" id="ig-kpi-followers">—</div><div class="kpi-sub" id="ig-kpi-followers-sub">—</div></div>
       <div class="kpi-card"><div class="kpi-label">Alcance Total (mês)</div><div class="kpi-value" id="ig-kpi-reach">—</div><div class="kpi-sub">Soma diária da conta</div></div>
-      <div class="kpi-card"><div class="kpi-label">Impressões Totais (mês)</div><div class="kpi-value" id="ig-kpi-impressions">—</div><div class="kpi-sub">Soma diária da conta</div></div>
       <div class="kpi-card"><div class="kpi-label">Curtidas Totais (mês)</div><div class="kpi-value" id="ig-kpi-likes">—</div><div class="kpi-sub" id="ig-kpi-likes-sub">—</div></div>
     </div>
 
     <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Impressões Média / Post</div><div class="kpi-value" id="ig-kpi-avg-impressions">—</div><div class="kpi-sub">Mês atual</div></div>
+      <div class="kpi-card"><div class="kpi-label">Visualizações Média / Post</div><div class="kpi-value" id="ig-kpi-avg-impressions">—</div><div class="kpi-sub">Mês atual</div></div>
       <div class="kpi-card"><div class="kpi-label">Média de Curtidas</div><div class="kpi-value" id="ig-kpi-avg-likes">—</div><div class="kpi-sub">Por post, mês atual</div></div>
       <div class="kpi-card hero"><div class="kpi-label">% de Engajamento</div><div class="kpi-value pink" id="ig-kpi-engagement">—</div><div class="kpi-sub" id="ig-kpi-engagement-sub">—</div></div>
     </div>
@@ -485,7 +484,7 @@
 
     <div class="section-title sub">Melhor horário para postar</div>
     <div class="chart-box"><canvas id="ig-chart-online-hours"></canvas></div>
-    <div class="ig-highlight">Seguidores online, média por horário (todos os dias sincronizados).</div>
+    <div class="ig-highlight" id="ig-online-hours-note">Seguidores online, média por horário (todos os dias sincronizados).</div>
     <div class="chart-box"><canvas id="ig-chart-reach-hours"></canvas></div>
     <div class="ig-highlight">Alcance médio dos posts, por horário em que foram publicados.</div>
 
@@ -504,8 +503,8 @@
     <div class="section-title sub">Taxa de ação por story</div>
     <div class="lista-table-wrap">
       <table class="lista-table">
-        <thead><tr><th>Story</th><th>Alcance</th><th>Ações</th><th>Taxa de Ação</th></tr></thead>
-        <tbody id="ig-stories-table"><tr><td colspan="4" class="lista-empty">Carregando…</td></tr></tbody>
+        <thead><tr><th></th><th>Story</th><th>Alcance</th><th>Ações</th><th>Taxa de Ação</th></tr></thead>
+        <tbody id="ig-stories-table"><tr><td colspan="5" class="lista-empty">Carregando…</td></tr></tbody>
       </table>
     </div>
 
@@ -1633,9 +1632,6 @@ function renderIgKpis(){
   const reachTotal=sum(accCur,d=>d.reach);
   document.getElementById('ig-kpi-reach').textContent=reachTotal.toLocaleString('pt-BR');
 
-  const impTotal=sum(accCur,d=>d.impressions);
-  document.getElementById('ig-kpi-impressions').textContent=impTotal.toLocaleString('pt-BR');
-
   const likesTotal=sum(mediaCur,p=>p.like_count);
   document.getElementById('ig-kpi-likes').textContent=likesTotal.toLocaleString('pt-BR');
   const likesPrevTotal=sum(mediaPrev,p=>p.like_count);
@@ -1738,12 +1734,16 @@ function renderIgHourCharts(){
     for(let h=0;h<24;h++)hourSums[h]+=(d.online_followers_by_hour[String(h)]||0);
   });
   const hourAvg=hourSums.map(v=>hourCount?Math.round(v/hourCount):0);
+  const hasOnlineData=hourAvg.some(v=>v>0);
   destroyChart('onlineHours');
   igCharts.onlineHours=new Chart(document.getElementById('ig-chart-online-hours'),{
     type:'bar',
     data:{labels:hourAvg.map((_,h)=>h+'h'),datasets:[{label:'Seguidores online (média)',data:hourAvg,backgroundColor:'#3A3A3A'}]},
     options:baseChartOptions()
   });
+  document.getElementById('ig-online-hours-note').textContent=hasOnlineData
+    ?'Seguidores online, média por horário (todos os dias sincronizados).'
+    :'A Meta ainda não retornou dados de seguidores online para esta conta. Se continuar vazio depois de alguns dias, é uma limitação da própria API do Instagram para essa conta (não é um erro do dashboard) — use o gráfico de alcance por horário de publicação abaixo, que já está funcionando.';
 
   const reachByHour=new Array(24).fill(0),countByHour=new Array(24).fill(0);
   igMedia.forEach(p=>{
@@ -1813,11 +1813,14 @@ function renderIgStories(){
   }).join(''):'<div class="lista-empty">Nenhuma story capturada ainda (stories somem em 24h — o sync precisa rodar enquanto ela está ativa).</div>';
 
   const tbody=document.getElementById('ig-stories-table');
-  if(!withReach.length){tbody.innerHTML='<tr><td colspan="4" class="lista-empty">Sem stories capturadas ainda.</td></tr>';return}
+  if(!withReach.length){tbody.innerHTML='<tr><td colspan="5" class="lista-empty">Sem stories capturadas ainda.</td></tr>';return}
   tbody.innerHTML=withReach.slice(0,15).map(s=>{
     const actions=(s.replies||0)+(s.shares||0)+(s.taps_forward||0)+(s.link_clicks||0);
     const taxa=s.reach?((actions/s.reach)*100).toFixed(1)+'%':'—';
-    return '<tr><td>'+fmtDateBR(s.posted_at)+'</td><td>'+s.reach.toLocaleString('pt-BR')+'</td><td>'+actions+'</td><td>'+taxa+'</td></tr>';
+    const thumb=s.media_url?'<img src="'+s.media_url+'" loading="lazy" style="width:34px;height:46px;object-fit:cover;border-radius:4px;display:block;">':'';
+    const dateLabel=fmtDateBR(s.posted_at);
+    const dateCell=s.permalink?'<a href="'+s.permalink+'" target="_blank" rel="noopener" style="color:inherit;">'+dateLabel+'</a>':dateLabel;
+    return '<tr><td>'+thumb+'</td><td>'+dateCell+'</td><td>'+s.reach.toLocaleString('pt-BR')+'</td><td>'+actions+'</td><td>'+taxa+'</td></tr>';
   }).join('');
 }
 
