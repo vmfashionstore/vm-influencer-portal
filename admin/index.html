@@ -182,6 +182,23 @@
   #profile-view .bar-fill{height:100%;background:linear-gradient(90deg,var(--pink-dark),var(--pink-light))}
 
   #profile-view .commission-box{border:1px solid var(--gray-line);margin-bottom:24px}
+  #profile-view .comm-hist{border:1px solid var(--gray-line);border-radius:14px;padding:16px;margin-bottom:24px;background:var(--gray-card)}
+  #profile-view .ch-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gray-line)}
+  #profile-view .ch-when{flex:1;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray-text)}
+  #profile-view .ch-val{font-weight:600;font-size:13px;color:var(--white)}
+  #profile-view .ch-del{background:none;border:1px solid var(--gray-line);color:var(--gray-text);border-radius:999px;font-family:'Jost',sans-serif;font-size:11px;padding:2px 9px;cursor:pointer}
+  #profile-view .ch-del:hover,#profile-view .ch-del.confirm{border-color:var(--pink);color:var(--pink)}
+  #profile-view .ch-del.confirm{font-size:8px;letter-spacing:0.1em;text-transform:uppercase}
+  #profile-view .ch-empty{font-size:10px;color:var(--gray-text);padding:6px 0 12px;line-height:1.5}
+  #profile-view .ch-form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-top:14px}
+  #profile-view .ch-field{display:flex;flex-direction:column;gap:4px;flex:1 1 120px}
+  #profile-view .ch-field span{font-size:7px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gray-text)}
+  #profile-view .ch-field input{background:var(--gray-dark);border:1px solid var(--gray-line);color:var(--white);font-family:'Jost',sans-serif;font-size:12px;padding:9px 12px;border-radius:999px;outline:none;width:100%}
+  #profile-view .ch-field input:focus{border-color:var(--pink)}
+  #profile-view .ch-save{background:var(--pink);color:var(--bg);border:none;font-family:'Jost',sans-serif;font-size:8px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;padding:12px 18px;border-radius:999px;cursor:pointer}
+  #profile-view .ch-save:hover{background:var(--pink-dark)}
+  #profile-view .ch-hint{font-size:9px;color:var(--gray-muted);margin-top:10px;line-height:1.5}
+  #profile-view .ch-msg{font-size:10px;color:var(--pink);margin-top:6px;min-height:14px}
   #profile-view .c-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--gray-line)}
   #profile-view .c-row:last-child{border-bottom:none}
   #profile-view .c-row.total{background:var(--gray-mid);position:relative}
@@ -633,6 +650,19 @@
         <div class="c-row total"><div class="c-label">Total a receber</div><div class="c-val pink" id="prof-comm-total">—</div></div>
       </div>
 
+      <div class="prof-section-header"><div class="prof-section-title">Histórico de comissão</div></div>
+      <div class="comm-hist">
+        <div id="prof-comm-hist-list"></div>
+        <form id="prof-comm-hist-form" class="ch-form">
+          <label class="ch-field"><span>A partir de</span><input type="month" id="ch-mes" required></label>
+          <label class="ch-field"><span>% comissão</span><input type="number" id="ch-perc" step="0.1" min="0" max="100" required placeholder="5"></label>
+          <label class="ch-field"><span>Cachê fixo (R$)</span><input type="number" id="ch-fixo" step="0.01" min="0" value="0"></label>
+          <button type="submit" class="ch-save">Registrar</button>
+        </form>
+        <div class="ch-hint">O valor vale do mês escolhido em diante, até a próxima mudança. Meses anteriores mantêm o valor que estava em vigor.</div>
+        <div class="ch-msg" id="ch-msg"></div>
+      </div>
+
       <div class="prof-section-header"><div class="prof-section-title">Pedidos do período</div><div class="prof-section-meta" id="prof-pedidos-count">—</div></div>
       <div class="table-wrap"><table><thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Total</th><th>Comissão</th></tr></thead><tbody id="prof-orders-table"><tr><td colspan="5" style="text-align:center;color:var(--gray-text);padding:24px;">Carregando...</td></tr></tbody></table></div>
     </div>
@@ -731,6 +761,7 @@ let listaSortCol='vendido',listaSortDir='desc',listaTierFilter='Todos';
 
 /* ---------- Perfil individual: estado ---------- */
 let profileInfluencer=null;
+let comissaoHist=[];
 let profileContents=[],profileTipoFiltro='todos';
 let profileMaterials=[],profileGallery=[],profileProdutosEnviados=[];
 let profileLightboxIdx=0,profileLightboxItems=[];
@@ -832,6 +863,7 @@ async function loadDashboard(){
   allInfluencers=(influencers||[]).filter(i=>i.cupom&&i.cupom.toUpperCase()!=='ADMIN'&&!i.is_admin);
   cupomToInfluencer={};
   allInfluencers.forEach(i=>{cupomToInfluencer[(i.cupom||'').toUpperCase()]=i});
+  await loadComissaoHist();
   document.getElementById('kpi-influencers-ativas').textContent=allInfluencers.length;
   renderTierCounts();
   setupListaControls();
@@ -1187,8 +1219,107 @@ function getOrdersForCupomPeriod(cupom,month,year){
   });
 }
 
+// ── Comissão por mês (tabela comissao_historico) ──
+// Para cada mês vale a linha com maior vigente_desde <= mês; sem histórico,
+// cai nos campos perc_comissao/valor_fixo da própria influencer.
+const VIGENCIA_BASE='2000-01-01';
+async function loadComissaoHist(){
+  try{
+    const{data,error}=await sb.from('comissao_historico').select('*');
+    if(error){console.warn('comissao_historico:',error.message);comissaoHist=[];return}
+    comissaoHist=data||[];
+  }catch(e){console.warn('comissao_historico:',e);comissaoHist=[]}
+}
+function ymKey(y,m){return y*12+m}
+function comissaoNoMes(inf,y,m){
+  const k=ymKey(y,m);let best=null,bk=-1;
+  comissaoHist.forEach(h=>{
+    if(h.influencer_id!==inf.id||!h.vigente_desde)return;
+    const p=h.vigente_desde.split('-'),hk=ymKey(+p[0],+p[1]-1);
+    if(hk<=k&&hk>bk){best=h;bk=hk}
+  });
+  if(best)return{pc:Number(best.perc_comissao)||0,vf:Number(best.valor_fixo)||0};
+  return{pc:Number(inf.perc_comissao)||0,vf:Number(inf.valor_fixo)||0};
+}
+function orderYM(o){const ds=o.confirmed_at||o.received_at;if(!ds)return null;const p=ds.substring(0,10).split('-');return[+p[0],+p[1]-1]}
+function pcDoPedido(inf,o){const ym=orderYM(o);return ym?comissaoNoMes(inf,ym[0],ym[1]).pc:(Number(inf.perc_comissao)||0)}
+function fmtPerc(pc){return (+(pc*100).toFixed(2)).toLocaleString('pt-BR')+'%'}
+// Comissão variável pedido a pedido (% do mês do pedido) + cachê fixo de cada
+// mês do período (em "ano"/"todos": meses desde o cadastro até o mês atual).
+function calcComissao(inf,orders,month,year){
+  const cv=orders.reduce((s,o)=>s+parseFloat(o.total||0)*pcDoPedido(inf,o),0);
+  const now=new Date(),nk=ymKey(now.getFullYear(),now.getMonth());
+  const meses=[];
+  if(typeof month==='number')meses.push([year,month]);
+  else{
+    const c=inf.created_at?new Date(inf.created_at):now;
+    let k=ymKey(c.getFullYear(),c.getMonth());
+    let end=nk;
+    if(month==='ano'){k=Math.max(k,ymKey(year,0));end=Math.min(nk,ymKey(year,11))}
+    for(;k<=end;k++)meses.push([Math.floor(k/12),k%12]);
+  }
+  const vf=meses.reduce((s,[y,m])=>s+comissaoNoMes(inf,y,m).vf,0);
+  const pcs=new Set(meses.map(([y,m])=>comissaoNoMes(inf,y,m).pc));
+  orders.forEach(o=>pcs.add(pcDoPedido(inf,o)));
+  const pcLabel=pcs.size===0?fmtPerc(Number(inf.perc_comissao)||0):pcs.size===1?fmtPerc([...pcs][0]):'Variável';
+  return{cv,vf,pcLabel};
+}
+function updateProfileComissaoLabel(){
+  const inf=profileInfluencer;if(!inf)return;
+  const now=new Date(),c=comissaoNoMes(inf,now.getFullYear(),now.getMonth());
+  const pc=fmtPerc(c.pc)+' comissão',vf=c.vf?(' + '+fmt(c.vf)+' fixo'):'';
+  document.getElementById('profile-comissao-label').textContent=pc+vf;
+}
+function fmtVigencia(d){
+  if(!d||d===VIGENCIA_BASE)return 'Desde o início';
+  const p=d.split('-');return 'A partir de '+MONTHS[+p[1]-1]+' '+p[0];
+}
+function renderComissaoHist(){
+  const inf=profileInfluencer,el=document.getElementById('prof-comm-hist-list');
+  if(!inf||!el)return;
+  const rows=comissaoHist.filter(h=>h.influencer_id===inf.id).sort((a,b)=>b.vigente_desde.localeCompare(a.vigente_desde));
+  el.innerHTML=rows.length===0
+    ?'<div class="ch-empty">Sem histórico registrado — usando '+fmtPerc(Number(inf.perc_comissao)||0)+(inf.valor_fixo?' + '+fmt(inf.valor_fixo)+' fixo':'')+' do cadastro para todos os meses.</div>'
+    :rows.map(h=>'<div class="ch-row"><div class="ch-when">'+fmtVigencia(h.vigente_desde)+'</div><div class="ch-val">'+fmtPerc(Number(h.perc_comissao)||0)+(Number(h.valor_fixo)?' + '+fmt(h.valor_fixo)+' fixo':'')+'</div><button type="button" class="ch-del" data-chid="'+h.id+'" title="Remover">×</button></div>').join('');
+}
+async function saveComissaoHist(e){
+  e.preventDefault();
+  const inf=profileInfluencer,msg=document.getElementById('ch-msg');if(!inf)return;
+  const mes=document.getElementById('ch-mes').value;
+  const perc=parseFloat(String(document.getElementById('ch-perc').value).replace(',','.'));
+  const fixo=parseFloat(String(document.getElementById('ch-fixo').value||'0').replace(',','.'));
+  if(!/^\d{4}-\d{2}$/.test(mes)){msg.textContent='Escolha o mês.';return}
+  if(!isFinite(perc)||perc<0||perc>100){msg.textContent='% de comissão inválido (0 a 100).';return}
+  if(!isFinite(fixo)||fixo<0){msg.textContent='Cachê fixo inválido.';return}
+  msg.textContent='Salvando...';
+  const{error}=await sb.from('comissao_historico').upsert(
+    {influencer_id:inf.id,vigente_desde:mes+'-01',perc_comissao:perc/100,valor_fixo:fixo},
+    {onConflict:'influencer_id,vigente_desde'});
+  if(error){msg.textContent='Erro ao salvar: '+error.message;return}
+  await afterComissaoHistChange();
+  msg.textContent='Salvo.';
+}
+async function deleteComissaoHist(id){
+  const msg=document.getElementById('ch-msg');
+  const btn=document.querySelector('.ch-del[data-chid="'+id+'"]');
+  if(btn&&!btn.classList.contains('confirm')){btn.classList.add('confirm');btn.textContent='Remover?';return}
+  msg.textContent='Removendo...';
+  const{error}=await sb.from('comissao_historico').delete().eq('id',id);
+  if(error){msg.textContent='Erro ao remover: '+error.message;return}
+  await afterComissaoHistChange();
+  msg.textContent='Removido.';
+}
+async function afterComissaoHistChange(){
+  await loadComissaoHist();
+  renderComissaoHist();
+  updateProfileComissaoLabel();
+  renderProfilePerformance();
+}
+
 function setupProfileEvents(){
   document.getElementById('profile-back-btn').addEventListener('click',closeProfile);
+  document.getElementById('prof-comm-hist-form').addEventListener('submit',saveComissaoHist);
+  document.getElementById('prof-comm-hist-list').addEventListener('click',function(e){const b=e.target.closest('.ch-del');if(b)deleteComissaoHist(b.dataset.chid)});
   document.querySelectorAll('#profile-view .nav-tab').forEach(btn=>{
     btn.addEventListener('click',function(){
       document.querySelectorAll('#profile-view .nav-tab').forEach(b=>b.classList.remove('active'));
@@ -1245,9 +1376,9 @@ function openProfile(cupom){
   document.getElementById('profile-name').textContent=inf.nome;
   document.getElementById('profile-tier-badge').textContent=inf.tier||'—';
   document.getElementById('profile-cupom-label').textContent='Cupom '+inf.cupom;
-  const pc=inf.perc_comissao?(inf.perc_comissao*100).toFixed(0)+'% comissão':'';
-  const vf=inf.valor_fixo?(' + '+fmt(inf.valor_fixo)+' fixo'):'';
-  document.getElementById('profile-comissao-label').textContent=(pc||vf)?(pc+vf):'—';
+  updateProfileComissaoLabel();
+  renderComissaoHist();
+  document.getElementById('ch-msg').textContent='';
   buildProfileMonthBar();
   document.querySelectorAll('#profile-view .nav-tab').forEach((b,i)=>b.classList.toggle('active',i===0));
   document.querySelectorAll('#profile-view .tab-panel').forEach(p=>p.classList.remove('active'));
@@ -1297,8 +1428,8 @@ function renderProfilePerformance(){
   const prev=typeof selectedMonth==='number'?getOrdersForCupomPeriod(cupom,pm,py):[];
   const tv=orders.reduce((s,o)=>s+parseFloat(o.total||0),0);
   const pv=prev.reduce((s,o)=>s+parseFloat(o.total||0),0);
-  const pc=inf.perc_comissao||0,vf=inf.valor_fixo||0;
-  const cv=tv*pc,tr=cv+vf,qp=new Set(orders.map(o=>o.id)).size,tm=qp>0?tv/qp:0;
+  const cc=calcComissao(inf,orders,selectedMonth,selectedYear);
+  const cv=cc.cv,vf=cc.vf,tr=cv+vf,qp=new Set(orders.map(o=>o.id)).size,tm=qp>0?tv/qp:0;
   const var_=pv>0?(tv-pv)/pv:0;
   const ml=selectedMonth==='todos'?'Todos':selectedMonth==='ano'?String(selectedYear):MONTHS[selectedMonth]+' '+selectedYear;
   const pl=typeof pm==='number'?MONTHS[pm]+' '+py:'—';
@@ -1316,7 +1447,7 @@ function renderProfilePerformance(){
   ve.style.color=var_>=0?'#8BC4A0':'var(--pink)';
   document.getElementById('prof-comp-badge').textContent='vs '+pl;
   document.getElementById('prof-comm-vendido').textContent=fmt(tv);
-  document.getElementById('prof-comm-perc').textContent=(pc*100).toFixed(0)+'%';
+  document.getElementById('prof-comm-perc').textContent=cc.pcLabel;
   document.getElementById('prof-comm-variavel').textContent=fmt(cv);
   document.getElementById('prof-comm-fixo').textContent=fmt(vf);
   document.getElementById('prof-comm-fixo-row').style.display=vf>0?'flex':'none';
@@ -1327,7 +1458,7 @@ function renderProfilePerformance(){
     ?'<tr><td colspan="5" style="text-align:center;color:var(--gray-text);padding:24px;font-size:11px;">Nenhum pedido neste período</td></tr>'
     :uo.map(o=>{
         const ds=o.confirmed_at||o.received_at,date=ds?ds.substring(0,10).split('-').reverse().join('/'):'—';
-        const tot=parseFloat(o.total||0),comm=tot*pc;
+        const tot=parseFloat(o.total||0),comm=tot*pcDoPedido(inf,o);
         const fi=Array.isArray(o.items)&&o.items.length>0?o.items[0].product_name||'—':'—';
         const qty=Array.isArray(o.items)?o.items.reduce((s,i)=>s+(i.quantity||0),0):'—';
         const ex=o.items&&o.items.length>1?' <span style="color:var(--gray-text);font-size:9px;">+'+(o.items.length-1)+'</span>':'';

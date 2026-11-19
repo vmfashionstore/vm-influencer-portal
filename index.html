@@ -377,6 +377,7 @@ const fmtPct=v=>(v>=0?'+':'')+((v||0)*100).toFixed(1)+'%';
 const CAT_CONFIG={briefing:{icon:'📋',label:'Briefing'},contrato:{icon:'📄',label:'Contrato'},fotos:{icon:'📸',label:'Fotos'},identidade:{icon:'🎨',label:'Identidade Visual'},produtos_enviados:{icon:'📦',label:'Produtos Enviados'},outro:{icon:'📁',label:'Outro'}};
 
 let sb,currentUser,currentInfluencer,allOrders=[],selectedMonth,selectedYear;
+let comissaoHist=[];
 let allContents=[],tipoFiltro='todos';
 let allMaterials=[],allGallery=[],allProdutosEnviados=[];
 let lightboxIdx=0,lightboxItems=[];
@@ -522,6 +523,11 @@ async function loadPortal(user){
     document.getElementById('loading-state').style.display='flex';return;
   }
   currentInfluencer=influencer;
+  try{
+    const{data:hist,error:histErr}=await sb.from('comissao_historico').select('*').eq('influencer_id',influencer.id);
+    if(histErr)console.warn('comissao_historico:',histErr.message);
+    comissaoHist=hist||[];
+  }catch(e){console.warn('comissao_historico:',e);comissaoHist=[]}
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('portal-screen').classList.remove('hidden');
   document.getElementById('user-name').textContent=influencer.nome;
@@ -587,6 +593,44 @@ async function fetchAllOrdersBackground(){
   setSyncStatus('✓ Sincronizado · '+allOrders.length+' pedidos',100,'done');updateDashboard();
 }
 
+// ── Comissão por mês (tabela comissao_historico) ──
+// Para cada mês vale a linha com maior vigente_desde <= mês; sem histórico,
+// cai nos campos perc_comissao/valor_fixo da própria influencer.
+function ymKey(y,m){return y*12+m}
+function comissaoNoMes(inf,y,m){
+  const k=ymKey(y,m);let best=null,bk=-1;
+  comissaoHist.forEach(h=>{
+    if(h.influencer_id!==inf.id||!h.vigente_desde)return;
+    const p=h.vigente_desde.split('-'),hk=ymKey(+p[0],+p[1]-1);
+    if(hk<=k&&hk>bk){best=h;bk=hk}
+  });
+  if(best)return{pc:Number(best.perc_comissao)||0,vf:Number(best.valor_fixo)||0};
+  return{pc:Number(inf.perc_comissao)||0,vf:Number(inf.valor_fixo)||0};
+}
+function orderYM(o){const ds=o.confirmed_at||o.received_at;if(!ds)return null;const p=ds.substring(0,10).split('-');return[+p[0],+p[1]-1]}
+function pcDoPedido(inf,o){const ym=orderYM(o);return ym?comissaoNoMes(inf,ym[0],ym[1]).pc:(Number(inf.perc_comissao)||0)}
+function fmtPerc(pc){return (+(pc*100).toFixed(2)).toLocaleString('pt-BR')+'%'}
+// Comissão variável pedido a pedido (% do mês do pedido) + cachê fixo de cada
+// mês do período (em "ano"/"todos": meses desde o cadastro até o mês atual).
+function calcComissao(inf,orders,month,year){
+  const cv=orders.reduce((s,o)=>s+parseFloat(o.total||0)*pcDoPedido(inf,o),0);
+  const now=new Date(),nk=ymKey(now.getFullYear(),now.getMonth());
+  const meses=[];
+  if(typeof month==='number')meses.push([year,month]);
+  else{
+    const c=inf.created_at?new Date(inf.created_at):now;
+    let k=ymKey(c.getFullYear(),c.getMonth());
+    let end=nk;
+    if(month==='ano'){k=Math.max(k,ymKey(year,0));end=Math.min(nk,ymKey(year,11))}
+    for(;k<=end;k++)meses.push([Math.floor(k/12),k%12]);
+  }
+  const vf=meses.reduce((s,[y,m])=>s+comissaoNoMes(inf,y,m).vf,0);
+  const pcs=new Set(meses.map(([y,m])=>comissaoNoMes(inf,y,m).pc));
+  orders.forEach(o=>pcs.add(pcDoPedido(inf,o)));
+  const pcLabel=pcs.size===0?fmtPerc(Number(inf.perc_comissao)||0):pcs.size===1?fmtPerc([...pcs][0]):'Variável';
+  return{cv,vf,pcLabel};
+}
+
 function getOrdersForPeriod(month,year){
   const cupom=currentInfluencer.cupom.toUpperCase();
   return allOrders.filter(o=>{
@@ -606,8 +650,8 @@ function updateDashboard(){
   const prev=typeof selectedMonth==='number'?getOrdersForPeriod(pm,py):[];
   const tv=orders.reduce((s,o)=>s+parseFloat(o.total||0),0);
   const pv=prev.reduce((s,o)=>s+parseFloat(o.total||0),0);
-  const pc=currentInfluencer.perc_comissao||0,vf=currentInfluencer.valor_fixo||0;
-  const cv=tv*pc,tr=cv+vf,qp=new Set(orders.map(o=>o.id)).size,tm=qp>0?tv/qp:0;
+  const cc=calcComissao(currentInfluencer,orders,selectedMonth,selectedYear);
+  const cv=cc.cv,vf=cc.vf,tr=cv+vf,qp=new Set(orders.map(o=>o.id)).size,tm=qp>0?tv/qp:0;
   const var_=pv>0?(tv-pv)/pv:0;
   const ml=selectedMonth==='todos'?'Todos':selectedMonth==='ano'?'2026':MONTHS[selectedMonth]+' '+selectedYear;
   const pl=typeof pm==='number'?MONTHS[pm]+' '+py:'—';
@@ -623,7 +667,7 @@ function updateDashboard(){
   const ve=document.getElementById('comp-variacao');ve.textContent=fmtPct(var_);ve.style.color=var_>=0?'#8BC4A0':'var(--pink)';
   document.getElementById('comp-badge').textContent='vs '+pl;
   document.getElementById('comm-vendido').textContent=fmt(tv);
-  document.getElementById('comm-perc').textContent=(pc*100).toFixed(0)+'%';
+  document.getElementById('comm-perc').textContent=cc.pcLabel;
   document.getElementById('comm-variavel').textContent=fmt(cv);
   document.getElementById('comm-fixo').textContent=fmt(vf);
   document.getElementById('comm-fixo-row').style.display=vf>0?'flex':'none';
@@ -635,7 +679,7 @@ function updateDashboard(){
     ?'<tr><td colspan="5" style="text-align:center;color:var(--gray-text);padding:24px;font-size:11px;">Nenhum pedido neste período</td></tr>'
     :uo.map(o=>{
         const ds=o.confirmed_at||o.received_at,date=ds?ds.substring(0,10).split('-').reverse().join('/'):'—';
-        const tot=parseFloat(o.total||0),comm=tot*pc;
+        const tot=parseFloat(o.total||0),comm=tot*pcDoPedido(currentInfluencer,o);
         const fi=Array.isArray(o.items)&&o.items.length>0?o.items[0].product_name||'—':'—';
         const qty=Array.isArray(o.items)?o.items.reduce((s,i)=>s+(i.quantity||0),0):'—';
         const ex=o.items&&o.items.length>1?' <span style="color:var(--gray-text);font-size:9px;">+'+(o.items.length-1)+'</span>':'';

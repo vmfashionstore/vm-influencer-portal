@@ -1,0 +1,4 @@
+node_modules/
+.env
+scripts/cadastro-influencers/.env
+scripts/cadastro-influencers/influencers.json
