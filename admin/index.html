@@ -7,7 +7,7 @@
 <title>VM Fashion Store — Painel Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --black:#1A1A1A;--white:#1A1A1A;--bg:#F7F5F0;--pink:#E8A0B0;--pink-light:#F2C4CE;--pink-dark:#C4607A;--gray-dark:#EDE9E0;--gray-mid:#F2EFE8;--gray-card:#FFFFFF;--gray-line:#E5E1D8;--gray-text:#6A6A6A;--gray-muted:#B8B2A3; }
+  :root { --black:#1A1A1A;--white:#1A1A1A;--bg:#F7F5F0;--pink:#C4607A;--pink-light:#F2C4CE;--pink-dark:#9C4660;--gray-dark:#EDE9E0;--gray-mid:#F2EFE8;--gray-card:#FFFFFF;--gray-line:#E5E1D8;--gray-text:#5C584E;--gray-muted:#B8B2A3; }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Jost',sans-serif;font-weight:300;overflow-x:hidden}
   .hidden{display:none!important}
@@ -23,7 +23,7 @@
   .input-field{width:100%;background:var(--gray-dark);border:1px solid var(--gray-line);color:var(--white);font-family:'Jost',sans-serif;font-size:13px;font-weight:300;padding:14px 16px;outline:none;transition:border-color 0.2s;-webkit-appearance:none;border-radius:999px}
   .input-field:focus{border-color:var(--pink)}
   .input-field::placeholder{color:var(--gray-muted)}
-  .login-btn{width:100%;background:var(--pink);color:var(--black);border:none;font-family:'Jost',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.3em;text-transform:uppercase;padding:16px;cursor:pointer;margin-top:8px;transition:background 0.2s;border-radius:999px;display:block}
+  .login-btn{width:100%;background:var(--pink);color:var(--bg);border:none;font-family:'Jost',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.3em;text-transform:uppercase;padding:16px;cursor:pointer;margin-top:8px;transition:background 0.2s;border-radius:999px;display:block}
   .login-btn:hover{background:var(--pink-light)}
   .login-btn:disabled{opacity:0.5;cursor:default}
   .login-error{font-size:10px;color:var(--pink);letter-spacing:0.1em;text-align:center;margin-top:12px;min-height:16px}
@@ -71,7 +71,7 @@
   .lista-filters{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
   .filter-chip{background:none;border:1px solid var(--gray-line);color:var(--gray-text);font-family:'Jost',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;padding:8px 14px;cursor:pointer;transition:all 0.2s;border-radius:999px}
   .filter-chip:hover{color:var(--white)}
-  .filter-chip.active{background:var(--pink);color:var(--black);border-color:var(--pink)}
+  .filter-chip.active{background:var(--pink);color:var(--bg);border-color:var(--pink)}
 
   .lista-table-wrap{overflow-x:auto;border:1px solid var(--gray-line);margin-bottom:8px;border-radius:14px}
   .lista-table{width:100%;border-collapse:collapse;min-width:680px}
@@ -178,7 +178,7 @@
 
   #profile-view .tipo-btn{font-family:'Jost',sans-serif;font-size:8px;font-weight:400;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray-text);padding:6px 14px;border:1px solid var(--gray-line);background:none;cursor:pointer;transition:all 0.2s;border-radius:999px}
   #profile-view .tipo-btn:hover{color:var(--white);border-color:var(--gray-text)}
-  #profile-view .tipo-btn.active{color:var(--black);background:var(--pink);border-color:var(--pink)}
+  #profile-view .tipo-btn.active{color:var(--bg);background:var(--pink);border-color:var(--pink)}
 
   #profile-view .content-cards{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
   #profile-view .content-card{background:var(--gray-card);border:1px solid var(--gray-line);padding:16px;display:flex;gap:14px;align-items:flex-start}
@@ -720,10 +720,10 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('ig-post-modal-close').addEventListener('click',closeIgPostModal);
   document.getElementById('ig-post-modal').addEventListener('click',function(e){if(e.target===this)closeIgPostModal()});
   if(window.Chart){
-    Chart.defaults.color='#6A6A6A';
+    Chart.defaults.color='#5C584E';
     Chart.defaults.font.family="'Jost',sans-serif";
     Chart.defaults.font.size=10;
-    Chart.defaults.borderColor='#282828';
+    Chart.defaults.borderColor='#E5E1D8';
   }
   init();
 });
@@ -1651,8 +1651,8 @@ function baseChartOptions(){
     responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:false}},
     scales:{
-      x:{grid:{color:'#1C1C1C'},ticks:{color:'#6A6A6A',font:{size:9}}},
-      y:{grid:{color:'#1C1C1C'},ticks:{color:'#6A6A6A',font:{size:9}},beginAtZero:true}
+      x:{grid:{color:'#E5E1D8'},ticks:{color:'#5C584E',font:{size:9}}},
+      y:{grid:{color:'#E5E1D8'},ticks:{color:'#5C584E',font:{size:9}},beginAtZero:true}
     }
   };
 }
@@ -1793,8 +1793,8 @@ function renderIgScatter(){
       responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const d=ctx.raw;return[d.label,'Alcance: '+d.x.toLocaleString('pt-BR'),'Engajamento: '+d.y.toFixed(2)+'%']}}}},
       scales:{
-        x:{title:{display:true,text:'Alcance',color:'#6A6A6A',font:{size:9}},grid:{color:'#1C1C1C'},ticks:{color:'#6A6A6A',font:{size:9}}},
-        y:{title:{display:true,text:'Engajamento %',color:'#6A6A6A',font:{size:9}},grid:{color:'#1C1C1C'},ticks:{color:'#6A6A6A',font:{size:9}}}
+        x:{title:{display:true,text:'Alcance',color:'#5C584E',font:{size:9}},grid:{color:'#E5E1D8'},ticks:{color:'#5C584E',font:{size:9}}},
+        y:{title:{display:true,text:'Engajamento %',color:'#5C584E',font:{size:9}},grid:{color:'#E5E1D8'},ticks:{color:'#5C584E',font:{size:9}}}
       },
       onClick:(evt,elements)=>{if(elements.length){const idx=elements[0].index;openIgPostModal(pts[idx].mediaId)}}
     }
