@@ -51,6 +51,28 @@
   .sidebar-user .logout-btn{width:100%;text-align:center;border-color:rgba(255,255,255,0.15);color:#C9C4B6}
   .sidebar-user .logout-btn:hover{border-color:var(--pink);color:var(--pink)}
   .main-area{flex:1;min-width:0}
+  .report-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:var(--gray-card);border-radius:16px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.06),0 2px 8px rgba(0,0,0,0.05)}
+  .report-bar-text{font-size:11px;color:var(--gray-text);line-height:1.5;flex:1 1 220px}
+  .report-btn{background:var(--pink);color:var(--bg);border:1px solid var(--pink);font-family:'Jost',sans-serif;font-size:8px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;padding:12px 20px;border-radius:999px;cursor:pointer;transition:background 0.2s;white-space:nowrap}
+  .report-btn:hover{background:var(--pink-dark);border-color:var(--pink-dark)}
+  .report-btn:disabled{opacity:0.5;cursor:default}
+  .report-btn.ghost{background:none;color:var(--pink)}
+  .report-btn.ghost:hover{background:rgba(196,96,122,0.08)}
+  .rep-modal{display:none;position:fixed;inset:0;background:rgba(26,26,26,0.55);z-index:2100;align-items:flex-start;justify-content:center;padding:max(24px,env(safe-area-inset-top,0px)) 16px 24px;overflow-y:auto}
+  .rep-modal.open{display:flex}
+  .rep-box{position:relative;background:var(--bg);border-radius:18px;max-width:560px;width:100%;margin:auto;padding:28px 24px 24px;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
+  .rep-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:22px;color:var(--gray-text);cursor:pointer;line-height:1}
+  .rep-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;color:var(--white);margin-bottom:6px}
+  .rep-sub{font-size:11px;color:var(--gray-text);line-height:1.5;margin-bottom:20px}
+  .rep-label{display:block;font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gray-text);margin:0 0 6px}
+  .rep-row{display:flex;gap:10px;flex-wrap:wrap}
+  .rep-select{flex:1 1 200px;background:var(--gray-card);border:1px solid var(--gray-line);color:var(--white);font-family:'Jost',sans-serif;font-size:13px;padding:10px 14px;border-radius:999px;outline:none}
+  .rep-select:focus{border-color:var(--pink)}
+  .rep-status{font-size:10px;color:var(--gray-text);min-height:16px;margin:12px 0 4px;line-height:1.5}
+  .rep-text{width:100%;background:var(--gray-card);border:1px solid var(--gray-line);border-radius:12px;padding:12px 14px;font-family:'Jost',sans-serif;font-size:12px;line-height:1.5;color:var(--white);resize:vertical;outline:none}
+  .rep-text:focus{border-color:var(--pink)}
+  .rep-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  #report-result .rep-label{margin-top:12px}
   /* Celular: sidebar vira barra no topo (logo + Sair, abas roláveis embaixo) */
   @media (max-width:767px){
     .app-shell{flex-direction:column}
@@ -437,6 +459,11 @@
 
   <main class="admin-content">
 
+    <div class="report-bar">
+      <div class="report-bar-text">Relatório em PDF do mês ou do acumulado do ano, com texto pronto para o grupo.</div>
+      <button class="report-btn" id="report-open-btn">Gerar relatório</button>
+    </div>
+
     <div class="section-title">Influencers por tier</div>
     <div class="tier-grid" id="tier-grid">
       <div class="tier-card" data-tier="Iconic"><div class="tier-card-name">Iconic</div><div class="tier-card-count">—</div><div class="tier-card-sub">—</div></div>
@@ -599,6 +626,28 @@
   </main>
   </div>
 
+    </div>
+  </div>
+</div>
+
+<div id="report-modal" class="rep-modal">
+  <div class="rep-box" role="dialog" aria-labelledby="report-title">
+    <button class="rep-close" id="report-close" aria-label="Fechar">×</button>
+    <div class="rep-title" id="report-title">Gerar relatório</div>
+    <div class="rep-sub">Resumo de saúde, melhores influencers, melhores conteúdos e comparativo com o mês anterior.</div>
+    <label class="rep-label" for="report-period">Período</label>
+    <div class="rep-row">
+      <select id="report-period" class="rep-select"></select>
+      <button class="report-btn" id="report-generate">Gerar PDF</button>
+    </div>
+    <div class="rep-status" id="report-status"></div>
+    <div id="report-result" hidden>
+      <label class="rep-label" for="report-text">Texto para enviar no grupo</label>
+      <textarea id="report-text" class="rep-text" rows="14"></textarea>
+      <div class="rep-actions">
+        <button class="report-btn" id="report-copy">Copiar texto</button>
+        <button class="report-btn ghost" id="report-download">Baixar PDF de novo</button>
+      </div>
     </div>
   </div>
 </div>
@@ -794,6 +843,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('password').addEventListener('keypress',e=>{if(e.key==='Enter')handleLogin()});
   document.getElementById('logout-btn').addEventListener('click',handleLogout);
   setupMainTabs();
+  setupReport();
   var sidebarEl=document.querySelector('.sidebar');
   var sidebarToggleEl=document.getElementById('sidebar-toggle');
   if(sidebarEl&&sidebarToggleEl){
@@ -1518,7 +1568,7 @@ async function fetchProfileContents(){
   document.getElementById('prof-content-cards').innerHTML='<div style="text-align:center;color:var(--gray-text);padding:32px;font-size:11px;border:1px solid var(--gray-line);">Carregando conteúdos...</div>';
   try{
     const res=await fetch(SHEETS_CSV+'&t='+Date.now());
-    const rows=parseCSV(await res.text());
+    const rows=parseCSVRobust(await res.text());
     profileContents=rows.map(c=>({
       cupom:(c[0]||'').toUpperCase(),data:c[1]||'',tipo:(c[2]||'').toLowerCase(),link:c[3]||'',imagem_url:c[4]||'',
       descricao:c[5]||'',curtidas:c[6]||'',alcance:c[7]||'',link_url:c[8]||'',produto:c[9]||''
@@ -1720,6 +1770,494 @@ function setupMainTabs(){
       if(this.dataset.atab==='instagram'&&!igLoaded){igLoaded=true;loadInstagramAnalysis();}
     });
   });
+}
+
+/* ================= Relatório (PDF + texto para o grupo) ================= */
+
+// CSV com suporte a quebra de linha dentro de aspas (legendas com várias linhas).
+// Retorna as linhas sem o cabeçalho, igual ao parseCSV.
+function parseCSVRobust(text){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c;continue}
+    if(c==='"'){q=true;continue}
+    if(c===','){row.push(cur.trim());cur='';continue}
+    if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cur.trim());if(row.some(x=>x))rows.push(row);row=[];cur='';continue}
+    cur+=c;
+  }
+  row.push(cur.trim());if(row.some(x=>x))rows.push(row);
+  return rows.slice(1);
+}
+
+const REPORT_LIBS=['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'];
+const _scriptPromises={};
+function loadScriptOnce(src){
+  if(!_scriptPromises[src])_scriptPromises[src]=new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>{delete _scriptPromises[src];rej(new Error('Não foi possível carregar o gerador de PDF. Verifique a internet e tente de novo.'))};document.head.appendChild(s)});
+  return _scriptPromises[src];
+}
+async function loadReportLibs(){for(const src of REPORT_LIBS)await loadScriptOnce(src)}
+
+function pad2(n){return String(n).padStart(2,'0')}
+function isoDate(y,m,d){return y+'-'+pad2(m+1)+'-'+pad2(d)}
+function daysInMonth(y,m){return new Date(y,m+1,0).getDate()}
+function orderDate(o){const ds=o.confirmed_at||o.received_at;return ds?ds.substring(0,10):null}
+function brDate(iso){if(!iso)return '—';const p=iso.substring(0,10).split('-');return p[2]+'/'+p[1]}
+function numBR(n){return Math.round(n||0).toLocaleString('pt-BR')}
+function pctBR(v,dec){return v==null?'—':(v*100).toFixed(dec==null?0:dec).replace('.',',')+'%'}
+function varPct(cur,prev){return prev>0?(cur-prev)/prev:null}
+function fmtVar(v){return v==null?'—':(v>=0?'+':'')+(v*100).toFixed(1).replace('.',',')+'%'}
+function arrowVar(v){return v==null?'':(v>=0?'▲ ':'▼ ')+fmtVar(v)}
+function parseIntLoose(v){const n=parseInt(String(v||'').replace(/\D/g,''),10);return isNaN(n)?0:n}
+
+function influencerOrdersBetween(from,to){
+  const rel=allOrders.filter(o=>{const d=orderDate(o);return d&&d>=from&&d<=to&&o.coupon_code&&cupomToInfluencer[o.coupon_code.toUpperCase()]});
+  return [...new Map(rel.map(o=>[o.id,o])).values()];
+}
+function salesStats(orders){
+  const byCupom={};let tv=0;
+  orders.forEach(o=>{
+    const c=o.coupon_code.toUpperCase(),v=parseFloat(o.total||0);tv+=v;
+    if(!byCupom[c])byCupom[c]={vendido:0,pedidos:0,orders:[]};
+    byCupom[c].vendido+=v;byCupom[c].pedidos++;byCupom[c].orders.push(o);
+  });
+  const byTier={};TIERS.forEach(t=>byTier[t]={vendido:0,pedidos:0,influencers:0,comVenda:0,investido:0,retorno:0});
+  allInfluencers.forEach(inf=>{
+    const t=byTier[inf.tier];if(!t)return;t.influencers++;
+    const s=byCupom[(inf.cupom||'').toUpperCase()];if(s){t.vendido+=s.vendido;t.pedidos+=s.pedidos;t.comVenda++}
+  });
+  const qp=orders.length;
+  return{tv,qp,tm:qp?tv/qp:0,byCupom,byTier,comVenda:Object.keys(byCupom).length};
+}
+async function roiForMonths(list){
+  const res=await Promise.all(list.map(([y,m])=>fetchInvestMonth(m,y)));
+  const ok=res.filter(r=>r.ok);
+  const out={investido:0,revertido:0,retorno:0,byCupom:{},ok:ok.length>0,tabs:ok.map(r=>r.tabName),missing:res.filter(r=>!r.ok).map(r=>r.tabName)};
+  ok.forEach(r=>{
+    out.investido+=r.totalInvestido;out.revertido+=r.totalRevertido;out.retorno+=r.totalRetorno;
+    Object.entries(r.byCupom).forEach(([c,d])=>{const b=out.byCupom[c]=out.byCupom[c]||{investido:0,revertido:0,retorno:0};b.investido+=d.investido;b.revertido+=d.revertido;b.retorno+=d.retorno});
+  });
+  out.roi=out.investido>0?out.retorno/out.investido:null;
+  out.margem=out.revertido>0?out.retorno/out.revertido:null;
+  return out;
+}
+async function fetchInfluencerContents(){
+  try{
+    const res=await fetch(SHEETS_CSV+'&t='+Date.now());
+    return parseCSVRobust(await res.text()).map(c=>({
+      cupom:(c[0]||'').toUpperCase().trim(),data:toISO(c[1]||''),tipo:(c[2]||'').toLowerCase().trim(),link:c[3]||'',
+      descricao:c[5]||'',curtidas:parseIntLoose(c[6]),alcance:parseIntLoose(c[7]),produto:c[9]||''
+    })).filter(c=>c.cupom&&cupomToInfluencer[c.cupom]&&c.data);
+  }catch(e){console.warn('conteúdos:',e);return null}
+}
+async function fetchBrandInstagram(from,to){
+  try{
+    const[mediaRes,accRes]=await Promise.all([
+      sb.from('ig_media_snapshot').select('*').gte('posted_at',from).lte('posted_at',to+'T23:59:59'),
+      sb.from('ig_account_daily').select('date,followers_count,reach').gte('date',from).lte('date',to).order('date',{ascending:true}),
+    ]);
+    if(mediaRes.error||accRes.error)return null;
+    const latest={};
+    (mediaRes.data||[]).forEach(m=>{if(!latest[m.media_id]||m.snapshot_date>latest[m.media_id].snapshot_date)latest[m.media_id]=m});
+    const media=Object.values(latest);
+    const acc=accRes.data||[];
+    const f=acc.filter(d=>d.followers_count!=null);
+    return{
+      posts:media.length,
+      reach:sum(acc,d=>d.reach),
+      interacoes:sum(media,engagementScore),
+      followersDelta:f.length>1?f[f.length-1].followers_count-f[0].followers_count:null,
+      followers:f.length?f[f.length-1].followers_count:null,
+      top:[...media].sort((a,b)=>engagementScore(b)-engagementScore(a)).slice(0,5),
+    };
+  }catch(e){console.warn('instagram:',e);return null}
+}
+
+// Monta todos os números do relatório. period: {kind:'mes',y,m} ou {kind:'ano',y}
+async function buildReportData(period){
+  const now=new Date(),ty=now.getFullYear(),tm=now.getMonth(),td=now.getDate();
+  const R={kind:period.kind,y:period.y,m:period.m,geradoEm:now};
+  let cur,prev,months,trend;
+  if(period.kind==='mes'){
+    const{y,m}=period;
+    const partial=(y===ty&&m===tm);
+    const lastDay=partial?td:daysInMonth(y,m);
+    let py=y,pm=m-1;if(pm<0){pm=11;py--}
+    const prevLast=partial?Math.min(td,daysInMonth(py,pm)):daysInMonth(py,pm);
+    cur={from:isoDate(y,m,1),to:isoDate(y,m,lastDay)};
+    prev={from:isoDate(py,pm,1),to:isoDate(py,pm,prevLast),y:py,m:pm};
+    R.partial=partial;R.lastDay=lastDay;
+    R.titulo=MONTHS[m]+' '+y+(partial?' (parcial, até '+pad2(td)+'/'+pad2(m+1)+')':'');
+    R.tituloCurto=MONTHS[m]+' '+y;
+    R.prevLabel=partial?MONTHS[pm]+' (mesmo período, dias 1–'+prevLast+')':MONTHS[pm]+' '+py;
+    months=[[y,m]];
+  }else{
+    const y=period.y;
+    const endM=y===ty?tm:11,endD=y===ty?td:31;
+    cur={from:isoDate(y,0,1),to:isoDate(y,endM,endD)};
+    prev={from:isoDate(y-1,0,1),to:isoDate(y-1,endM,Math.min(endD,daysInMonth(y-1,endM))),y:y-1};
+    R.partial=y===ty;
+    R.titulo='Acumulado '+y+(R.partial?' (até '+pad2(td)+'/'+pad2(tm+1)+')':'');
+    R.tituloCurto='Acumulado '+y;
+    R.prevLabel='mesmo período de '+(y-1);
+    months=[];for(let k=0;k<=endM;k++)months.push([y,k]);
+  }
+  R.cur=cur;R.prev=prev;
+  const ordersCur=influencerOrdersBetween(cur.from,cur.to);
+  const ordersPrev=influencerOrdersBetween(prev.from,prev.to);
+  R.s=salesStats(ordersCur);R.sp=salesStats(ordersPrev);
+
+  // Comparativo "mês vs mês anterior": no relatório mensal é o próprio período;
+  // no acumulado é o último mês do ano (mesmo período, se em andamento) vs o anterior.
+  let A,B;
+  if(period.kind==='mes'){A={from:cur.from,to:cur.to,y:period.y,m:period.m};B=prev}
+  else{
+    const y=period.y,lm=y===ty?tm:11,lastD=y===ty?td:daysInMonth(y,lm);let pm=lm-1,py=y;if(pm<0){pm=11;py--}
+    A={from:isoDate(y,lm,1),to:isoDate(y,lm,lastD),y,m:lm};
+    B={from:isoDate(py,pm,1),to:isoDate(py,pm,y===ty?Math.min(lastD,daysInMonth(py,pm)):daysInMonth(py,pm)),y:py,m:pm};
+  }
+  const partialA=period.kind==='ano'&&R.partial;
+  R.cmp={aLabel:MONTHS[A.m]+(partialA?' (até dia '+td+')':''),bLabel:MONTHS[B.m]+(R.partial?' (mesmo período)':''),A,B};
+  if(period.kind==='ano')R.prevLabel=R.cmp.bLabel;
+  const[roi,roiPrev,roiA,contents,ig,igA,igB]=await Promise.all([
+    roiForMonths(months),roiForMonths([[B.y,B.m]]),period.kind==='mes'?null:roiForMonths([[A.y,A.m]]),fetchInfluencerContents(),
+    fetchBrandInstagram(cur.from,cur.to),period.kind==='mes'?null:fetchBrandInstagram(A.from,A.to),fetchBrandInstagram(B.from,B.to)
+  ]);
+  R.roi=roi;R.ig=ig;
+  R.cmp.sA=period.kind==='mes'?R.s:salesStats(influencerOrdersBetween(A.from,A.to));
+  R.cmp.sB=period.kind==='mes'?R.sp:salesStats(influencerOrdersBetween(B.from,B.to));
+  R.cmp.roiA=period.kind==='mes'?roi:roiA;R.cmp.roiB=roiPrev;
+  R.cmp.igA=period.kind==='mes'?ig:igA;R.cmp.igB=igB;
+  R.yoy=period.kind==='ano'&&R.sp.tv>0;
+  // ROI por cupom/tier
+  Object.entries(roi.byCupom).forEach(([c,d])=>{const inf=cupomToInfluencer[c];if(inf&&R.s.byTier[inf.tier]){R.s.byTier[inf.tier].investido+=d.investido;R.s.byTier[inf.tier].retorno+=d.retorno}});
+
+  // comissões do período (respeitando o histórico de comissão)
+  const mParam=period.kind==='mes'?period.m:'ano';
+  R.comissao=allInfluencers.reduce((s,inf)=>{const b=R.s.byCupom[(inf.cupom||'').toUpperCase()];const c=calcComissao(inf,b?b.orders:[],mParam,period.y);return s+c.cv+c.vf},0);
+
+  // ranking de influencers
+  R.ranking=allInfluencers.map(inf=>{
+    const c=(inf.cupom||'').toUpperCase(),a=R.s.byCupom[c]||{vendido:0,pedidos:0},b=R.sp.byCupom[c]||{vendido:0,pedidos:0},iv=roi.byCupom[c];
+    return{nome:inf.nome,tier:inf.tier||'—',cupom:c,vendido:a.vendido,pedidos:a.pedidos,ticket:a.pedidos?a.vendido/a.pedidos:0,
+      vendidoPrev:b.vendido,var:varPct(a.vendido,b.vendido),roi:iv&&iv.investido>0?iv.retorno/iv.investido:null};
+  }).sort((a,b)=>b.vendido-a.vendido);
+  R.top=R.ranking.filter(r=>r.vendido>0).slice(0,period.kind==='mes'?5:10);
+  R.semVenda=R.ranking.filter(r=>r.vendido===0);
+  const momRank=allInfluencers.map(inf=>{const c=(inf.cupom||'').toUpperCase(),a=R.cmp.sA.byCupom[c],b=R.cmp.sB.byCupom[c];const va=a?a.vendido:0,vb=b?b.vendido:0;return{nome:inf.nome,vendido:va,vendidoPrev:vb,var:varPct(va,vb)}});
+  R.crescimento=momRank.filter(r=>r.var!=null&&r.vendidoPrev>=200&&r.var>0).sort((a,b)=>b.var-a.var).slice(0,3);
+  R.quedas=momRank.filter(r=>r.var!=null&&r.vendidoPrev>=500&&r.var<=-0.3).sort((a,b)=>a.var-b.var).slice(0,3);
+
+  // conteúdos das influencers (planilha)
+  R.contentsOk=contents!==null;
+  const inRange=(c,a,b)=>c.data>=a&&c.data<=b;
+  const ct=(contents||[]).filter(c=>inRange(c,cur.from,cur.to));
+  const ctp=(contents||[]).filter(c=>inRange(c,R.cmp.B.from,R.cmp.B.to));
+  R.cmp.contA=(contents||[]).filter(c=>inRange(c,R.cmp.A.from,R.cmp.A.to)).length;R.cmp.contB=ctp.length;
+  R.conteudos={qtd:ct.length,qtdPrev:ctp.length,alcance:sum(ct,c=>c.alcance),alcancePrev:sum(ctp,c=>c.alcance),
+    top:[...ct].sort((a,b)=>(b.alcance-a.alcance)||(b.curtidas-a.curtidas)).slice(0,5)};
+
+  // evolução mês a mês (acumulado do ano)
+  if(period.kind==='ano'){
+    R.mensal=months.map(([y,m])=>{
+      const last=(y===ty&&m===tm)?td:daysInMonth(y,m);
+      const st=salesStats(influencerOrdersBetween(isoDate(y,m,1),isoDate(y,m,last)));
+      const inv=investCache[MONTH_TAB[m]+'/'+y];
+      return{label:MONTHS_SHORT[m],nome:MONTHS[m],tv:st.tv,qp:st.qp,tm:st.tm,comVenda:st.comVenda,partial:y===ty&&m===tm,
+        roi:inv&&inv.ok&&inv.totalInvestido>0?inv.totalRetorno/inv.totalInvestido:null};
+    });
+    R.mensal.forEach((r,i)=>{r.var=i>0?varPct(r.tv,R.mensal[i-1].tv):null});
+  }
+
+  // tendência "vs mês anterior" usada no diagnóstico
+  trend={v:varPct(R.cmp.sA.tv,R.cmp.sB.tv),label:(period.kind==='mes'?'vs ':R.cmp.aLabel+' vs ')+R.cmp.bLabel};
+  R.trend=trend;
+
+  // diagnóstico de saúde
+  const total=allInfluencers.length,share=total?R.s.comVenda/total:0;
+  const signals=[];
+  if(roi.ok)signals.push({ok:roi.retorno>0,text:roi.retorno>0?'Retorno positivo sobre o investimento (ROI '+pctBR(roi.roi)+')':'Retorno negativo: investimos mais do que voltou (ROI '+pctBR(roi.roi)+')'});
+  if(trend.v!=null)signals.push({ok:trend.v>=-0.10,text:(trend.v>=-0.10?'Vendas estáveis ou em alta':'Vendas em queda')+' ('+fmtVar(trend.v)+' — '+trend.label+')'});
+  signals.push({ok:share>=0.5,text:R.s.comVenda+' de '+total+' influencers venderam no período ('+pctBR(share)+')'+(share>=0.5?'':' — menos da metade')});
+  const fails=signals.filter(s=>!s.ok).length;
+  R.health=fails===0?{status:'Saudável',tone:'green',resumo:'Os indicadores principais estão positivos.'}
+    :fails===1?{status:'Atenção',tone:'amber',resumo:'Um dos indicadores principais precisa de atenção.'}
+    :{status:'Em risco',tone:'red',resumo:'Mais de um indicador principal está negativo.'};
+  R.health.signals=signals;
+
+  // pontos de atenção
+  const att=[];
+  if(R.semVenda.length)att.push(R.semVenda.length+' influencer'+(R.semVenda.length>1?'s':'')+' sem venda no período: '+R.semVenda.slice(0,12).map(r=>r.nome).join(', ')+(R.semVenda.length>12?' e mais '+(R.semVenda.length-12):'')+'.');
+  R.quedas.forEach(r=>att.push(r.nome+' caiu '+fmtVar(r.var)+' em vendas ('+fmt(r.vendidoPrev)+' → '+fmt(r.vendido)+').'));
+  if(roi.missing.length&&period.kind==='mes')att.push('Planilha de investimento sem a aba '+roi.missing.join(', ')+' — ROI do período indisponível.');
+  else if(roi.missing.length)att.push('Abas de investimento ainda não criadas: '+roi.missing.join(', ')+' (ROI considera só os meses preenchidos).');
+  if(R.contentsOk&&R.conteudos.qtd===0)att.push('Nenhum conteúdo de influencer registrado na planilha de conteúdos neste período (as linhas recentes estão sem cupom).');
+  if(R.partial)att.push('Período ainda em andamento: os números vão mudar até o fim do '+(period.kind==='mes'?'mês':'ano')+'.');
+  R.atencao=att;
+  return R;
+}
+
+function reportText(R){
+  const L=[];
+  const tone={green:'🟢',amber:'🟡',red:'🔴'}[R.health.tone];
+  L.push('📊 *Relatório Influencers VM — '+R.titulo+'*');
+  L.push('');
+  L.push(tone+' Status: *'+R.health.status+'*');
+  L.push('');
+  L.push('💰 Vendas via cupom: *'+fmt(R.s.tv)+'*'+(R.kind==='mes'&&R.sp.tv>0?' ('+arrowVar(varPct(R.s.tv,R.sp.tv))+' vs '+R.prevLabel+')':R.yoy?' ('+arrowVar(varPct(R.s.tv,R.sp.tv))+' vs '+(R.y-1)+')':''));
+  L.push('🛍️ Pedidos: '+R.s.qp+' · Ticket médio: '+fmt(R.s.tm));
+  if(R.roi.ok)L.push('📈 ROI: *'+pctBR(R.roi.roi)+'* · Retorno: '+fmt(R.roi.retorno)+' sobre '+fmt(R.roi.investido)+' investidos');
+  L.push('👥 '+R.s.comVenda+' de '+allInfluencers.length+' influencers venderam');
+  if(R.kind==='ano'&&R.trend.v!=null)L.push('📅 '+R.trend.label+': '+arrowVar(R.trend.v));
+  if(R.top.length){
+    L.push('');L.push('🏆 *Top influencers*');
+    R.top.slice(0,5).forEach((r,i)=>L.push((i+1)+'. '+r.nome+' — '+fmt(r.vendido)+' ('+r.pedidos+' pedido'+(r.pedidos!==1?'s':'')+')'));
+  }
+  if(R.crescimento.length){L.push('');L.push('🚀 *Maior crescimento*: '+R.crescimento.map(r=>r.nome+' ('+fmtVar(r.var)+')').join(', '))}
+  if(R.conteudos.top.length){
+    L.push('');L.push('🔥 *Conteúdos de influencers com mais alcance*');
+    R.conteudos.top.slice(0,3).forEach((c,i)=>{const inf=cupomToInfluencer[c.cupom];L.push((i+1)+'. '+(inf?inf.nome:c.cupom)+' — '+(c.tipo||'post')+' de '+brDate(c.data)+' · '+numBR(c.alcance)+' de alcance')});
+  }
+  if(R.ig&&R.ig.top.length){
+    L.push('');L.push('📱 *Posts da marca com mais interação*');
+    R.ig.top.slice(0,3).forEach((p,i)=>L.push((i+1)+'. '+labelForType(p.media_type)+' de '+brDate(p.posted_at)+' · '+numBR(engagementScore(p))+' interações'));
+  }
+  const pontos=[];
+  if(R.semVenda.length)pontos.push(R.semVenda.length+' influencers sem venda no período');
+  R.quedas.forEach(r=>pontos.push(r.nome+' com queda de '+fmtVar(r.var)));
+  if(pontos.length){L.push('');L.push('⚠️ *Atenção*: '+pontos.join('; ')+'.')}
+  L.push('');L.push('📎 Relatório completo no PDF em anexo.');
+  return L.join('\n');
+}
+
+function pdfSafe(s){
+  return String(s==null?'':s).replace(/[  ]/g,' ').replace(/[▲]/g,'+').replace(/[▼]/g,'-')
+    .replace(/[^\x20-\x7E -ÿ–—…“”‘’•\n]/g,'').replace(/[ \t]+/g,' ').trim();
+}
+async function imageToDataUrl(src){
+  const blob=await (await fetch(src)).blob();
+  const data=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(blob)});
+  const dims=await new Promise(res=>{const i=new Image();i.onload=()=>res({w:i.naturalWidth,h:i.naturalHeight});i.onerror=()=>res(null);i.src=data});
+  return dims?{data,...dims}:null;
+}
+
+async function buildReportPdf(R){
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const W=210,H=297,M=14,CW=W-2*M;
+  const C={dark:[26,26,26],pink:[196,96,122],pinkL:[232,160,176],cream:[247,245,240],text:[60,57,50],muted:[120,114,100],line:[229,225,216],
+    green:[52,128,84],amber:[184,128,24],red:[176,58,72],zebra:[250,248,244]};
+  const toneColor={green:C.green,amber:C.amber,red:C.red};
+  let y=0;
+  const T=(s,x,yy,o)=>doc.text(pdfSafe(s),x,yy,o);
+  const ensure=h=>{if(y+h>H-16){doc.addPage();y=18}};
+  const section=(title)=>{ensure(48);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...C.pink);T(title.toUpperCase(),M,y,{charSpace:0.6});doc.setDrawColor(...C.line);doc.setLineWidth(0.3);doc.line(M,y+2,W-M,y+2);y+=7};
+  const tableBase={theme:'plain',margin:{left:M,right:M},styles:{font:'helvetica',fontSize:8,textColor:C.text,cellPadding:{top:2,bottom:2,left:2,right:2},overflow:'linebreak'},
+    headStyles:{fillColor:C.dark,textColor:C.cream,fontStyle:'bold',fontSize:7},alternateRowStyles:{fillColor:C.zebra}};
+  const table=(opts)=>{ensure(12+Math.min((opts.body||[]).length,3)*7.5);doc.autoTable(Object.assign({},tableBase,opts,{startY:y}));y=doc.lastAutoTable.finalY+8};
+  const varColor=v=>v==null?C.muted:v>=0?C.green:C.red;
+
+  // Cabeçalho
+  doc.setFillColor(...C.dark);doc.rect(0,0,W,32,'F');
+  try{const logoEl=document.querySelector('.sidebar-logo-img');if(logoEl){const lg=await imageToDataUrl(logoEl.src);if(lg){const h=13,w=lg.w/lg.h*h;doc.addImage(lg.data,'PNG',M,9.5,w,h)}}}catch(e){}
+  doc.setTextColor(...C.cream);doc.setFont('helvetica','bold');doc.setFontSize(15);T('Relatório de Influencers',W-M,14,{align:'right'});
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...C.pinkL);T(R.titulo,W-M,20.5,{align:'right'});
+  doc.setFontSize(7);doc.setTextColor(184,178,163);
+  T('Gerado em '+R.geradoEm.toLocaleDateString('pt-BR')+' às '+R.geradoEm.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' · comparação com '+(R.kind==='mes'?R.prevLabel:'o mês anterior'),W-M,26,{align:'right'});
+  y=40;
+
+  // Diagnóstico
+  const sig=R.health.signals,boxH=16+sig.length*5.2;
+  doc.setFillColor(...C.cream);doc.roundedRect(M,y,CW,boxH,3,3,'F');
+  const tc=toneColor[R.health.tone];
+  doc.setFillColor(...tc);doc.roundedRect(M+5,y+5,34,8,4,4,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(9);T(R.health.status.toUpperCase(),M+22,y+10.4,{align:'center'});
+  doc.setTextColor(...C.text);doc.setFontSize(10);T('Como estamos',M+44,y+8.5);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...C.muted);T(R.health.resumo,M+44,y+12.8);
+  let sy=y+19;
+  sig.forEach(s=>{doc.setFillColor(...(s.ok?C.green:C.red));doc.circle(M+7,sy-1.1,1.1,'F');doc.setTextColor(...C.text);doc.setFontSize(8);T(s.text,M+11,sy);sy+=5.2});
+  y+=boxH+7;
+
+  // KPIs
+  const useVar=R.kind==='mes'||R.yoy,vsTxt=R.kind==='mes'?' vs mês anterior':' vs '+(R.y-1);
+  const kpis=[
+    {l:'Vendas via cupom',v:fmt(R.s.tv),d:useVar?varPct(R.s.tv,R.sp.tv):null,sub:useVar?null:'acumulado no ano'},
+    {l:'Pedidos',v:String(R.s.qp),d:useVar?varPct(R.s.qp,R.sp.qp):null,sub:useVar?null:'acumulado no ano'},
+    {l:'Ticket médio',v:fmt(R.s.tm),d:useVar?varPct(R.s.tm,R.sp.tm):null,sub:useVar?null:'média do ano'},
+    {l:'ROI',v:R.roi.ok?pctBR(R.roi.roi):'—',d:null,sub:R.roi.ok?'Retorno '+fmt(R.roi.retorno):'Sem dados na planilha'},
+  ];
+  const gap=4,kw=(CW-gap*3)/4,kh=22;
+  kpis.forEach((k,i)=>{
+    const x=M+i*(kw+gap),dark=i===0;
+    doc.setFillColor(...(dark?C.dark:C.cream));doc.roundedRect(x,y,kw,kh,3,3,'F');
+    doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(...(dark?[184,178,163]:C.muted));T(k.l.toUpperCase(),x+4,y+6,{charSpace:0.3});
+    doc.setFont('helvetica','bold');doc.setFontSize(12.5);doc.setTextColor(...(dark?C.cream:C.dark));T(k.v,x+4,y+13.5);
+    doc.setFont('helvetica','normal');doc.setFontSize(7);
+    if(k.sub){doc.setTextColor(...C.muted);T(k.sub,x+4,y+18.5)}
+    else{doc.setTextColor(...(k.d==null?C.muted:dark?(k.d>=0?[140,200,160]:C.pinkL):varColor(k.d)));T(k.d==null?'sem base de comparação':fmtVar(k.d)+vsTxt,x+4,y+18.5)}
+  });
+  y+=kh+9;
+
+  // Comparativo
+  section(R.kind==='mes'?'Comparativo com o mês anterior':'Comparativo: '+R.cmp.aLabel+' vs '+R.cmp.bLabel);
+  const X=R.cmp,a=X.sA,b=X.sB,ra=X.roiA,rb=X.roiB;
+  const cmpRows=[
+    ['Vendas via cupom',fmt(a.tv),fmt(b.tv),varPct(a.tv,b.tv)],
+    ['Pedidos',String(a.qp),String(b.qp),varPct(a.qp,b.qp)],
+    ['Ticket médio',fmt(a.tm),fmt(b.tm),varPct(a.tm,b.tm)],
+    ['Influencers que venderam',String(a.comVenda),String(b.comVenda),varPct(a.comVenda,b.comVenda)],
+  ];
+  if(ra.ok||rb.ok){
+    cmpRows.push(['Total investido',ra.ok?fmt(ra.investido):'—',rb.ok?fmt(rb.investido):'—',ra.ok&&rb.ok?varPct(ra.investido,rb.investido):null]);
+    cmpRows.push(['Retorno (R$)',ra.ok?fmt(ra.retorno):'—',rb.ok?fmt(rb.retorno):'—',null]);
+    cmpRows.push(['ROI',ra.ok?pctBR(ra.roi):'—',rb.ok?pctBR(rb.roi):'—',null]);
+  }
+  if(R.kind==='mes')cmpRows.push(['Comissões das influencers',fmt(R.comissao),'—',null]);
+  if(R.contentsOk)cmpRows.push(['Conteúdos de influencers registrados',String(X.contA),String(X.contB),varPct(X.contA,X.contB)]);
+  if(X.igA&&X.igB){
+    cmpRows.push(['Instagram da marca — posts',String(X.igA.posts),String(X.igB.posts),varPct(X.igA.posts,X.igB.posts)]);
+    cmpRows.push(['Instagram da marca — interações',numBR(X.igA.interacoes),numBR(X.igB.interacoes),varPct(X.igA.interacoes,X.igB.interacoes)]);
+  }
+  table({head:[['Indicador',R.kind==='mes'?R.tituloCurto:X.aLabel,R.kind==='mes'?MONTHS[R.prev.m]:X.bLabel,'Variação']],
+    body:cmpRows.map(r=>[r[0],r[1],r[2],r[3]==null?'—':fmtVar(r[3])]),
+    columnStyles:{0:{cellWidth:72},1:{halign:'right'},2:{halign:'right'},3:{halign:'right',fontStyle:'bold'}},
+    didParseCell:d=>{if(d.section==='body'&&d.column.index===3){const v=cmpRows[d.row.index][3];d.cell.styles.textColor=varColor(v)}}});
+  if(R.partial){doc.setFontSize(7);doc.setTextColor(...C.muted);T('Mês em andamento: a comparação usa os mesmos dias do mês anterior (1 a '+(R.kind==='mes'?R.lastDay:R.geradoEm.getDate())+') para ser justa.',M,y-4);y+=2}
+  if(R.kind==='ano'){ensure(8);doc.setFontSize(8);doc.setTextColor(...C.text);T('Comissões das influencers no ano: '+fmt(R.comissao),M,y-2);y+=5}
+
+  // Evolução mês a mês (acumulado)
+  if(R.kind==='ano'&&R.mensal){
+    section('Evolução mês a mês');
+    const ch=42,maxV=Math.max(1,...R.mensal.map(r=>r.tv)),n=R.mensal.length,slot=CW/12,bw=Math.min(9,slot*0.6);
+    ensure(ch+10);
+    const base=y+ch;
+    R.mensal.forEach((r,i)=>{
+      const x=M+i*slot+(slot-bw)/2,h=(r.tv/maxV)*(ch-8);
+      doc.setFillColor(...(i===n-1?C.pink:C.dark));doc.rect(x,base-h,bw,h,'F');
+      doc.setFontSize(6);doc.setTextColor(...C.muted);
+      if(r.tv>0)T(r.tv>=1000?(r.tv/1000).toFixed(1).replace('.',',')+'k':numBR(r.tv),x+bw/2,base-h-1.5,{align:'center'});
+      doc.setFontSize(7);doc.setTextColor(...C.text);T(r.label+(r.partial?'*':''),x+bw/2,base+4,{align:'center'});
+    });
+    doc.setDrawColor(...C.line);doc.line(M,base,W-M,base);
+    y=base+10;
+    table({head:[['Mês','Vendas','Pedidos','Ticket médio','Venderam','ROI','Vs mês anterior']],
+      body:R.mensal.map(r=>[r.nome+(r.partial?' *':''),fmt(r.tv),String(r.qp),fmt(r.tm),String(r.comVenda),r.roi==null?'—':pctBR(r.roi),r.var==null?'—':fmtVar(r.var)]),
+      columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right',fontStyle:'bold'}},
+      didParseCell:d=>{if(d.section==='body'&&d.column.index===6)d.cell.styles.textColor=varColor(R.mensal[d.row.index].var)}});
+    if(R.partial){doc.setFontSize(7);doc.setTextColor(...C.muted);T('* mês em andamento',M,y-4);y+=2}
+  }
+
+  // Tiers
+  section('Desempenho por tier');
+  table({head:[['Tier','Influencers','Venderam','Vendas','Pedidos','Investido','ROI']],
+    body:TIERS.map(t=>{const b=R.s.byTier[t];return[t,String(b.influencers),String(b.comVenda),fmt(b.vendido),String(b.pedidos),R.roi.ok?fmt(b.investido):'—',b.investido>0?pctBR(b.retorno/b.investido):'—']}),
+    columnStyles:{1:{halign:'right'},2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'}}});
+
+  // Top influencers
+  section('Melhores influencers');
+  if(R.top.length){
+    const showVar=R.kind==='mes'||R.yoy;
+    // sem base de comparação (ex.: acumulado sem dados do ano anterior), a coluna "vs" sai
+    const head=['#','Influencer','Tier','Vendas','Pedidos','Ticket'].concat(showVar?[R.kind==='mes'?'Vs mês ant.':'Vs '+(R.y-1)]:[],['ROI']);
+    table({head:[head],
+      body:R.top.map((r,i)=>[String(i+1),r.nome,r.tier,fmt(r.vendido),String(r.pedidos),fmt(r.ticket)].concat(showVar?[r.var==null?(r.vendidoPrev===0?'novo':'—'):fmtVar(r.var)]:[],[r.roi==null?'—':pctBR(r.roi)])),
+      columnStyles:{0:{cellWidth:8,textColor:C.pink,fontStyle:'bold'},1:{fontStyle:'bold'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'},7:{halign:'right'}},
+      didParseCell:d=>{if(showVar&&d.section==='body'&&d.column.index===6)d.cell.styles.textColor=varColor(R.top[d.row.index].var)}});
+  }else{doc.setFontSize(8);doc.setTextColor(...C.muted);T('Nenhuma venda via cupom de influencer no período.',M,y);y+=8}
+  if(R.crescimento.length){ensure(8);doc.setFontSize(8);doc.setTextColor(...C.text);T('Maior crescimento vs mês anterior: '+R.crescimento.map(r=>r.nome+' ('+fmtVar(r.var)+')').join(' · '),M,y-3);y+=4}
+
+  // Conteúdos
+  section('Melhores conteúdos das influencers');
+  if(R.conteudos.top.length){
+    const rows=R.conteudos.top;
+    table({head:[['#','Influencer','Tipo','Data','Alcance','Curtidas','Produto','Link']],
+      body:rows.map((c,i)=>{const inf=cupomToInfluencer[c.cupom];return[String(i+1),inf?inf.nome:c.cupom,c.tipo||'—',brDate(c.data),numBR(c.alcance),numBR(c.curtidas),pdfSafe(c.produto)||'—',c.link?'ver post':'—']}),
+      columnStyles:{0:{cellWidth:8,textColor:C.pink,fontStyle:'bold'},4:{halign:'right'},5:{halign:'right'},7:{textColor:C.pink}},
+      didDrawCell:d=>{if(d.section==='body'&&d.column.index===7){const u=rows[d.row.index].link;if(u&&u.startsWith('http'))doc.link(d.cell.x,d.cell.y,d.cell.width,d.cell.height,{url:u})}}});
+  }else{doc.setFontSize(8);doc.setTextColor(...C.muted);T(R.contentsOk?'Nenhum conteúdo de influencer registrado na planilha neste período.':'Não foi possível carregar a planilha de conteúdos.',M,y);y+=8}
+
+  if(R.ig&&R.ig.top.length){
+    section('Instagram da marca — posts com mais interação');
+    const rows=R.ig.top;
+    table({head:[['#','Tipo','Data','Legenda','Alcance','Interações','Link']],
+      body:rows.map((p,i)=>[String(i+1),labelForType(p.media_type),brDate(p.posted_at),pdfSafe(truncate(p.caption,70)),numBR(p.reach),numBR(engagementScore(p)),p.permalink?'ver post':'—']),
+      columnStyles:{0:{cellWidth:8,textColor:C.pink,fontStyle:'bold'},3:{cellWidth:70},4:{halign:'right'},5:{halign:'right'},6:{textColor:C.pink}},
+      didDrawCell:d=>{if(d.section==='body'&&d.column.index===6){const u=rows[d.row.index].permalink;if(u)doc.link(d.cell.x,d.cell.y,d.cell.width,d.cell.height,{url:u})}}});
+    if(R.ig.followersDelta!=null){doc.setFontSize(8);doc.setTextColor(...C.text);T('Seguidores: '+numBR(R.ig.followers)+' ('+(R.ig.followersDelta>=0?'+':'')+numBR(R.ig.followersDelta)+' no período)',M,y-3);y+=4}
+  }
+
+  // Pontos de atenção
+  if(R.atencao.length){
+    section('Pontos de atenção');
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...C.text);
+    R.atencao.forEach(a=>{const lines=doc.splitTextToSize(pdfSafe(a),CW-6);ensure(lines.length*4+2);doc.setFillColor(...C.pink);doc.circle(M+1.5,y-1.1,0.9,'F');doc.text(lines,M+5,y);y+=lines.length*4+2});
+    y+=4;
+  }
+
+  // Critérios
+  ensure(18);
+  doc.setFontSize(6.5);doc.setTextColor(...C.muted);
+  doc.text(doc.splitTextToSize(pdfSafe('Como o status é definido: avaliamos três sinais — ROI positivo (planilha de investimentos), vendas estáveis ou em alta vs mês anterior (queda de até 10% é tolerada) e pelo menos metade das influencers com venda. Todos positivos = Saudável; um negativo = Atenção; dois ou mais = Em risco. Vendas consideram pedidos da loja online (VNDA) com cupom de influencer cadastrada no portal.'),CW),M,y);
+
+  // Rodapé
+  const pages=doc.getNumberOfPages();
+  for(let p=1;p<=pages;p++){
+    doc.setPage(p);doc.setFontSize(6.5);doc.setTextColor(...C.muted);
+    T('VM Fashion Store · Relatório de Influencers · '+R.titulo,M,H-8);
+    T('Página '+p+' de '+pages,W-M,H-8,{align:'right'});
+  }
+  return doc;
+}
+
+function reportFileName(R){return 'relatorio-influencers-'+(R.kind==='mes'?R.y+'-'+pad2(R.m+1):R.y+'-acumulado')+'.pdf'}
+
+let lastReport=null;
+function setupReport(){
+  const modal=document.getElementById('report-modal');
+  document.getElementById('report-open-btn').addEventListener('click',openReportModal);
+  document.getElementById('report-close').addEventListener('click',()=>{modal.classList.remove('open');document.body.style.overflow=''});
+  modal.addEventListener('click',e=>{if(e.target===modal){modal.classList.remove('open');document.body.style.overflow=''}});
+  document.getElementById('report-generate').addEventListener('click',generateReport);
+  document.getElementById('report-download').addEventListener('click',()=>{if(lastReport)lastReport.doc.save(reportFileName(lastReport.R))});
+  document.getElementById('report-copy').addEventListener('click',copyReportText);
+}
+function openReportModal(){
+  const sel=document.getElementById('report-period'),now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  const opts=[];
+  for(let k=m;k>=0;k--)opts.push('<option value="mes:'+y+':'+k+'">'+MONTHS[k]+' '+y+(k===m?' (mês atual)':'')+'</option>');
+  opts.splice(1,0,'<option value="ano:'+y+'">Acumulado do ano '+y+'</option>');
+  for(let k=11;k>=0&&opts.length<15;k--)opts.push('<option value="mes:'+(y-1)+':'+k+'">'+MONTHS[k]+' '+(y-1)+'</option>');
+  sel.innerHTML=opts.join('');
+  document.getElementById('report-result').hidden=true;
+  document.getElementById('report-status').textContent='';
+  document.getElementById('report-modal').classList.add('open');document.body.style.overflow='hidden';
+}
+async function generateReport(){
+  const btn=document.getElementById('report-generate'),status=document.getElementById('report-status');
+  const v=document.getElementById('report-period').value.split(':');
+  const period=v[0]==='ano'?{kind:'ano',y:+v[1]}:{kind:'mes',y:+v[1],m:+v[2]};
+  btn.disabled=true;document.getElementById('report-result').hidden=true;
+  try{
+    if(!allInfluencers.length)throw new Error('As influencers ainda estão carregando. Tente de novo em alguns segundos.');
+    while(ordersInFlight){status.textContent='Aguardando a sincronização dos pedidos ('+allOrders.length+' até agora)…';await new Promise(r=>setTimeout(r,800))}
+    status.textContent='Carregando gerador de PDF…';
+    await loadReportLibs();
+    status.textContent='Calculando números do período…';
+    const R=await buildReportData(period);
+    status.textContent='Montando o PDF…';
+    const doc=await buildReportPdf(R);
+    lastReport={R,doc};
+    doc.save(reportFileName(R));
+    document.getElementById('report-text').value=reportText(R);
+    document.getElementById('report-result').hidden=false;
+    status.textContent='✓ PDF baixado ('+reportFileName(R)+'). Texto para o grupo abaixo.';
+  }catch(e){console.error(e);status.textContent='Erro: '+e.message}
+  finally{btn.disabled=false}
+}
+async function copyReportText(){
+  const ta=document.getElementById('report-text'),btn=document.getElementById('report-copy');
+  try{await navigator.clipboard.writeText(ta.value)}catch(e){ta.select();document.execCommand('copy')}
+  btn.textContent='Copiado ✓';setTimeout(()=>{btn.textContent='Copiar texto'},1800);
 }
 
 function monthKey(y,m){return y+'-'+String(m+1).padStart(2,'0')}
