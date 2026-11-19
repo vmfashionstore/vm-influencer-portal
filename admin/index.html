@@ -51,6 +51,22 @@
   .sidebar-user .logout-btn{width:100%;text-align:center;border-color:rgba(255,255,255,0.15);color:#C9C4B6}
   .sidebar-user .logout-btn:hover{border-color:var(--pink);color:var(--pink)}
   .main-area{flex:1;min-width:0}
+  /* Celular: sidebar vira barra no topo (logo + Sair, abas roláveis embaixo) */
+  @media (max-width:767px){
+    .app-shell{flex-direction:column}
+    .sidebar,.sidebar.collapsed{width:100%;height:auto;position:sticky;top:0;z-index:150;align-self:stretch;display:grid;grid-template-columns:1fr auto;grid-template-areas:"top user" "nav nav";transition:none;padding-top:env(safe-area-inset-top,0px)}
+    .sidebar-top,.sidebar.collapsed .sidebar-top{grid-area:top;padding:12px 16px;flex-direction:row;align-items:center;gap:10px;cursor:default}
+    .sidebar-logo-img,.sidebar.collapsed .sidebar-logo-img{width:44px}
+    .sidebar-logo-tag,.sidebar.collapsed .sidebar-logo-tag{display:block;margin-top:0}
+    .sidebar-user,.sidebar.collapsed .sidebar-user{grid-area:user;display:flex;align-items:center;padding:12px 16px;border-top:none}
+    .sidebar-user .user-name,.sidebar-user .user-sub{display:none}
+    .sidebar-user .logout-btn{width:auto}
+    .sidebar-nav,.sidebar.collapsed .sidebar-nav{grid-area:nav;display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:0 8px;scrollbar-width:none;border-top:1px solid rgba(255,255,255,0.08)}
+    .sidebar-nav::-webkit-scrollbar{display:none}
+    .sidebar-nav .main-nav-tab{flex-shrink:0;white-space:nowrap;padding:12px 12px;border-left:none;border-bottom:2px solid transparent}
+    .sidebar-nav .main-nav-tab.active{border-left:none;border-bottom:2px solid var(--pink);background:none}
+    .admin-tab-panel .month-bar{top:var(--topbar-h,0px)}
+  }
   .admin-logo{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;letter-spacing:0.4em;color:var(--white);text-transform:uppercase}
   .admin-logo-tag{font-size:7px;letter-spacing:0.2em;text-transform:uppercase;color:var(--pink);margin-top:2px}
   .admin-user{display:flex;align-items:center;gap:16px}
@@ -781,11 +797,18 @@ document.addEventListener('DOMContentLoaded',function(){
   var sidebarEl=document.querySelector('.sidebar');
   var sidebarToggleEl=document.getElementById('sidebar-toggle');
   if(sidebarEl&&sidebarToggleEl){
-    if(localStorage.getItem('vm_sidebar_collapsed')==='1')sidebarEl.classList.add('collapsed');
+    var mobileMq=window.matchMedia('(max-width:767px)');
+    try{if(localStorage.getItem('vm_sidebar_collapsed')==='1')sidebarEl.classList.add('collapsed')}catch(e){}
     sidebarToggleEl.addEventListener('click',function(){
+      if(mobileMq.matches)return; // no celular a barra do topo não recolhe
       sidebarEl.classList.toggle('collapsed');
-      localStorage.setItem('vm_sidebar_collapsed',sidebarEl.classList.contains('collapsed')?'1':'0');
+      try{localStorage.setItem('vm_sidebar_collapsed',sidebarEl.classList.contains('collapsed')?'1':'0')}catch(e){}
     });
+    // altura da barra do topo no celular, para a barra de meses grudar logo abaixo dela
+    var syncTopbarH=function(){document.documentElement.style.setProperty('--topbar-h',(mobileMq.matches?sidebarEl.offsetHeight:0)+'px')};
+    if(window.ResizeObserver)new ResizeObserver(syncTopbarH).observe(sidebarEl);
+    window.addEventListener('resize',syncTopbarH);
+    syncTopbarH();
   }
   document.getElementById('ig-post-modal-close').addEventListener('click',closeIgPostModal);
   document.getElementById('ig-post-modal').addEventListener('click',function(e){if(e.target===this)closeIgPostModal()});
